@@ -46,6 +46,12 @@
 
     <!-- Session -->
     <string name="phase_connecting">Connecting…</string>
+    <string name="unreachable_title">%1$s is not reachable</string>
+    <string name="unreachable_body">Kira keeps looking for it until you cancel. This is not a problem with the machine\'s boot or its TPM: the machine is not waiting for a phone yet, or is out of range. Make sure it is at the passphrase prompt (or runs “sudo tpm2-kira attest gate”) and close to this phone.</string>
+    <string name="bluetooth_off_title">Bluetooth is off</string>
+    <string name="bluetooth_off_body">Turn on Bluetooth on this phone. Kira continues looking for %1$s as soon as it is on.</string>
+    <string name="unreachable_attempt">Attempt %1$d · %2$s</string>
+    <string name="the_machine">the machine</string>
     <string name="phase_securing">Establishing a secure channel…</string>
     <string name="phase_enrolling">Checking the machine\'s TPM…</string>
     <string name="phase_verifying">Verifying %1$s…</string>
@@ -104,7 +110,7 @@
     <string name="ack_unknown">The machine answered with result %1$d.</string>
 
     <!-- Failures -->
-    <string name="fail_connect">Could not connect to the machine.</string>
+    <string name="fail_connect">Kira reached the machine, but setting up the connection failed.</string>
     <string name="fail_update_needed">This machine speaks a different protocol version. Please update the app or tpm2-kira.</string>
     <string name="fail_wrong_mode">The machine is not in the expected mode. For enrolment run \'attest enrol\'; for verification, \'attest gate\'.</string>
     <string name="fail_link_lost">Connection lost.</string>
@@ -197,5 +203,6 @@
     <string name="notif_channel">Attestation sessions</string>
     <string name="notif_connecting">Connecting…</string>
     <string name="notif_verifying">Verifying %1$s…</string>
+    <string name="notif_unreachable">%1$s is not reachable yet — still looking</string>
     <string name="notif_enrolling">Enrolling %1$s…</string>
 </resources>

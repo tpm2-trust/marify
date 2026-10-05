@@ -255,7 +255,8 @@ class GattLink private constructor(private val device: BluetoothDevice) : Link {
                         delay(500)
                         continue
                     }
-                    throw LinkException("could not connect to the machine", e)
+                    // Never connected: out of range, switched off, or gone.
+                    throw MachineNotReachable("the Bluetooth connection could not be established", e)
                 } catch (e: Exception) {
                     link.disconnect()
                     throw if (e is LinkException) e else LinkException(e.message ?: "connection failed", e)

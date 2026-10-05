@@ -2,9 +2,12 @@
 
 package app.kira
 
+import app.kira.ble.BluetoothOff
 import app.kira.ble.InfoValue
 import app.kira.ble.Link
 import app.kira.ble.LinkEvent
+import app.kira.ble.LinkException
+import app.kira.ble.MachineNotReachable
 import app.kira.core.CoreSession
 import app.kira.core.Decision
 import app.kira.core.Event
@@ -23,10 +26,14 @@ import app.kira.session.SessionMode
 import app.kira.session.SessionRunner
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.currentTime
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -106,14 +113,16 @@ class SessionRunnerTest {
     private fun TestScope.runner(
         core: FakeCore, link: FakeLink, keys: FakeKeys = FakeKeys(), records: FakeRecords = FakeRecords(),
         mode: SessionMode = SessionMode.Attest("a0".repeat(16), "Thinkpad-X1"),
+        connect: suspend () -> Link = { link },
     ) = SessionRunner(
         mode = mode,
-        connect = { link },
+        connect = connect,
         newSession = { core },
         keys = keys,
         records = records,
         coreProtocol = 1,
         coreSchema = 1,
+        clock = { testScheduler.currentTime },
         dispatcher = StandardTestDispatcher(testScheduler),
     )
 
@@ -291,5 +300,90 @@ class SessionRunnerTest {
         assertEquals(listOf("""{"r":1}"""), records.saved)
         assertEquals(Outcome.Succeeded, r.state.value.outcome)
         assertEquals("Thinkpad-X1", r.state.value.machineName)
+    }
+
+    // ---- reaching the machine ----
+
+    @Test fun retriesEveryFiveSecondsUntilTheMachineIsReachable() = runTest {
+        val core = FakeCore()
+        val link = FakeLink()
+        val attempts = mutableListOf<Long>()
+        val r = runner(core, link, connect = {
+            attempts += currentTime
+            // A scan window: the machine is not seen for 5 s, twice.
+            if (attempts.size < 3) { delay(5_000); throw MachineNotReachable("Thinkpad-X1 was not seen nearby") }
+            link
+        })
+        launch { r.run() }
+        advanceTimeBy(5_001); runCurrent()
+        assertEquals(1, r.state.value.unreachable?.attempt)
+        assertEquals(Phase.CONNECTING, r.state.value.phase)
+        advanceUntilIdle()
+        assertEquals(listOf(0L, 5_000L, 10_000L), attempts)
+        assertEquals(null, r.state.value.unreachable)
+        assertEquals(Phase.SECURING, r.state.value.phase)
+        r.cancel()
+    }
+
+    @Test fun fastFailuresWaitOutTheInterval() = runTest {
+        val attempts = mutableListOf<Long>()
+        val r = runner(FakeCore(), FakeLink(), connect = {
+            attempts += currentTime
+            throw MachineNotReachable("the Bluetooth connection could not be established")
+        })
+        val job = launch { r.run() }
+        advanceTimeBy(20_001); runCurrent()
+        assertEquals(listOf(0L, 5_000L, 10_000L, 15_000L, 20_000L), attempts)
+        job.cancel() // while connecting, SessionManager cancels the job
+    }
+
+    @Test fun keepsLookingUntilCancelled() = runTest {
+        var attempts = 0
+        val r = runner(FakeCore(), FakeLink(), connect = {
+            attempts++
+            delay(5_000)
+            throw MachineNotReachable("Thinkpad-X1 was not seen nearby")
+        })
+        val job = launch { r.run() }
+        advanceTimeBy(30 * 60_000L + 1); runCurrent()   // half an hour
+        assertEquals(Phase.CONNECTING, r.state.value.phase)
+        assertEquals(null, r.state.value.outcome)
+        assertEquals(361, attempts)
+        assertEquals(360, r.state.value.unreachable?.attempt)
+        job.cancel()
+        advanceUntilIdle()
+        assertEquals(FailureKind.CANCELLED, (r.state.value.outcome as Outcome.Failed).kind)
+    }
+
+    @Test fun bluetoothOffIsWaitedOut() = runTest {
+        var on = false
+        val link = FakeLink()
+        val r = runner(FakeCore(), link, connect = { if (!on) throw BluetoothOff() else link })
+        launch { r.run() }
+        runCurrent()
+        assertEquals(true, r.state.value.unreachable?.bluetoothOff)
+        on = true
+        advanceTimeBy(5_001); runCurrent()
+        assertEquals(null, r.state.value.unreachable)
+        assertEquals(Phase.SECURING, r.state.value.phase)
+        r.cancel()
+    }
+
+    @Test fun otherConnectionErrorsAreNotRetried() = runTest {
+        var attempts = 0
+        val r = runner(FakeCore(), FakeLink(), connect = { attempts++; throw LinkException("TX has no CCCD") })
+        r.run()
+        assertEquals(FailureKind.CONNECT, (r.state.value.outcome as Outcome.Failed).kind)
+        assertEquals(1, attempts)
+    }
+
+    @Test fun cancellingWhileUnreachableEndsTheSession() = runTest {
+        val r = runner(FakeCore(), FakeLink(), connect = { delay(5_000); throw MachineNotReachable("not seen") })
+        val job = launch { r.run() }
+        advanceTimeBy(7_000); runCurrent()
+        job.cancel()
+        advanceUntilIdle()
+        assertEquals(FailureKind.CANCELLED, (r.state.value.outcome as Outcome.Failed).kind)
+        assertTrue(r.state.value.finished)
     }
 }

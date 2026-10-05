@@ -27,6 +27,7 @@ enum class Phase {
 
 /** Why a session ended without success; selects the message the user sees. */
 enum class FailureKind {
+    /** Connected, but setting up the session (GATT, INFO) failed. */
     CONNECT,
     UPDATE_NEEDED,
     WRONG_MODE,
@@ -45,9 +46,16 @@ sealed interface Outcome {
     data class Failed(val kind: FailureKind, val code: Int, val message: String) : Outcome
 }
 
+/**
+ * The machine has not been reached in [attempt] attempts so far (or
+ * Bluetooth is off); the runner keeps looking until the user cancels.
+ */
+data class Unreachable(val attempt: Int, val reason: String, val waitedMs: Long, val bluetoothOff: Boolean = false)
+
 data class SessionState(
     val mode: SessionMode,
     val phase: Phase = Phase.CONNECTING,
+    val unreachable: Unreachable? = null,
     val machineName: String? = (mode as? SessionMode.Attest)?.machineName,
     val deviceId: String? = (mode as? SessionMode.Attest)?.deviceId,
     val sas: String? = null,

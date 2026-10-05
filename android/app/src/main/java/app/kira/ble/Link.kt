@@ -32,4 +32,14 @@ sealed interface LinkEvent {
     data class Lost(val reason: String) : LinkEvent
 }
 
-class LinkException(message: String, cause: Throwable? = null) : Exception(message, cause)
+open class LinkException(message: String, cause: Throwable? = null) : Exception(message, cause)
+
+/**
+ * The machine could not be reached at all: it was not seen advertising, or
+ * the Bluetooth connection to it could not be established. Nothing about
+ * the machine's integrity follows from this; the session retries.
+ */
+class MachineNotReachable(message: String, cause: Throwable? = null) : LinkException(message, cause)
+
+/** Bluetooth is switched off on this phone. */
+class BluetoothOff : LinkException("Bluetooth is off on this phone")

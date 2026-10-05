@@ -1,10 +1,12 @@
 package app.kira.session
 
 import android.util.Log
+import app.kira.ble.BluetoothOff
 import app.kira.ble.InfoValue
 import app.kira.ble.Link
 import app.kira.ble.LinkEvent
 import app.kira.ble.LinkException
+import app.kira.ble.MachineNotReachable
 import app.kira.core.CoreSession
 import app.kira.core.Decision
 import app.kira.core.Event
@@ -23,6 +25,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -51,6 +54,9 @@ class SessionRunner(
     private val records: RecordSink,
     private val coreProtocol: Long,
     private val coreSchema: Long,
+    /** How often connecting is retried while the machine is not reachable. */
+    private val retryIntervalMs: Long = RETRY_INTERVAL_MS,
+    private val clock: () -> Long = { System.nanoTime() / 1_000_000 },
     @OptIn(ExperimentalCoroutinesApi::class)
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default.limitedParallelism(1),
 ) {
@@ -86,13 +92,12 @@ class SessionRunner(
     /** Runs the session to its end. Cancelling the caller aborts the session. */
     suspend fun run() = withContext(dispatcher) {
         link = try {
-            connect()
+            connectWithRetry() ?: return@withContext
         } catch (e: CancellationException) {
+            withContext(NonCancellable) { end(Outcome.Failed(FailureKind.CANCELLED, 0, "cancelled")) }
             throw e
-        } catch (e: Exception) {
-            end(Outcome.Failed(FailureKind.CONNECT, 0, e.message ?: "connection failed"))
-            return@withContext
         }
+        _state.update { it.copy(unreachable = null) }
         try {
             coroutineScope {
                 val expected = if (mode is SessionMode.Enrol) InfoValue.MODE_ENROL else InfoValue.MODE_ATTEST
@@ -131,6 +136,42 @@ class SessionRunner(
         } finally {
             withContext(NonCancellable) { link.disconnect() }
         }
+    }
+
+    /**
+     * Calls [connect] until a link comes up. While the machine is not
+     * reachable, or Bluetooth is off, it keeps trying every [retryIntervalMs]
+     * (counted from the start of the previous attempt) for as long as the
+     * user waits; cancelling ends it. Any other failure ends the session at
+     * once. Returns null when the session ended.
+     */
+    private suspend fun connectWithRetry(): Link? {
+        val start = clock()
+        var attempt = 0
+        while (true) {
+            attempt++
+            val began = clock()
+            try {
+                return connect()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: MachineNotReachable) {
+                notReachable(attempt, e, start, began, bluetoothOff = false)
+            } catch (e: BluetoothOff) {
+                notReachable(attempt, e, start, began, bluetoothOff = true)
+            } catch (e: Exception) {
+                end(Outcome.Failed(FailureKind.CONNECT, 0, e.message ?: "connection failed"))
+                return null
+            }
+        }
+    }
+
+    private suspend fun notReachable(attempt: Int, e: Exception, start: Long, began: Long, bluetoothOff: Boolean) {
+        Log.i(TAG, "machine not reachable (attempt $attempt): ${e.message}")
+        _state.update {
+            it.copy(unreachable = Unreachable(attempt, e.message ?: "", clock() - start, bluetoothOff))
+        }
+        delay((retryIntervalMs - (clock() - began)).coerceAtLeast(0))
     }
 
     private suspend fun handle(input: Input, scope: CoroutineScope) {
@@ -308,7 +349,8 @@ class SessionRunner(
         if (::link.isInitialized) link.disconnect()
     }
 
-    private companion object {
-        const val TAG = "KiraSession"
+    companion object {
+        private const val TAG = "KiraSession"
+        const val RETRY_INTERVAL_MS = 5_000L
     }
 }

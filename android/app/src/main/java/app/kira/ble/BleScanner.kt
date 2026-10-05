@@ -44,7 +44,7 @@ class BleScanner(private val context: Context) {
     fun scan(): Flow<Advertisement> = callbackFlow {
         val scanner = adapter()?.takeIf { it.isEnabled }?.bluetoothLeScanner
         if (scanner == null) {
-            close(LinkException("Bluetooth is off"))
+            close(BluetoothOff())
             return@callbackFlow
         }
         val service = ParcelUuid(KiraCore.SERVICE_UUID)

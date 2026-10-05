@@ -53,8 +53,11 @@ class AttestationService : LifecycleService() {
                         stopSelf()
                     } else {
                         val name = s.machineName ?: getString(R.string.a_machine)
-                        val text = if (s.mode is SessionMode.Enrol) getString(R.string.notif_enrolling, name)
-                        else getString(R.string.notif_verifying, name)
+                        val text = when {
+                            s.unreachable != null -> getString(R.string.notif_unreachable, name)
+                            s.mode is SessionMode.Enrol -> getString(R.string.notif_enrolling, name)
+                            else -> getString(R.string.notif_verifying, name)
+                        }
                         getSystemService(NotificationManager::class.java).notify(NOTIF_ID, notification(text))
                     }
                 }

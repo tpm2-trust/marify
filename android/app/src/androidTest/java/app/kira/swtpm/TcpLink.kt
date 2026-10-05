@@ -4,6 +4,7 @@ import app.kira.ble.InfoValue
 import app.kira.ble.Link
 import app.kira.ble.LinkEvent
 import app.kira.ble.LinkException
+import app.kira.ble.MachineNotReachable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import java.io.DataInputStream
@@ -68,11 +69,24 @@ class TcpLink private constructor(
     }
 
     companion object {
+        /**
+         * Connects like GattLink: a machine that is not serving (connection
+         * refused, or closed before INFO) is [MachineNotReachable].
+         */
         fun connect(host: String, port: Int, mtu: Int): TcpLink {
-            val s = Socket(host, port)
+            val s = try {
+                Socket(host, port)
+            } catch (e: IOException) {
+                throw MachineNotReachable("the test machine refused the connection", e)
+            }
             s.tcpNoDelay = true
             val info = ByteArray(InfoValue.SIZE)
-            DataInputStream(s.getInputStream()).readFully(info)
+            try {
+                DataInputStream(s.getInputStream()).readFully(info)
+            } catch (e: IOException) {
+                s.close()
+                throw MachineNotReachable("the test machine is not waiting for a phone", e)
+            }
             return TcpLink(s, mtu - 3, InfoValue.parse(info))
         }
     }

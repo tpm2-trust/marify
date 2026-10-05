@@ -31,6 +31,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.concurrent.thread
 
 /**
  * The app's session code and the real Go core against a tpm2-kira machine on
@@ -76,13 +77,16 @@ class SwtpmMachineSessionTest {
     private fun session(
         mode: SessionMode,
         mtu: Int = 517,
+        startServing: Boolean = true,
         react: suspend (SessionRunner, SessionState) -> Unit = { _, _ -> },
     ): SessionState = runBlocking {
         val runner = SessionRunner(
             mode = mode,
             connect = {
                 withContext(Dispatchers.IO) {
-                    if (mode is SessionMode.Enrol) machine.startEnrolment(mtu) else machine.startAttestation(mtu)
+                    if (startServing) {
+                        if (mode is SessionMode.Enrol) machine.startEnrolment(mtu) else machine.startAttestation(mtu)
+                    }
                     machine.link(mtu)
                 }
             },
@@ -196,6 +200,29 @@ class SwtpmMachineSessionTest {
         assertEquals(FailureKind.CANCELLED, (s.outcome as Outcome.Failed).kind)
         // The machine was told: the Error message from Abort reached it.
         assertEquals("error: peer aborted (code 10): cancelled", machine.outcome())
+    }
+
+    @Test fun retriesEveryFiveSecondsUntilTheMachineWaits() {
+        enrol()
+        machine.reboot()
+        // The machine only starts waiting for a phone 7 s after the app began.
+        val late = thread {
+            Thread.sleep(7_000)
+            machine.startAttestation(517)
+        }
+        var mostAttempts = 0
+        val started = System.nanoTime()
+        val s = session(attestMode(), startServing = false) { _, st ->
+            st.unreachable?.let { mostAttempts = maxOf(mostAttempts, it.attempt) }
+        }
+        late.join()
+        val seconds = (System.nanoTime() - started) / 1e9
+        assertEquals(Verdict.MATCH, s.verdict?.verdict?.state)
+        assertEquals(Outcome.Succeeded, s.outcome)
+        assertEquals("receipt: verdict=ok authentic=true", machine.outcome())
+        // Attempts at 0 s and 5 s fail; the one at 10 s reaches the machine.
+        assertEquals(2, mostAttempts)
+        assertTrue("took ${seconds}s", seconds in 9.5..20.0)
     }
 
     @Test fun strangerPhoneGetsNoAnswer() {

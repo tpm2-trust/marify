@@ -124,6 +124,7 @@ fun SessionContent(
                     }
                 }
             }
+            !state.finished && state.unreachable != null -> Unreachable(state.machineName, state.unreachable)
             !state.finished -> Progress(
                 when (state.phase) {
                     Phase.CONNECTING -> stringResource(R.string.phase_connecting)
@@ -197,6 +198,28 @@ private fun SasContent(sas: String, onConfirm: (Boolean) -> Unit) {
     }
     OutlinedButton(onClick = { onConfirm(false) }, modifier = Modifier.fillMaxWidth().testTag("sas_no_match")) {
         Text(stringResource(R.string.sas_no_match))
+    }
+}
+
+/** Connecting keeps failing because the machine cannot be reached; the runner retries. */
+@Composable
+private fun Unreachable(machineName: String?, u: app.kira.session.Unreachable) {
+    val name = machineName ?: stringResource(R.string.the_machine)
+    Column(Modifier.testTag("unreachable"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            CircularProgressIndicator(Modifier.size(28.dp))
+            Text(
+                if (u.bluetoothOff) stringResource(R.string.bluetooth_off_title)
+                else stringResource(R.string.unreachable_title, name),
+                style = MaterialTheme.typography.titleLarge,
+            )
+        }
+        Text(
+            if (u.bluetoothOff) stringResource(R.string.bluetooth_off_body, name)
+            else stringResource(R.string.unreachable_body),
+            style = MaterialTheme.typography.bodyLarge,
+        )
+        Text(stringResource(R.string.unreachable_attempt, u.attempt, u.reason), style = MaterialTheme.typography.bodySmall)
     }
 }
 
