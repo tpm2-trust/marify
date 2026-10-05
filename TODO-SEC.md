@@ -12,7 +12,7 @@ tpm2-kira.
 | # | Finding | Severity | Where the fix goes | Status |
 |---|---|---|---|---|
 | [S1](#s1-the-phone-does-not-say-that-the-machines-enrolment-changed) | Phone gives a generic error when the machine's blob was replaced, and one text falsely reassures | High | app | done |
-| [S2](#s2-the-machines-attestation-blob-can-be-replaced-and-its-signature-is-never-checked) | Machine blob replaceable; its signature is never verified | High | tpm2-kira | open |
+| [S2](#s2-the-machines-attestation-blob-can-be-replaced-and-its-signature-is-never-checked) | Machine blob replaceable; its signature is never verified | High | tpm2-kira | done |
 | [S3](#s3-enrolment-does-not-verify-that-the-tpm-is-genuine) | Enrolment trusts the TPM on first use (EK certificate not verified) | Medium | core, tpm2-kira, app | open |
 | [S4](#s4-phone-debug-builds-and-data-at-rest) | Debug build usable for real machines; stored policy editable by code running as the app | Medium | app | 1–2 done |
 | [S5](#s5-the-pcr-selection-may-not-cover-the-initrd) | PCR selection may not cover the initrd | Medium | tpm2-kira, app | open |
@@ -135,6 +135,13 @@ integration: write a blob with a second key by undefine/redefine and check
 that `attest status` and `attest check` flag it.
 
 The phone side of this finding is S1.
+
+**Done** (tpm2-kira, see its log). As described, plus: `attest check --accept`
+records a validly signed blob after a deliberate change; `attest unenrol`
+forgets the recorded state; the unit is installed by the AUR and Debian
+packages but not enabled (`systemctl enable tpm2-kira-attest-check.service`).
+The swtpm test performs the attack (undefine through the owner hierarchy,
+write a blob signed with another key) and confirms both detections.
 
 ---
 
