@@ -10,7 +10,6 @@ import app.kira.session.SessionManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 
 /** Manual dependency injection: one instance of each service per process. */
 class AppContainer(app: Application) {
@@ -30,6 +29,5 @@ class KiraApp : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
-        container.scope.launch { container.machines.load() }
     }
 }

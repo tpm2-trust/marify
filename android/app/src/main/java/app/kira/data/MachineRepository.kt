@@ -1,6 +1,7 @@
 package app.kira.data
 
 import android.content.Context
+import android.security.keystore.UserNotAuthenticatedException
 import android.util.Log
 import app.kira.core.KiraCore
 import app.kira.core.RecordSummary
@@ -51,16 +52,32 @@ class MachineRepository(context: Context) {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    suspend fun load() = mutex.withLock {
+    @Volatile private var loaded = false
+
+    /**
+     * Reads the stored machines once. The records cannot be decrypted while
+     * the phone is locked; then nothing is marked loaded and the next call
+     * (MainActivity.onStart) tries again.
+     */
+    suspend fun loadIfNeeded() = mutex.withLock {
+        if (loaded) return@withLock
         withContext(Dispatchers.IO) {
-            _machines.value = (dir.listFiles() ?: emptyArray())
+            var locked = false
+            val list = (dir.listFiles() ?: emptyArray())
                 .filter { it.name.endsWith(SUFFIX) }
                 .mapNotNull { f ->
                     runCatching { read(f) }
-                        .onFailure { Log.w(TAG, "cannot read ${f.name}", it) }
+                        .onFailure {
+                            if (it is UserNotAuthenticatedException) locked = true
+                            Log.w(TAG, "cannot read ${f.name}", it)
+                        }
                         .getOrNull()
                 }
                 .sortedBy { it.name.lowercase() }
+            if (!locked) {
+                _machines.value = list
+                loaded = true
+            }
         }
     }
 
@@ -107,7 +124,14 @@ class MachineRepository(context: Context) {
 
     private fun read(f: File): Machine {
         val id = f.name.removeSuffix(SUFFIX)
-        val env = json.decodeFromString(Envelope.serializer(), String(aead.decrypt(f.readBytes(), aad(id))))
+        val d = aead.decrypt(f.readBytes(), aad(id))
+        if (d.legacy) {
+            // Re-encrypt under the key that needs an unlocked phone.
+            val tmp = File(dir, f.name + ".tmp")
+            tmp.writeBytes(aead.encrypt(d.plain, aad(id)))
+            if (!tmp.renameTo(f)) tmp.delete()
+        }
+        val env = json.decodeFromString(Envelope.serializer(), String(d.plain))
         val summary = KiraCore.recordSummary(env.record)
         check(summary.deviceId == id) { "record does not belong to its file" }
         return Machine(env.record, summary, env.keyStorage, env.factorBlob)

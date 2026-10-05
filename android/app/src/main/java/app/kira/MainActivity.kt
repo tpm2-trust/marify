@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.fragment.app.FragmentActivity
+import kotlinx.coroutines.launch
 import app.kira.ui.KiraNavHost
 import app.kira.ui.KiraTheme
 
@@ -76,6 +77,8 @@ class MainActivity : FragmentActivity() {
     override fun onStart() {
         super.onStart()
         container.biometricHost.attach(this)
+        // Records are only readable on an unlocked phone (TODO-SEC.md S4.3).
+        container.scope.launch { container.machines.loadIfNeeded() }
     }
 
     override fun onStop() {

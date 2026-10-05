@@ -14,7 +14,7 @@ tpm2-kira.
 | [S1](#s1-the-phone-does-not-say-that-the-machines-enrolment-changed) | Phone gives a generic error when the machine's blob was replaced, and one text falsely reassures | High | app | done |
 | [S2](#s2-the-machines-attestation-blob-can-be-replaced-and-its-signature-is-never-checked) | Machine blob replaceable; its signature is never verified | High | tpm2-kira | done |
 | [S3](#s3-enrolment-does-not-verify-that-the-tpm-is-genuine) | Enrolment trusts the TPM on first use (EK certificate not verified) | Medium | core, tpm2-kira, app | done (Intel); needs a real-hardware check |
-| [S4](#s4-phone-debug-builds-and-data-at-rest) | Debug build usable for real machines; stored policy editable by code running as the app | Medium | app | 1–2 done |
+| [S4](#s4-phone-debug-builds-and-data-at-rest) | Debug build usable for real machines; stored policy editable by code running as the app | Medium | app | 1–3 done; 4 not done (see S4) |
 | [S5](#s5-the-pcr-selection-may-not-cover-the-initrd) | PCR selection may not cover the initrd | Medium | tpm2-kira, app | done |
 | [S6](#s6-the-blob-is-readable-by-anyone-with-tpm-access) | Blob (machine Noise key, advertising key) readable with TPM access | Low, accepted | docs | open |
 | [S7](#s7-relay-to-a-look-alike-machine) | Relay to a look-alike machine | Inherent | docs | open |
@@ -300,6 +300,21 @@ afterwards): `apksigner` verifies, release `debuggable=false` and no
 ("Kira debug"), has a red banner on every screen, and lists real machines on
 the enrol screen only after a switch (off by default, not persisted). The
 release key itself is still to be created by the owner (README.md).
+
+**Done: 3.** New data is encrypted under `<alias>-v2` with
+`setUnlockedDeviceRequired(true)`, marked with a `K2` prefix; data from the
+first version's key is still read and re-encrypted on first use, so existing
+installs keep their machines. Records load when the screen starts instead of
+at process start, and retry if the phone is locked. `KeystoreAeadTest` covers
+new, legacy and wrong-AAD data; the locked-phone refusal itself relies on the
+platform and was not exercised on the emulator.
+
+**Not done: 4, by decision.** Signing the profile list only stops an attacker
+who can change Kira's files *without* running code as Kira. With backups
+disabled and no exported providers that attacker has no way in; one who runs
+code as Kira (root) can also replace the Keystore key the signature is
+checked against. The cost would be an extra unlock prompt at enrolment and at
+every "approve and remember". Revisit if Kira ever shares its files.
 
 ---
 
