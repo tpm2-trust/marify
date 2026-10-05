@@ -16,9 +16,9 @@ tpm2-kira.
 | [S3](#s3-enrolment-does-not-verify-that-the-tpm-is-genuine) | Enrolment trusts the TPM on first use (EK certificate not verified) | Medium | core, tpm2-kira, app | done (Intel); needs a real-hardware check |
 | [S4](#s4-phone-debug-builds-and-data-at-rest) | Debug build usable for real machines; stored policy editable by code running as the app | Medium | app | 1–3 done; 4 not done (see S4) |
 | [S5](#s5-the-pcr-selection-may-not-cover-the-initrd) | PCR selection may not cover the initrd | Medium | tpm2-kira, app | done |
-| [S6](#s6-the-blob-is-readable-by-anyone-with-tpm-access) | Blob (machine Noise key, advertising key) readable with TPM access | Low, accepted | docs | open |
-| [S7](#s7-relay-to-a-look-alike-machine) | Relay to a look-alike machine | Inherent | docs | open |
-| [S8](#s8-smaller-hardening) | Noise test vectors, overlay taps, biometric-only option | Low | both | open |
+| [S6](#s6-the-blob-is-readable-by-anyone-with-tpm-access) | Blob (machine Noise key, advertising key) readable with TPM access | Low, accepted | docs | done (documented) |
+| [S7](#s7-relay-to-a-look-alike-machine) | Relay to a look-alike machine | Inherent | docs | done (documented) |
+| [S8](#s8-smaller-hardening) | Noise test vectors, overlay taps, biometric-only option | Low | both | done |
 
 What already holds: Noise XX with a commit-then-reveal six-digit code at
 enrolment; credential activation proving the AK is in the TPM that owns the
@@ -366,6 +366,9 @@ Add the reasoning to `docs/PROTOCOL-BLE.md` §2.2 and SECURITY.md. With S1,
 an imitated endpoint ends in a red "did not accept this phone" or a failed
 verdict, never a green one.
 
+**Done:** SECURITY.md ("what it does not protect against") and
+PROTOCOL-BLE.md §2.2 in tpm2-kira.
+
 ---
 
 ## S7: Relay to a look-alike machine
@@ -383,6 +386,8 @@ evident marking of the device, and the planned salt release (the released
 factor is useless without the real machine's TPM, so the passphrase alone
 no longer opens the disk).
 
+**Done:** documented in tpm2-kira's SECURITY.md.
+
 ---
 
 ## S8: Smaller hardening
@@ -392,6 +397,9 @@ no longer opens the disk).
    vectors are in the repository. Add the official XX and IK vectors for
    `25519_ChaChaPoly_SHA256` (cacophony / noise-c format) to
    `attest/vectors_test.go`.
+   **Done:** `attest/noise_vectors_test.go` replays the XX and IK vectors from
+   cacophony and snow (`attest/testdata/noise_vectors.json`); all four match
+   byte for byte, including the handshake hash.
 2. **Overlay taps** (app): in `MainActivity.onCreate` set
    `window.decorView.filterTouchesWhenObscured = true` and, on API 31+,
    `window.setHideOverlayWindows(true)`, so another app cannot draw over the
@@ -409,8 +417,18 @@ no longer opens the disk).
    does not reach the phone, the machine lists a phone that has no record.
    `attest status` should make stale entries visible; enrolling again with
    the same phone replaces the entry.
+   **No change needed:** enrolling again with the same phone already
+   replaces its entry (`UpsertVerifier` keys on the verifier id), and
+   `attest status` lists every entry with its anchor digest.
 
 ---
+
+## Remaining
+
+- S3: run `sudo tpm2-kira attest ekcert` on a laptop with Intel PTT to check
+  the full Intel chain on real hardware; add roots for other vendors.
+- S4.1: create the release signing key (see `android/README.md`).
+- Real-hardware checks in `android/TESTING.md` §4.
 
 ## Suggested order
 
