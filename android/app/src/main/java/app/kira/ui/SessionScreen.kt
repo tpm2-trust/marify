@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.kira.R
 import app.kira.core.Decision
+import app.kira.core.Event
 import app.kira.session.FailureKind
 import app.kira.session.Outcome
 import app.kira.session.Phase
@@ -84,6 +85,7 @@ fun SessionScreen(manager: SessionManager, onClose: () -> Unit) {
         state = state,
         canRetry = manager.canRetry,
         onConfirmSas = r::confirmSas,
+        onConfirmBind = r::confirmBind,
         onDecide = r::decide,
         onRequestEventlog = r::requestEventlog,
         onRetry = { manager.dismiss(); manager.retry() },
@@ -96,6 +98,7 @@ fun SessionContent(
     state: SessionState,
     canRetry: Boolean,
     onConfirmSas: (Boolean) -> Unit,
+    onConfirmBind: (Boolean) -> Unit = {},
     onDecide: (Decision, String) -> Unit,
     onRequestEventlog: () -> Unit,
     onRetry: () -> Unit,
@@ -109,6 +112,7 @@ fun SessionContent(
         val verdict = state.verdict
         when {
             state.phase == Phase.CONFIRM_SAS && state.sas != null -> SasContent(state.sas, onConfirmSas)
+            state.phase == Phase.CONFIRM_BIND && state.bind != null -> BindContent(state.bind, onConfirmBind)
             verdict != null -> {
                 VerdictContent(
                     event = verdict,
@@ -184,6 +188,58 @@ fun SessionContent(
                 OutlinedButton(onClick = onDone, modifier = Modifier.fillMaxWidth().testTag("done")) { Text(stringResource(R.string.done)) }
             }
         }
+    }
+}
+
+/**
+ * What the phone learnt about the machine during enrolment, before the user
+ * binds it (TODO-SEC.md S3, S5). Nothing here comes from the app: the core
+ * decided it, the screen only shows it.
+ */
+@Composable
+private fun BindContent(b: Event.NeedAnchorKey, onConfirm: (Boolean) -> Unit) {
+    val colors = LocalVerdictColors.current
+    Text(stringResource(R.string.bind_title, b.friendlyName), style = MaterialTheme.typography.headlineSmall)
+    val verified = b.ekVerifiedBy.isNotEmpty()
+    Card(
+        Modifier.fillMaxWidth().testTag(if (verified) "tpm_verified" else "tpm_unverified"),
+        colors = CardDefaults.cardColors(
+            containerColor = if (verified) colors.matchContainer else colors.changedContainer,
+            contentColor = if (verified) colors.onMatch else colors.onChanged,
+        ),
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                if (verified) stringResource(R.string.bind_tpm_verified, b.ekVerifiedBy)
+                else stringResource(R.string.bind_tpm_unverified),
+                style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                if (verified) stringResource(R.string.bind_tpm_verified_body)
+                else stringResource(R.string.bind_tpm_unverified_body, b.ekNote),
+            )
+        }
+    }
+    val pcrs = b.initrdPcrs.joinToString(" or ")
+    when (b.initrdCoverage) {
+        Event.INITRD_NOT_COVERED -> Card(
+            Modifier.fillMaxWidth().testTag("initrd_not_covered"),
+            colors = CardDefaults.cardColors(containerColor = colors.changedContainer, contentColor = colors.onChanged),
+        ) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.bind_initrd_not_covered), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.bind_initrd_not_covered_body, pcrs))
+            }
+        }
+        Event.INITRD_COVERED -> Text(stringResource(R.string.bind_initrd_covered, pcrs), style = MaterialTheme.typography.bodyMedium)
+        Event.INITRD_NONE -> Text(stringResource(R.string.bind_initrd_none), style = MaterialTheme.typography.bodyMedium)
+        else -> Text(stringResource(R.string.bind_initrd_unknown), style = MaterialTheme.typography.bodyMedium)
+    }
+    Button(onClick = { onConfirm(true) }, modifier = Modifier.fillMaxWidth().testTag("bind")) {
+        Text(stringResource(R.string.bind_confirm))
+    }
+    OutlinedButton(onClick = { onConfirm(false) }, modifier = Modifier.fillMaxWidth().testTag("bind_cancel")) {
+        Text(stringResource(R.string.cancel))
     }
 }
 

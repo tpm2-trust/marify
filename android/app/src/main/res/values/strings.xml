@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Kira</string>
     <string name="cancel">Cancel</string>
     <string name="done">Done</string>
@@ -69,6 +69,21 @@
     <string name="sas_matches">Matches</string>
     <string name="sas_no_match">Does not match</string>
 
+    <string name="bind_title">Bind %1$s to this phone?</string>
+    <string name="bind_tpm_verified">TPM verified as genuine: %1$s</string>
+    <string name="bind_tpm_verified_body">The machine\'s TPM proved it holds an endorsement key certified by its manufacturer.</string>
+    <string name="bind_tpm_unverified">TPM not verified as genuine hardware</string>
+    <string name="bind_tpm_unverified_body">Kira could not confirm that this machine\'s TPM is real hardware (%1$s). This is common for firmware TPMs without a usable certificate. Only continue if you trust the machine\'s current state: a machine that is already compromised could pretend to have a TPM.</string>
+    <string name="bind_initrd_not_covered">The checked boot measurements do not include the initrd</string>
+    <!-- The double hyphen in the pcrs option is a command-line flag, not a dash. -->
+    <string name="bind_initrd_not_covered_body" tools:ignore="TypographyDashes">On this boot the initrd was measured into PCR %1$s, which this enrolment does not check. A modified initrd, for example one that records your passphrase, would then show as unchanged. Cancel, and enrol again with “--pcrs” including PCR %1$s.</string>
+    <string name="bind_initrd_covered">The checked boot measurements include the initrd (PCR %1$s).</string>
+    <string name="bind_initrd_unknown">The machine could not tell where its initrd was measured. Make sure the checked PCRs cover it.</string>
+    <string name="bind_initrd_none">This machine boots without an initrd.</string>
+    <string name="bind_confirm">Bind</string>
+    <string name="tpm_label">TPM</string>
+    <string name="tpm_verified_short">Verified as genuine: %1$s</string>
+    <string name="tpm_unverified_short">Not verified as genuine hardware</string>
     <string name="enrolled_title">%1$s is bound to this phone</string>
     <string name="enrolled_body">From now on, when this machine boots and waits for attestation, Kira will show it here.</string>
 

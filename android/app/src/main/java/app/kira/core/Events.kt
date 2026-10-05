@@ -16,7 +16,19 @@ import kotlinx.serialization.json.longOrNull
  */
 sealed interface Event {
     data class Sas(val sas: String) : Event
-    data class NeedAnchorKey(val deviceId: String, val friendlyName: String) : Event
+    /**
+     * The machine passed the checks and waits for this phone's key. Carries
+     * what the phone learnt about it, for the user to decide on binding:
+     * the EK vendor verification and whether the checked PCRs cover the initrd.
+     */
+    data class NeedAnchorKey(
+        val deviceId: String,
+        val friendlyName: String,
+        val ekVerifiedBy: String = "",
+        val ekNote: String = "",
+        val initrdCoverage: String = INITRD_UNKNOWN,
+        val initrdPcrs: List<Int> = emptyList(),
+    ) : Event
     data class NeedSignature(val purpose: String, val verdictCode: Int) : Event
     data class Enrolled(val recordJson: String) : Event
     data class Hello(val deviceId: String, val friendlyName: String) : Event
@@ -38,6 +50,11 @@ sealed interface Event {
         const val PURPOSE_ENROL_ACCEPT = "enrol_accept"
         const val PURPOSE_RECEIPT = "receipt"
 
+        const val INITRD_COVERED = "covered"
+        const val INITRD_NOT_COVERED = "not_covered"
+        const val INITRD_NONE = "no_initrd"
+        const val INITRD_UNKNOWN = "unknown"
+
         private val json = Json { ignoreUnknownKeys = true }
 
         fun parse(text: String): Event {
@@ -52,7 +69,15 @@ sealed interface Event {
 
             return when (val type = str("type")) {
                 "sas" -> Sas(str("sas"))
-                "need_anchor_key" -> NeedAnchorKey(str("device_id"), str("friendly_name"))
+                "need_anchor_key" -> NeedAnchorKey(
+                    deviceId = str("device_id"),
+                    friendlyName = str("friendly_name"),
+                    ekVerifiedBy = str("ek_verified_by"),
+                    ekNote = str("ek_note"),
+                    initrdCoverage = str("initrd_coverage").ifEmpty { INITRD_UNKNOWN },
+                    initrdPcrs = (o["initrd_pcrs"] as? kotlinx.serialization.json.JsonArray)
+                        ?.mapNotNull { it.jsonPrimitive.intOrNull } ?: emptyList(),
+                )
                 "need_signature" -> NeedSignature(str("purpose"), int("verdict_code"))
                 "enrolled" -> Enrolled(record())
                 "hello" -> Hello(str("device_id"), str("friendly_name"))
@@ -124,6 +149,8 @@ data class RecordSummary(
     @SerialName("last_attested") val lastAttested: String? = null,
     val slot: Int = 0,
     val profiles: List<Profile> = emptyList(),
+    /** TPM vendor whose certificate vouched for the EK at enrolment; empty if not verified. */
+    @SerialName("ek_verified_by") val ekVerifiedBy: String = "",
 ) {
     @Serializable
     data class Profile(

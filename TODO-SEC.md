@@ -13,9 +13,9 @@ tpm2-kira.
 |---|---|---|---|---|
 | [S1](#s1-the-phone-does-not-say-that-the-machines-enrolment-changed) | Phone gives a generic error when the machine's blob was replaced, and one text falsely reassures | High | app | done |
 | [S2](#s2-the-machines-attestation-blob-can-be-replaced-and-its-signature-is-never-checked) | Machine blob replaceable; its signature is never verified | High | tpm2-kira | done |
-| [S3](#s3-enrolment-does-not-verify-that-the-tpm-is-genuine) | Enrolment trusts the TPM on first use (EK certificate not verified) | Medium | core, tpm2-kira, app | open |
+| [S3](#s3-enrolment-does-not-verify-that-the-tpm-is-genuine) | Enrolment trusts the TPM on first use (EK certificate not verified) | Medium | core, tpm2-kira, app | done (Intel); needs a real-hardware check |
 | [S4](#s4-phone-debug-builds-and-data-at-rest) | Debug build usable for real machines; stored policy editable by code running as the app | Medium | app | 1–2 done |
-| [S5](#s5-the-pcr-selection-may-not-cover-the-initrd) | PCR selection may not cover the initrd | Medium | tpm2-kira, app | 1, 3 done; 2 with S3 |
+| [S5](#s5-the-pcr-selection-may-not-cover-the-initrd) | PCR selection may not cover the initrd | Medium | tpm2-kira, app | done |
 | [S6](#s6-the-blob-is-readable-by-anyone-with-tpm-access) | Blob (machine Noise key, advertising key) readable with TPM access | Low, accepted | docs | open |
 | [S7](#s7-relay-to-a-look-alike-machine) | Relay to a look-alike machine | Inherent | docs | open |
 | [S8](#s8-smaller-hardening) | Noise test vectors, overlay taps, biometric-only option | Low | both | open |
@@ -225,6 +225,30 @@ truncated and padded chain blobs.
 **Limit.** This proves a genuine TPM holds the EK. It does not stop attacks
 on the bus of a discrete TPM or firmware bugs in the TPM itself.
 
+**Done** (tpm2-kira `db193b1`, core pinned in `android/core.properties`).
+Steps 1–5 as described, with these decisions:
+
+- Only the Intel root is a trust anchor; the two static Intel intermediates
+  are embedded as helpers. All three are byte-identical in
+  intel-ek-dechainer and on tsci.intel.com, and their SHA-256 fingerprints
+  are pinned in `attest/ekcert_test.go`; the real Intel signatures between
+  them verify in that test.
+- Intel products with another P_MCC issuing CA, and other vendors
+  (Infineon, ST, Nuvoton, AMD), show as "not verified" until their roots
+  are added the same way.
+- The machine now offers the EK whose algorithm has a certificate (Intel
+  PTT often certifies only RSA). An EK certificate Go cannot parse no longer
+  aborts enrolment; it becomes "not verified".
+- The EKU is required only when the certificate has one.
+- The app shows the result on a new "Bind <machine> to this phone?" step
+  between the code comparison and the key/unlock prompt, and in machine
+  details.
+
+**Still open:** no real Intel EK certificate was available here, so the full
+chain (EK ← per-machine CAs ← embedded CAs) is tested only with a synthetic
+hierarchy. On a laptop with Intel PTT, run `sudo tpm2-kira attest ekcert`:
+it prints what the phone will conclude.
+
 ---
 
 ## S4: Phone: debug builds and data at rest
@@ -304,9 +328,11 @@ covered, a modified initrd (the classic passphrase logger) verifies as
 (PCR 9 file), the EFI stub's LoadFile2 tag (PCR 9) and a UKI (PCR 11
 `.initrd`, PCR 4 image), prints whether the selection covers the initrd and
 asks (default no) when it does not; the table is in tpm2-kira's README.
-Checked on real event logs from go-attestation's test data. **Step 2** changes
-the protocol (an optional EnrolOffer field) and needs a rebuilt core: it is
-done together with S3, which changes the same message.
+Checked on real event logs from go-attestation's test data. **Step 2** is
+done with S3 (tpm2-kira `db193b1`): BootContext fields 7/8 carry where the
+initrd was measured; the bind step warns in amber when the enrolled PCRs do
+not cover it. The machine reports only a recognised measurement ("none
+found" stays "unknown", so an unfamiliar boot path cannot hide the warning).
 
 ---
 

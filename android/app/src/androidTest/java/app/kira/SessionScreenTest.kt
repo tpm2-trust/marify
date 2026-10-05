@@ -43,6 +43,29 @@ class SessionScreenTest {
         rule.onNodeWithText("Try again").assertDoesNotExist()
     }
 
+    private fun enrolState(b: app.kira.core.Event.NeedAnchorKey) = SessionState(
+        mode = SessionMode.Enrol, phase = Phase.CONFIRM_BIND, machineName = b.friendlyName, bind = b,
+    )
+
+    @Test fun bindShowsVerifiedTPM() {
+        show(enrolState(app.kira.core.Event.NeedAnchorKey("a0", "box", ekVerifiedBy = "Intel PTT", initrdCoverage = "covered", initrdPcrs = listOf(9))))
+        rule.onNodeWithText("Bind box to this phone?").assertIsDisplayed()
+        rule.onNodeWithTag("tpm_verified").assertIsDisplayed()
+        rule.onNodeWithText("TPM verified as genuine: Intel PTT").assertIsDisplayed()
+        rule.onNodeWithText("include the initrd (PCR 9)", substring = true).assertIsDisplayed()
+        rule.onNodeWithTag("initrd_not_covered").assertDoesNotExist()
+    }
+
+    @Test fun bindWarnsAboutUnverifiedTPMAndUncoveredInitrd() {
+        show(enrolState(app.kira.core.Event.NeedAnchorKey("a0", "box", ekNote = "no certificate", initrdCoverage = "not_covered", initrdPcrs = listOf(9))))
+        rule.onNodeWithTag("tpm_unverified").assertIsDisplayed()
+        rule.onNodeWithText("no certificate", substring = true).assertIsDisplayed()
+        rule.onNodeWithTag("initrd_not_covered").assertIsDisplayed()
+        rule.onNodeWithText("measured into PCR 9", substring = true).assertIsDisplayed()
+        rule.onNodeWithTag("bind").assertIsDisplayed()
+        rule.onNodeWithTag("bind_cancel").assertIsDisplayed()
+    }
+
     @Test fun unreachableDoesNotClaimTheMachineIsFine() {
         show(
             SessionState(

@@ -17,6 +17,7 @@ enum class Phase {
     CONNECTING,
     SECURING,       // Noise handshake
     CONFIRM_SAS,    // enrolment: compare the six digits
+    CONFIRM_BIND,   // enrolment: what is known about the machine; bind or not
     ENROLLING,      // enrolment: offer, credential activation, binding
     VERIFYING,      // attestation: waiting for evidence
     DECIDING,       // changed / failed: the user decides
@@ -65,6 +66,8 @@ data class SessionState(
     val machineName: String? = (mode as? SessionMode.Attest)?.machineName,
     val deviceId: String? = (mode as? SessionMode.Attest)?.deviceId,
     val sas: String? = null,
+    /** Enrolment: the machine's checks, shown before the user binds it. */
+    val bind: Event.NeedAnchorKey? = null,
     val verdict: Event.VerdictEvent? = null,
     val decisionSent: Boolean = false,
     val eventlogRequested: Boolean = false,

@@ -63,6 +63,7 @@ class SessionRunner(
     private sealed interface Input {
         class FromLink(val event: LinkEvent, val from: Link) : Input
         class ConfirmSas(val match: Boolean) : Input
+        class ConfirmBind(val bind: Boolean) : Input
         class Decide(val decision: Decision, val confirmName: String) : Input
         data object RequestEventlog : Input
         class Abort(val reason: String, val kind: FailureKind) : Input
@@ -94,6 +95,7 @@ class SessionRunner(
     // ---- user actions (any thread) ----
 
     fun confirmSas(match: Boolean) { inbox.trySend(Input.ConfirmSas(match)) }
+    fun confirmBind(bind: Boolean) { inbox.trySend(Input.ConfirmBind(bind)) }
     fun decide(decision: Decision, confirmName: String = "") { inbox.trySend(Input.Decide(decision, confirmName)) }
     fun requestEventlog() { inbox.trySend(Input.RequestEventlog) }
     fun cancel(reason: String = "cancelled") { inbox.trySend(Input.Abort(reason, FailureKind.CANCELLED)) }
@@ -231,6 +233,25 @@ class SessionRunner(
                 _state.update { it.copy(phase = Phase.ENROLLING) }
                 process(core.confirmSas(input.match), scope)
             }
+            is Input.ConfirmBind -> {
+                if (_state.value.phase != Phase.CONFIRM_BIND) return
+                if (!input.bind) {
+                    failureKind = FailureKind.CANCELLED
+                    process(core.abort("enrolment declined on the phone"), scope)
+                    return
+                }
+                _state.update { it.copy(phase = Phase.ENROLLING) }
+                val step = try {
+                    val key = keys.create(deviceId ?: error("no device id"))
+                    keyStorage = key.storage
+                    core.provideAnchorKey(key.spkiDer)
+                } catch (ex: Exception) {
+                    Log.w(TAG, "anchor key creation failed", ex)
+                    failureKind = FailureKind.KEY_ERROR
+                    core.abort("could not create the anchor key: ${ex.message}")
+                }
+                process(step, scope)
+            }
             is Input.Decide -> {
                 if (_state.value.phase != Phase.DECIDING) return
                 _state.update { it.copy(notice = null) }
@@ -315,17 +336,12 @@ class SessionRunner(
         when (e) {
             is Event.Sas -> _state.update { it.copy(phase = Phase.CONFIRM_SAS, sas = e.sas) }
             is Event.NeedAnchorKey -> {
+                // The user decides on binding with what is now known about
+                // the machine (TODO-SEC.md S3, S5); the key is made after that.
                 deviceId = e.deviceId
                 machineName = e.friendlyName
-                _state.update { it.copy(machineName = e.friendlyName, deviceId = e.deviceId) }
-                try {
-                    val key = keys.create(e.deviceId)
-                    keyStorage = key.storage
-                    queue.add(core.provideAnchorKey(key.spkiDer))
-                } catch (ex: Exception) {
-                    Log.w(TAG, "anchor key creation failed", ex)
-                    failureKind = FailureKind.KEY_ERROR
-                    queue.add(core.abort("could not create the anchor key: ${ex.message}"))
+                _state.update {
+                    it.copy(machineName = e.friendlyName, deviceId = e.deviceId, bind = e, phase = Phase.CONFIRM_BIND)
                 }
             }
             is Event.NeedSignature -> {

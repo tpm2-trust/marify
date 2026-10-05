@@ -103,6 +103,13 @@ fun MachineDetailsScreen(c: AppContainer, deviceId: String, onBack: () -> Unit, 
             }
 
             HorizontalDivider()
+            Text(stringResource(R.string.tpm_label), style = MaterialTheme.typography.titleMedium)
+            Text(
+                if (s.ekVerifiedBy.isNotEmpty()) stringResource(R.string.tpm_verified_short, s.ekVerifiedBy)
+                else stringResource(R.string.tpm_unverified_short),
+            )
+
+            HorizontalDivider()
             Text(stringResource(R.string.key_storage), style = MaterialTheme.typography.titleMedium)
             val k = key
             if (k == null) {

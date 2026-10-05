@@ -110,9 +110,15 @@ class SwtpmMachineSessionTest {
     private fun attestMode() =
         KiraCore.recordSummary(record).let { SessionMode.Attest(it.deviceId, it.friendlyName, it.lastAttested) }
 
+    private var bindShown: Event.NeedAnchorKey? = null
+
     private fun enrol(mtu: Int = 517) {
         var shown: String? = null
         val s = session(SessionMode.Enrol, mtu) { r, st ->
+            if (st.phase == Phase.CONFIRM_BIND) {
+                bindShown = st.bind
+                r.confirmBind(true)
+            }
             if (st.phase == Phase.CONFIRM_SAS && shown == null) {
                 shown = st.sas
                 r.confirmSas(true)
@@ -122,6 +128,9 @@ class SwtpmMachineSessionTest {
         assertEquals("enrolled", machine.outcome())
         assertEquals(machine.lastSas(), shown)
         assertEquals("swtpm-box", KiraCore.recordSummary(record).friendlyName)
+        // swtpm's EK has no vendor certificate: shown as not verified.
+        assertEquals("", bindShown?.ekVerifiedBy)
+        assertTrue(bindShown?.ekNote.orEmpty().isNotEmpty())
     }
 
     @Test fun enrolThenMatch() = enrolThenMatch(517)

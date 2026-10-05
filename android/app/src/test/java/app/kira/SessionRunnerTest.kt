@@ -251,6 +251,23 @@ class SessionRunnerTest {
         r.cancel()
     }
 
+    @Test fun decliningToBindAbortsWithoutAKey() = runTest {
+        val core = FakeCore()
+        val link = FakeLink(mode = InfoValue.MODE_ENROL)
+        val keys = FakeKeys()
+        core.onNotification = { step(events = listOf(Event.NeedAnchorKey("a0".repeat(16), "box", ekNote = "no certificate"))) }
+        val r = runner(core, link, keys, mode = SessionMode.Enrol)
+        launch { r.run() }
+        link.notify(1)
+        advanceUntilIdle()
+        assertEquals("no certificate", r.state.value.bind?.ekNote)
+        r.confirmBind(false)
+        advanceUntilIdle()
+        assertTrue(core.calls.contains("abort(enrolment declined on the phone)"))
+        assertFalse(core.calls.contains("anchorKey"))
+        assertEquals(FailureKind.CANCELLED, (r.state.value.outcome as Outcome.Failed).kind)
+    }
+
     @Test fun linkLossAfterHelloIsConnectionLost() = runTest {
         val core = FakeCore()
         val link = FakeLink()
@@ -382,6 +399,11 @@ class SessionRunnerTest {
         assertEquals(Phase.CONFIRM_SAS, r.state.value.phase)
         r.confirmSas(true)
         link.notify(2)
+        advanceUntilIdle()
+        // The user sees what is known about the machine before any key exists.
+        assertEquals(Phase.CONFIRM_BIND, r.state.value.phase)
+        assertFalse(core.calls.contains("anchorKey"))
+        r.confirmBind(true)
         link.notify(3)
         advanceUntilIdle()
         assertTrue(core.calls.containsAll(listOf("confirmSas(true)", "anchorKey")))

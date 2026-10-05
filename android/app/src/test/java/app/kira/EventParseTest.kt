@@ -19,6 +19,20 @@ class EventParseTest {
         Event.parse("""{"type":"need_anchor_key","device_id":"a0a1a2a3a4a5a6a7a8a9aaabacadaeaf","friendly_name":"Thinkpad-X1"}"""),
     )
 
+    @Test fun needAnchorKeyWithMachineChecks() {
+        val e = Event.parse(
+            """{"type":"need_anchor_key","device_id":"a0","friendly_name":"box","ek_verified_by":"Intel PTT",
+               "initrd_coverage":"not_covered","initrd_pcrs":[9]}""",
+        ) as Event.NeedAnchorKey
+        assertEquals("Intel PTT", e.ekVerifiedBy)
+        assertEquals(Event.INITRD_NOT_COVERED, e.initrdCoverage)
+        assertEquals(listOf(9), e.initrdPcrs)
+        // An older core sends none of these: unknown, never "covered".
+        val old = Event.parse("""{"type":"need_anchor_key","device_id":"a0","friendly_name":"box"}""") as Event.NeedAnchorKey
+        assertEquals(Event.INITRD_UNKNOWN, old.initrdCoverage)
+        assertEquals("", old.ekVerifiedBy)
+    }
+
     @Test fun needSignatureEnrol() = assertEquals(
         Event.NeedSignature("enrol_accept", 0),
         Event.parse("""{"type":"need_signature","purpose":"enrol_accept","tbs":"dHBtMi1raXJh"}"""),

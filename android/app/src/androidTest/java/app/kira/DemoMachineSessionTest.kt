@@ -85,9 +85,15 @@ class DemoMachineSessionTest {
         runner.state.value
     }
 
+    private var bindShown: Event.NeedAnchorKey? = null
+
     private fun enrol(mtu: Int = 517) {
         var sasShown: String? = null
         val s = session(SessionMode.Enrol, mtu) { r, st ->
+            if (st.phase == Phase.CONFIRM_BIND) {
+                bindShown = st.bind
+                r.confirmBind(true)
+            }
             if (st.phase == Phase.CONFIRM_SAS && sasShown == null) {
                 sasShown = st.sas
                 r.confirmSas(true)
@@ -99,6 +105,10 @@ class DemoMachineSessionTest {
         assertEquals("Thinkpad-X1", s.machineName)
         assertEquals("Thinkpad-X1", KiraCore.recordSummary(record).friendlyName)
         assertTrue(keys.requests.single().purpose == Event.PURPOSE_ENROL_ACCEPT)
+        // The demo machine's software TPM has no EK certificate.
+        assertEquals("", bindShown?.ekVerifiedBy)
+        assertEquals("the TPM has no vendor certificate for its endorsement key", bindShown?.ekNote)
+        assertEquals("", KiraCore.recordSummary(record).ekVerifiedBy)
     }
 
     private fun attestMode() = KiraCore.recordSummary(record).let { SessionMode.Attest(it.deviceId, it.friendlyName, it.lastAttested) }
