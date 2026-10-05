@@ -26,6 +26,8 @@ interface CoreSession {
     fun onNotification(value: ByteArray): StepResult
     fun confirmSas(match: Boolean): StepResult
     fun provideAnchorKey(spkiDer: ByteArray): StepResult
+    /** [attestation]: the key's certificate chain, concatenated DER, leaf first; empty if none. */
+    fun provideAnchorKeyAttested(spkiDer: ByteArray, attestation: ByteArray): StepResult
     fun pendingTbs(): ByteArray
     fun provideSignature(der: ByteArray): StepResult
     fun decide(decision: Decision, confirmName: String): StepResult
@@ -43,6 +45,8 @@ class GoCoreSession(private val s: kiracore.Session) : CoreSession {
     override fun onNotification(value: ByteArray) = s.onNotification(value).toResult()
     override fun confirmSas(match: Boolean) = s.confirmSAS(match).toResult()
     override fun provideAnchorKey(spkiDer: ByteArray) = s.provideAnchorKey(spkiDer).toResult()
+    override fun provideAnchorKeyAttested(spkiDer: ByteArray, attestation: ByteArray) =
+        s.provideAnchorKeyAttested(spkiDer, attestation).toResult()
     override fun pendingTbs(): ByteArray = s.pendingTBS() ?: ByteArray(0)
     override fun provideSignature(der: ByteArray) = s.provideSignature(der).toResult()
     override fun decide(decision: Decision, confirmName: String) =

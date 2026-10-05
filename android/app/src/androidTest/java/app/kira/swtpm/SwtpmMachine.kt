@@ -40,6 +40,9 @@ class SwtpmMachine(private val host: String, private val port: Int) : Closeable 
     /** Restores the saved TPM state: a replayed, older TPM. */
     fun rollback() { command("rollback") }
 
+    /** The machine's verdict on the phone's key attestation at the last enrolment (JSON). */
+    fun phoneVerdict(): String = command("phone")
+
     /** The code the machine's console showed at the last enrolment. */
     fun lastSas(): String = command("sas")
 

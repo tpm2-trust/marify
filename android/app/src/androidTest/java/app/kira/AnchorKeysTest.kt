@@ -8,11 +8,13 @@ import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import app.kira.keys.AndroidAnchorKeys
+import app.kira.core.KiraCore
 import app.kira.keys.BiometricHost
 import app.kira.ui.Requirements
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
@@ -83,6 +85,41 @@ class AnchorKeysTest {
             } catch (_: Exception) {
             }
         }
+    }
+
+    /**
+     * A real Keystore attestation, made with the session challenge, read by
+     * the very parser the machine uses at enrolment (kiracore). An emulator
+     * attests in software, so it is not verified, but every field must parse.
+     */
+    @Test fun attestationIsReadableByTheMachine() = runBlocking {
+        val challenge = ByteArray(32) { it.toByte() }
+        val key = keys.create(id, attestationChallenge = challenge)
+        val chain = key.attestation
+        if (chain == null) {
+            // The device has no attestation keys (some custom ROMs): the key
+            // was still created, without one.
+            return@runBlocking
+        }
+        val verdict = org.json.JSONObject(KiraCore.checkAnchorAttestation(chain, key.spkiDer, challenge))
+        val problems = verdict.getJSONArray("problems").toString()
+        assertFalse(problems, problems.contains("different key"))
+        assertFalse(problems, problems.contains("not made for this enrolment"))
+        assertFalse(problems, problems.contains("does not parse"))
+        assertFalse(problems, problems.contains("no readable key description"))
+        if (verdict.getString("security_level") == "Software") {
+            // Emulator: the machine must refuse to call this secure hardware.
+            assertTrue(problems, problems.contains("not in secure hardware"))
+            assertFalse(verdict.getBoolean("verified"))
+        } else {
+            // A real phone: the hardware enforces what the app asked for.
+            assertEquals("fingerprint/face or PIN", verdict.getString("unlock"))
+            assertFalse(problems, problems.contains("not generated inside"))
+            assertFalse(problems, problems.contains("does not enforce an unlock"))
+        }
+        // Another session's challenge is noticed.
+        val other = org.json.JSONObject(KiraCore.checkAnchorAttestation(chain, key.spkiDer, ByteArray(32)))
+        assertTrue(other.getJSONArray("problems").toString().contains("not made for this enrolment"))
     }
 
     @Test fun cannotSignWithoutAuthentication() = runBlocking {

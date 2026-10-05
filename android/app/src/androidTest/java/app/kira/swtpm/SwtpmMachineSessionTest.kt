@@ -131,6 +131,9 @@ class SwtpmMachineSessionTest {
         // swtpm's EK has no vendor certificate: shown as not verified.
         assertEquals("", bindShown?.ekVerifiedBy)
         assertTrue(bindShown?.ekNote.orEmpty().isNotEmpty())
+        // The machine judged the phone's key: the test's software key has no
+        // attestation, which the machine reports (and the test machine accepts).
+        assertTrue(machine.phoneVerdict(), machine.phoneVerdict().contains("the phone sent no key attestation"))
     }
 
     @Test fun enrolThenMatch() = enrolThenMatch(517)

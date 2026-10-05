@@ -64,7 +64,10 @@ class SessionRunnerTest {
         override fun start() = onStart().also { calls += "start" }
         override fun onNotification(value: ByteArray) = onNotification.invoke(value).also { calls += "notify(${value.toList()})" }
         override fun confirmSas(match: Boolean) = StepResult.EMPTY.also { calls += "confirmSas($match)" }
+        var attestationSent: ByteArray? = null
         override fun provideAnchorKey(spkiDer: ByteArray) = StepResult.EMPTY.also { calls += "anchorKey" }
+        override fun provideAnchorKeyAttested(spkiDer: ByteArray, attestation: ByteArray) =
+            StepResult.EMPTY.also { calls += "anchorKey"; attestationSent = attestation }
         override fun pendingTbs() = byteArrayOf(1, 2, 3)
         override fun provideSignature(der: ByteArray) = onSignature(der).also { calls += "signature" }
         override fun decide(decision: Decision, confirmName: String) = onDecide(decision, confirmName).also { calls += "decide($decision)" }
@@ -95,9 +98,11 @@ class SessionRunnerTest {
         val gate = CompletableDeferred<Unit>().apply { complete(Unit) }
         var requests = mutableListOf<SignRequest>()
         var biometricOnly: Boolean? = null
-        override suspend fun create(deviceIdHex: String, biometricOnly: Boolean): CreatedAnchorKey {
+        var challenge: ByteArray? = null
+        override suspend fun create(deviceIdHex: String, biometricOnly: Boolean, attestationChallenge: ByteArray?): CreatedAnchorKey {
             this.biometricOnly = biometricOnly
-            return CreatedAnchorKey(ByteArray(91), KeyStorage.TEE)
+            this.challenge = attestationChallenge
+            return CreatedAnchorKey(ByteArray(91), KeyStorage.TEE, attestation = byteArrayOf(0x30, 0x00))
         }
         override suspend fun sign(deviceIdHex: String, tbs: ByteArray, request: SignRequest): ByteArray {
             requests += request
@@ -389,7 +394,7 @@ class SessionRunnerTest {
         core.onNotification = { v ->
             when (v[0].toInt()) {
                 1 -> step(events = listOf(Event.Sas("123456")))
-                2 -> step(events = listOf(Event.NeedAnchorKey("a0".repeat(16), "Thinkpad-X1")))
+                2 -> step(events = listOf(Event.NeedAnchorKey("a0".repeat(16), "Thinkpad-X1", attestationChallenge = byteArrayOf(7, 7))))
                 else -> {
                     core.finished = true; core.succeeded = true
                     step(frag(0x7e), events = listOf(Event.Enrolled("""{"r":1}"""), Event.Done))
@@ -413,6 +418,9 @@ class SessionRunnerTest {
         advanceUntilIdle()
         assertTrue(core.calls.containsAll(listOf("confirmSas(true)", "anchorKey")))
         assertEquals(true, keys.biometricOnly)
+        // The session's challenge goes into the key; its chain goes to the core.
+        assertTrue(byteArrayOf(7, 7).contentEquals(keys.challenge))
+        assertTrue(byteArrayOf(0x30, 0x00).contentEquals(core.attestationSent))
         assertEquals(listOf("""{"r":1}"""), records.saved)
         assertEquals(Outcome.Succeeded, r.state.value.outcome)
         assertEquals("Thinkpad-X1", r.state.value.machineName)

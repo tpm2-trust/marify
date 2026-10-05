@@ -3,7 +3,11 @@ package app.kira.keys
 /** Where an anchor key lives (shown in machine details). */
 enum class KeyStorage { STRONGBOX, TEE, SOFTWARE }
 
-class CreatedAnchorKey(val spkiDer: ByteArray, val storage: KeyStorage)
+/**
+ * [attestation]: the key's attestation certificate chain (concatenated DER,
+ * leaf first) for the machine to check, or null where the phone cannot attest.
+ */
+class CreatedAnchorKey(val spkiDer: ByteArray, val storage: KeyStorage, val attestation: ByteArray? = null)
 
 /** What a signature is for; selects the biometric prompt's text. */
 data class SignRequest(val machineName: String, val purpose: String, val verdictCode: Int)
@@ -24,7 +28,11 @@ interface AnchorKeyProvider {
      * Creates (or replaces) the key for this machine; returns SPKI DER (91
      * bytes). With [biometricOnly] the screen-lock PIN does not unlock it.
      */
-    suspend fun create(deviceIdHex: String, biometricOnly: Boolean = false): CreatedAnchorKey
+    suspend fun create(
+        deviceIdHex: String,
+        biometricOnly: Boolean = false,
+        attestationChallenge: ByteArray? = null,
+    ): CreatedAnchorKey
 
     /** DER ECDSA over SHA-256([tbs]) — the platform hashes, no raw r‖s. */
     suspend fun sign(deviceIdHex: String, tbs: ByteArray, request: SignRequest): ByteArray

@@ -10,6 +10,7 @@ import android.security.keystore.StrongBoxUnavailableException
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
 import androidx.biometric.BiometricPrompt
+import android.util.Log
 import androidx.core.content.ContextCompat
 import app.kira.BuildConfig
 import app.kira.R
@@ -47,23 +48,64 @@ class AndroidAnchorKeys(
 
     private fun keyStore() = KeyStore.getInstance(KeystoreAead.ANDROID_KEYSTORE).apply { load(null) }
 
-    override suspend fun create(deviceIdHex: String, biometricOnly: Boolean): CreatedAnchorKey = withContext(Dispatchers.IO) {
+    override suspend fun create(
+        deviceIdHex: String,
+        biometricOnly: Boolean,
+        attestationChallenge: ByteArray?,
+    ): CreatedAnchorKey = withContext(Dispatchers.IO) {
         val alias = alias(deviceIdHex)
         keyStore().deleteEntry(alias)
-        val pair = try {
-            generate(alias, strongBox = true, biometricOnly)
-        } catch (_: StrongBoxUnavailableException) {
-            generate(alias, strongBox = false, biometricOnly)
-        }
+        var attested = attestationChallenge != null
+        val pair = generateWithFallback(alias, biometricOnly, attestationChallenge) { attested = false }
         val details = details(deviceIdHex) ?: error("anchor key vanished")
         if (!BuildConfig.DEBUG && (details.storage == KeyStorage.SOFTWARE || !details.authEnforcedByHardware)) {
             keyStore().deleteEntry(alias)
             throw IllegalStateException("this phone cannot keep the key in secure hardware")
         }
-        CreatedAnchorKey(pair.public.encoded, details.storage)
+        val chain = if (attested) {
+            keyStore().getCertificateChain(alias)
+                ?.takeIf { it.size > 1 }
+                ?.fold(ByteArray(0)) { acc, c -> acc + c.encoded }
+        } else {
+            null
+        }
+        CreatedAnchorKey(pair.public.encoded, details.storage, chain)
     }
 
-    private fun generate(alias: String, strongBox: Boolean, biometricOnly: Boolean): java.security.KeyPair {
+    /**
+     * StrongBox first, then the TEE. Each with attestation first: some ROMs
+     * (e.g. LineageOS) have no attestation keys provisioned and refuse a key
+     * with an attestation challenge. The key is then made without one; it is
+     * protected the same way, only the machine cannot verify that.
+     */
+    private fun generateWithFallback(
+        alias: String,
+        biometricOnly: Boolean,
+        challenge: ByteArray?,
+        onNoAttestation: () -> Unit,
+    ): java.security.KeyPair {
+        for (strongBox in listOf(true, false)) {
+            try {
+                if (challenge != null) {
+                    try {
+                        return generate(alias, strongBox, biometricOnly, challenge)
+                    } catch (e: StrongBoxUnavailableException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Log.w(TAG, "key attestation unavailable (strongBox=$strongBox), creating the key without", e)
+                        keyStore().deleteEntry(alias)
+                        onNoAttestation()
+                    }
+                }
+                return generate(alias, strongBox, biometricOnly, null)
+            } catch (_: StrongBoxUnavailableException) {
+                continue
+            }
+        }
+        error("unreachable")
+    }
+
+    private fun generate(alias: String, strongBox: Boolean, biometricOnly: Boolean, challenge: ByteArray?): java.security.KeyPair {
         val b = KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_SIGN)
             .setAlgorithmParameterSpec(ECGenParameterSpec("secp256r1"))
             .setDigests(KeyProperties.DIGEST_SHA256)
@@ -77,8 +119,8 @@ class AndroidAnchorKeys(
                 else KeyProperties.AUTH_BIOMETRIC_STRONG or KeyProperties.AUTH_DEVICE_CREDENTIAL,
             )
             .setInvalidatedByBiometricEnrollment(true)
-            .setAttestationChallenge(alias.toByteArray())
             .setIsStrongBoxBacked(strongBox)
+        if (challenge != null) b.setAttestationChallenge(challenge)
         val gen = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_EC, KeystoreAead.ANDROID_KEYSTORE)
         gen.initialize(b.build())
         return gen.generateKeyPair()
@@ -184,5 +226,6 @@ class AndroidAnchorKeys(
 
     private companion object {
         const val VERDICT_APPROVED = 2
+        const val TAG = "KiraKeys"
     }
 }

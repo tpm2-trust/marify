@@ -18,6 +18,10 @@ object KiraCore {
     val protocolVersion: Long get() = kiracore.Kiracore.protocolVersion()
     val schemaVersion: Long get() = kiracore.Kiracore.schemaVersion()
 
+    /** The machine's verdict on an anchor key attestation (JSON); for display and tests. */
+    fun checkAnchorAttestation(chain: ByteArray, spki: ByteArray, challenge: ByteArray): String =
+        kiracore.Kiracore.checkAnchorAttestation(chain, spki, challenge)
+
     /** TPM vendors whose EK certificates the core in this app can verify. */
     fun ekVendors(): List<String> =
         kotlinx.serialization.json.Json.decodeFromString<List<String>>(kiracore.Kiracore.ekVendors())

@@ -244,9 +244,11 @@ class SessionRunner(
                 }
                 _state.update { it.copy(phase = Phase.ENROLLING) }
                 val step = try {
-                    val key = keys.create(deviceId ?: error("no device id"), input.biometricOnly)
+                    val bind = _state.value.bind
+                    val key = keys.create(deviceId ?: error("no device id"), input.biometricOnly, bind?.attestationChallenge)
                     keyStorage = key.storage
-                    core.provideAnchorKey(key.spkiDer)
+                    // The machine judges the attestation; the phone only passes it on.
+                    core.provideAnchorKeyAttested(key.spkiDer, key.attestation ?: ByteArray(0))
                 } catch (ex: Exception) {
                     Log.w(TAG, "anchor key creation failed", ex)
                     failureKind = FailureKind.KEY_ERROR

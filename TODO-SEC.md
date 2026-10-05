@@ -19,6 +19,7 @@ tpm2-kira.
 | [S6](#s6-the-blob-is-readable-by-anyone-with-tpm-access) | Blob (machine Noise key, advertising key) readable with TPM access | Low, accepted | docs | done (documented) |
 | [S7](#s7-relay-to-a-look-alike-machine) | Relay to a look-alike machine | Inherent | docs | done (documented) |
 | [S8](#s8-smaller-hardening) | Noise test vectors, overlay taps, biometric-only option | Low | both | done |
+| [S9](#s9-the-machine-checks-the-phones-hardware-too) | The machine did not check the phone's key or its own TPM | Medium | both | done; needs real phones |
 
 What already holds: Noise XX with a commit-then-reveal six-digit code at
 enrolment; credential activation proving the AK is in the TPM that owns the
@@ -432,6 +433,42 @@ no longer opens the disk).
    `attest status` lists every entry with its anchor digest.
 
 ---
+
+## S9: The machine checks the phone's hardware too
+
+**Problem.** The phone verifies the machine's TPM (S3), but the machine took
+the phone's anchor key on trust: it could not tell a StrongBox key on a
+locked phone from a key in software on a rooted one. And `attest enrol` did
+not show the machine's own TPM verdict before enrolling.
+
+**Done** (tpm2-kira `aac0ef6`, `a360fbd`; app pinned to `a360fbd`):
+
+- The core gives the app an attestation challenge bound to the session; the
+  app creates the anchor key with it and sends the key's attestation chain
+  (EnrolAccept field 7). Where the ROM cannot attest (no attestation keys,
+  e.g. LineageOS), the key is created without and the machine is told so.
+- The machine checks the chain against pinned Google attestation roots
+  (`attest/phoneroots/`, the two roots Google's attestation API serves,
+  identical to the documented ones): the certificate is for the anchor key,
+  the challenge is this session's, the key was generated in StrongBox/TEE,
+  an unlock is enforced for every use, the bootloader is locked and the boot
+  verified; on the booted machine also Google's revocation list.
+- `attest enrol --verify-phone` and `--verify-tpm` (`warn` | `require` | `off`,
+  default `warn`: show and ask, default answer no). The TPM check runs the
+  phone's EK verification on the machine before advertising.
+- Tests: Google's real (development-device) attestation chains, synthetic
+  chains for every rule, a full enrolment refused by the machine, the swtpm
+  machine reporting the test phone's missing attestation, and a real
+  Keystore attestation from the emulator read by the machine's parser
+  (`AnchorKeysTest`): it parses, matches key and challenge, and is correctly
+  rejected as a software keystore.
+- Found on the way: `trimNVPadding` could cut an EK chain whose last byte
+  was 0x00 or 0xFF (about one in 128); fixed with a regression test.
+
+**Still open:** a real phone. On the Pixel 6a expect "verified by Google:
+StrongBox …, locked bootloader, verified boot"; on the LineageOS 4a expect
+either no attestation or "self-signed boot" — the machine asks, and `y`
+enrols it.
 
 ## Remaining
 

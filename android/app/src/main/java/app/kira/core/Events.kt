@@ -28,6 +28,8 @@ sealed interface Event {
         val ekNote: String = "",
         val initrdCoverage: String = INITRD_UNKNOWN,
         val initrdPcrs: List<Int> = emptyList(),
+        /** Goes into the anchor key's attestation; binds it to this enrolment. */
+        val attestationChallenge: ByteArray? = null,
     ) : Event
     data class NeedSignature(val purpose: String, val verdictCode: Int) : Event
     data class Enrolled(val recordJson: String) : Event
@@ -77,6 +79,7 @@ sealed interface Event {
                     initrdCoverage = str("initrd_coverage").ifEmpty { INITRD_UNKNOWN },
                     initrdPcrs = (o["initrd_pcrs"] as? kotlinx.serialization.json.JsonArray)
                         ?.mapNotNull { it.jsonPrimitive.intOrNull } ?: emptyList(),
+                    attestationChallenge = str("attestation_challenge").takeIf { it.isNotEmpty() }?.hexToByteArray(),
                 )
                 "need_signature" -> NeedSignature(str("purpose"), int("verdict_code"))
                 "enrolled" -> Enrolled(record())
