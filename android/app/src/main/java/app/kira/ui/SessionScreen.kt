@@ -15,9 +15,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -161,7 +165,10 @@ fun SessionContent(
                 }
                 Button(onClick = onDone, modifier = Modifier.fillMaxWidth().testTag("done")) { Text(stringResource(R.string.done)) }
             }
-            is Outcome.Failed -> {
+            is Outcome.Failed -> if (o.kind == FailureKind.MACHINE_REFUSED) {
+                Refused(state.machineName ?: stringResource(R.string.the_machine), o.message)
+                OutlinedButton(onClick = onDone, modifier = Modifier.fillMaxWidth().testTag("done")) { Text(stringResource(R.string.done)) }
+            } else {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Filled.ErrorOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error)
                     Text(stringResource(R.string.session_failed), style = MaterialTheme.typography.titleLarge)
@@ -198,6 +205,27 @@ private fun SasContent(sas: String, onConfirm: (Boolean) -> Unit) {
     }
     OutlinedButton(onClick = { onConfirm(false) }, modifier = Modifier.fillMaxWidth().testTag("sas_no_match")) {
         Text(stringResource(R.string.sas_no_match))
+    }
+}
+
+/**
+ * The machine advertised as enrolled but refused this phone (TODO-SEC.md S1):
+ * shown with the same weight as a failed attestation, and without a retry.
+ */
+@Composable
+private fun Refused(name: String, detail: String) {
+    val colors = LocalVerdictColors.current
+    Card(
+        Modifier.fillMaxWidth().testTag("refused"),
+        colors = CardDefaults.cardColors(containerColor = colors.failedContainer, contentColor = colors.onFailed),
+    ) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Icon(Icons.Filled.Error, null, Modifier.size(40.dp), tint = colors.onFailed)
+            Text(stringResource(R.string.refused_title, name), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.refused_body), style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(R.string.refused_action), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+            if (detail.isNotBlank()) Text(detail, style = MaterialTheme.typography.bodySmall)
+        }
     }
 }
 

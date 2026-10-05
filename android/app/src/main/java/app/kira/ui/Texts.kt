@@ -59,6 +59,7 @@ object Texts {
 
     @StringRes
     fun failure(kind: FailureKind): Int = when (kind) {
+        FailureKind.MACHINE_REFUSED -> R.string.refused_body
         FailureKind.CONNECT -> R.string.fail_connect
         FailureKind.UPDATE_NEEDED -> R.string.fail_update_needed
         FailureKind.WRONG_MODE -> R.string.fail_wrong_mode

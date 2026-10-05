@@ -27,6 +27,12 @@ enum class Phase {
 
 /** Why a session ended without success; selects the message the user sees. */
 enum class FailureKind {
+    /**
+     * The machine advertised as enrolled but refused this phone's secure
+     * connection, twice: its enrolment data was changed or removed, or another
+     * machine imitates it (TODO-SEC.md S1).
+     */
+    MACHINE_REFUSED,
     /** Connected, but setting up the session (GATT, INFO) failed. */
     CONNECT,
     UPDATE_NEEDED,

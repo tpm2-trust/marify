@@ -61,7 +61,7 @@ class SessionRunner(
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default.limitedParallelism(1),
 ) {
     private sealed interface Input {
-        class FromLink(val event: LinkEvent) : Input
+        class FromLink(val event: LinkEvent, val from: Link) : Input
         class ConfirmSas(val match: Boolean) : Input
         class Decide(val decision: Decision, val confirmName: String) : Input
         data object RequestEventlog : Input
@@ -82,6 +82,15 @@ class SessionRunner(
     private var machineName: String = (mode as? SessionMode.Attest)?.machineName ?: ""
     private var keyStorage = KeyStorage.SOFTWARE
 
+    // Attestation only: whether the machine identified itself (Hello) in the
+    // current connection. A machine that advertises as enrolled but ends the
+    // session before that has refused this phone (TODO-SEC.md S1).
+    private var helloSeen = false
+    // Whether the input being handled came from the machine (a notification).
+    private var handlingMachineInput = false
+    private var refusals = 0
+    private var retryAfterRefusal = false
+
     // ---- user actions (any thread) ----
 
     fun confirmSas(match: Boolean) { inbox.trySend(Input.ConfirmSas(match)) }
@@ -91,8 +100,19 @@ class SessionRunner(
 
     /** Runs the session to its end. Cancelling the caller aborts the session. */
     suspend fun run() = withContext(dispatcher) {
+        do {
+            retryAfterRefusal = false
+            if (!connectAndRun()) return@withContext
+        } while (retryAfterRefusal)
+    }
+
+    /**
+     * One connection: connect, check INFO, run the protocol until the session
+     * ends. Returns false when connecting itself ended the session.
+     */
+    private suspend fun connectAndRun(): Boolean {
         link = try {
-            connectWithRetry() ?: return@withContext
+            connectWithRetry() ?: return false
         } catch (e: CancellationException) {
             withContext(NonCancellable) { end(Outcome.Failed(FailureKind.CANCELLED, 0, "cancelled")) }
             throw e
@@ -115,9 +135,10 @@ class SessionRunner(
                 }
                 core = newSession()
                 core.setMaxFragment(link.maxFragment)
+                val current = link
                 launch {
-                    for (ev in link.events) inbox.send(Input.FromLink(ev))
-                    inbox.send(Input.FromLink(LinkEvent.Lost("connection closed")))
+                    for (ev in current.events) inbox.send(Input.FromLink(ev, current))
+                    inbox.send(Input.FromLink(LinkEvent.Lost("connection closed"), current))
                 }
                 _state.update { it.copy(phase = Phase.SECURING) }
                 process(core.start())
@@ -130,12 +151,24 @@ class SessionRunner(
                     failureKind = FailureKind.CANCELLED
                     process(core.abort("cancelled"))
                 }
-                if (!ended) end(Outcome.Failed(FailureKind.CANCELLED, 0, "cancelled"))
+                retryAfterRefusal = false
+                if (!ended || _state.value.outcome == null) {
+                    ended = false
+                    end(Outcome.Failed(FailureKind.CANCELLED, 0, "cancelled"))
+                }
             }
             throw e
         } finally {
             withContext(NonCancellable) { link.disconnect() }
         }
+        if (retryAfterRefusal) {
+            // Start over on a new connection and a new core session.
+            ended = false
+            failureKind = null
+            helloSeen = false
+            _state.update { it.copy(phase = Phase.CONNECTING, notice = null) }
+        }
+        return true
     }
 
     /**
@@ -176,8 +209,16 @@ class SessionRunner(
 
     private suspend fun handle(input: Input, scope: CoroutineScope) {
         when (input) {
-            is Input.FromLink -> when (val ev = input.event) {
-                is LinkEvent.Notification -> process(core.onNotification(ev.value), scope)
+            // Events of an earlier connection (before a retry) are stale.
+            is Input.FromLink -> if (input.from !== link) Unit else when (val ev = input.event) {
+                is LinkEvent.Notification -> {
+                    handlingMachineInput = true
+                    try {
+                        process(core.onNotification(ev.value), scope)
+                    } finally {
+                        handlingMachineInput = false
+                    }
+                }
                 is LinkEvent.Lost -> {
                     // Nothing can be written any more; end the core's session too.
                     core.abort("connection lost")
@@ -303,6 +344,7 @@ class SessionRunner(
                 _state.update { it.copy(notice = "could not store the machine: ${ex.message}") }
             }
             is Event.Hello -> {
+                helloSeen = true
                 machineName = e.friendlyName
                 _state.update { it.copy(phase = Phase.VERIFYING, machineName = e.friendlyName) }
             }
@@ -345,9 +387,30 @@ class SessionRunner(
     private suspend fun end(outcome: Outcome) {
         if (ended) return
         ended = true
-        _state.update { it.copy(phase = Phase.FINISHED, outcome = outcome) }
+        var final = outcome
+        if (refusedByMachine(outcome)) {
+            if (refusals++ == 0) {
+                // Once could be the radio: try a fresh connection silently.
+                Log.i(TAG, "session ended before the machine identified itself; retrying once")
+                retryAfterRefusal = true
+                if (::link.isInitialized) link.disconnect()
+                return
+            }
+            final = Outcome.Failed(FailureKind.MACHINE_REFUSED, (outcome as Outcome.Failed).code, outcome.message)
+        }
+        _state.update { it.copy(phase = Phase.FINISHED, outcome = final) }
         if (::link.isInitialized) link.disconnect()
     }
+
+    /**
+     * An attestation that ended before the machine's Hello, for a reason other
+     * than the user: the machine advertised as enrolled but did not accept
+     * this phone's handshake. Decided by phase, never by message content.
+     */
+    private fun refusedByMachine(o: Outcome): Boolean =
+        mode is SessionMode.Attest && !helloSeen && o is Outcome.Failed &&
+            _state.value.phase == Phase.SECURING &&
+            (o.kind == FailureKind.LINK_LOST || (o.kind == FailureKind.PROTOCOL && handlingMachineInput))
 
     companion object {
         private const val TAG = "KiraSession"

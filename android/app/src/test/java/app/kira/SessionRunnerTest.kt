@@ -251,16 +251,104 @@ class SessionRunnerTest {
         r.cancel()
     }
 
-    @Test fun linkLossEndsTheSession() = runTest {
+    @Test fun linkLossAfterHelloIsConnectionLost() = runTest {
         val core = FakeCore()
         val link = FakeLink()
+        core.onNotification = { step(events = listOf(Event.Hello("a0".repeat(16), "Thinkpad-X1"))) }
         val r = runner(core, link)
         launch { r.run() }
+        link.notify(1)
         advanceUntilIdle()
         link.channel.trySend(LinkEvent.Lost("gone"))
         advanceUntilIdle()
         assertEquals(FailureKind.LINK_LOST, (r.state.value.outcome as Outcome.Failed).kind)
-        assertTrue(link.written.isEmpty())
+    }
+
+    // ---- a machine that refuses this phone (TODO-SEC.md S1) ----
+
+    /** Each connection gets a fresh link and core, as SessionManager does. */
+    private class Connections(val behave: (index: Int, FakeCore, FakeLink) -> Unit) {
+        val links = mutableListOf<FakeLink>()
+        val cores = mutableListOf<FakeCore>()
+        suspend fun connect(): Link = FakeLink().also { links += it }
+        fun core(): CoreSession = FakeCore().also { c ->
+            cores += c
+            behave(cores.size, c, links.last())
+        }
+    }
+
+    private fun TestScope.refusalRunner(c: Connections) = SessionRunner(
+        mode = SessionMode.Attest("a0".repeat(16), "Thinkpad-X1"),
+        connect = c::connect,
+        newSession = c::core,
+        keys = FakeKeys(),
+        records = FakeRecords(),
+        coreProtocol = 1,
+        coreSchema = 1,
+        clock = { testScheduler.currentTime },
+        dispatcher = StandardTestDispatcher(testScheduler),
+    )
+
+    @Test fun connectionDroppedBeforeHelloTwiceIsARefusal() = runTest {
+        val c = Connections { _, _, link -> link.channel.trySend(LinkEvent.Lost("machine closed the connection")) }
+        val r = refusalRunner(c)
+        r.run()
+        assertEquals(2, c.links.size)   // one silent retry
+        val o = r.state.value.outcome as Outcome.Failed
+        assertEquals(FailureKind.MACHINE_REFUSED, o.kind)
+        assertTrue(c.links.all { it.disconnected })
+    }
+
+    @Test fun handshakeRejectedByTheCoreTwiceIsARefusal() = runTest {
+        val c = Connections { _, core, link ->
+            core.onNotification = {
+                core.finished = true
+                step(events = listOf(Event.Error(1, "handshake failed: chacha20poly1305: message authentication failed")), err = "x")
+            }
+            link.notify(1)
+        }
+        val r = refusalRunner(c)
+        r.run()
+        assertEquals(FailureKind.MACHINE_REFUSED, (r.state.value.outcome as Outcome.Failed).kind)
+        assertEquals(2, c.cores.size)
+    }
+
+    @Test fun oneDroppedHandshakeIsRetriedSilently() = runTest {
+        val c = Connections { index, core, link ->
+            if (index == 1) {
+                link.channel.trySend(LinkEvent.Lost("radio"))
+            } else {
+                core.onNotification = { step(events = listOf(Event.Hello("a0".repeat(16), "Thinkpad-X1"))) }
+                link.notify(1)
+            }
+        }
+        val r = refusalRunner(c)
+        val job = launch { r.run() }
+        advanceUntilIdle()
+        assertEquals(null, r.state.value.outcome)
+        assertEquals(Phase.VERIFYING, r.state.value.phase)
+        assertEquals(2, c.links.size)
+        job.cancel()
+    }
+
+    @Test fun localCoreErrorAtStartIsNotARefusal() = runTest {
+        val c = Connections { _, core, _ ->
+            core.onStart = { core.finished = true; step(events = listOf(Event.Error(1, "boom")), err = "boom") }
+        }
+        val r = refusalRunner(c)
+        r.run()
+        assertEquals(FailureKind.PROTOCOL, (r.state.value.outcome as Outcome.Failed).kind)
+        assertEquals(1, c.links.size)
+    }
+
+    @Test fun enrolmentIsNeverCalledARefusal() = runTest {
+        val link = FakeLink(mode = InfoValue.MODE_ENROL)
+        val r = runner(FakeCore(), link, mode = SessionMode.Enrol)
+        launch { r.run() }
+        runCurrent()
+        link.channel.trySend(LinkEvent.Lost("gone"))
+        advanceUntilIdle()
+        assertEquals(FailureKind.LINK_LOST, (r.state.value.outcome as Outcome.Failed).kind)
     }
 
     @Test fun wrongModeIsRefusedBeforeStarting() = runTest {

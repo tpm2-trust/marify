@@ -231,8 +231,10 @@ class SwtpmMachineSessionTest {
         // Another phone that copied the record but not the enrolled Noise key.
         noise = KiraCore.generateNoiseKey()
         val s = session(attestMode())
+        // The machine refuses the IK handshake; after one silent retry the
+        // app says so instead of "connection lost" (TODO-SEC.md S1).
         val o = s.outcome as Outcome.Failed
-        assertTrue(o.toString(), o.kind == FailureKind.LINK_LOST || o.kind == FailureKind.PROTOCOL)
+        assertEquals(o.toString(), FailureKind.MACHINE_REFUSED, o.kind)
         assertEquals(null, s.verdict)
         assertEquals("error: attest: initiator is not an enrolled verifier", machine.outcome())
     }
