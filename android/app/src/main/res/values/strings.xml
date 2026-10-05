@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Kira</string>
+    <string name="cancel">Cancel</string>
+    <string name="done">Done</string>
+    <string name="back">Back</string>
+    <string name="details">Details</string>
+    <string name="a_machine">a machine</string>
+    <string name="try_again">Try again</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Know what your computer booted</string>
+    <string name="onboarding_body">Before you type your disk passphrase, your Linux machine asks this phone to check it. The machine\'s TPM signs a statement of what it booted; Kira compares it with what it recorded when you bound the machine, shows you the result, and sends back a receipt signed with a key that only your fingerprint, face or screen-lock PIN can unlock.</string>
+    <string name="onboarding_permissions">Allow Bluetooth</string>
+    <string name="onboarding_permissions_rationale">Kira talks to your machine over Bluetooth Low Energy. It only looks for tpm2-kira machines and never uses your location.</string>
+    <string name="onboarding_permissions_rationale_legacy">Kira talks to your machine over Bluetooth Low Energy. On this Android version, Bluetooth scanning requires the location permission; Kira does not use your location.</string>
+    <string name="onboarding_bluetooth_on">Turn on Bluetooth</string>
+    <string name="onboarding_screen_lock">Set up a screen lock</string>
+    <string name="onboarding_screen_lock_rationale">Every receipt is signed with a key that needs a fresh unlock — your PIN, pattern, password, fingerprint or face — so that someone holding your unlocked phone cannot vouch for a machine without knowing your PIN.</string>
+    <string name="onboarding_screen_lock_unavailable">This phone cannot protect keys with its screen lock. Kira cannot be used on it.</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_open_settings">Open settings</string>
+    <string name="granted">Done</string>
+
+    <!-- Machines -->
+    <string name="machines_title">Machines</string>
+    <string name="machines_empty">No machines yet. Enrol your computer to start.</string>
+    <string name="enrol_machine">Enrol a machine</string>
+    <string name="asking_for_attestation">%1$s is asking for attestation</string>
+    <string name="asking_tap">Tap to verify</string>
+    <string name="last_verified">Last verified %1$s</string>
+    <string name="never_verified">Not verified yet</string>
+    <string name="session_running">A session is in progress</string>
+    <string name="bluetooth_off">Bluetooth is off. Machines asking for attestation cannot be seen.</string>
+
+    <!-- Enrol -->
+    <string name="enrol_title">Enrol a machine</string>
+    <string name="enrol_instructions">On the computer, run:</string>
+    <string name="enrol_command">sudo tpm2-kira attest enrol</string>
+    <string name="enrol_instructions_2">Machines waiting for a phone appear below. Keep the computer\'s screen in view: you will compare a six-digit number.</string>
+    <string name="enrol_searching">Searching…</string>
+    <string name="enrol_waiting_machine">tpm2-kira machine waiting for enrolment</string>
+    <string name="enrol_signal">Signal %1$d dBm</string>
+    <string name="demo_machine">Demo machine (debug build)</string>
+    <string name="demo_machine_sub">Simulated Thinkpad-X1, no hardware needed</string>
+
+    <!-- Session -->
+    <string name="phase_connecting">Connecting…</string>
+    <string name="phase_securing">Establishing a secure channel…</string>
+    <string name="phase_enrolling">Checking the machine\'s TPM…</string>
+    <string name="phase_verifying">Verifying %1$s…</string>
+    <string name="phase_signing">Waiting for your confirmation…</string>
+    <string name="phase_delivering">Delivering the receipt…</string>
+    <string name="leave_session_title">Stop this session?</string>
+    <string name="leave_session_body">The machine will be told that you cancelled.</string>
+    <string name="stop">Stop</string>
+    <string name="continue_session">Continue</string>
+
+    <string name="sas_title">Compare the numbers</string>
+    <string name="sas_question">Does this match the number on your computer\'s screen?</string>
+    <string name="sas_matches">Matches</string>
+    <string name="sas_no_match">Does not match</string>
+
+    <string name="enrolled_title">%1$s is bound to this phone</string>
+    <string name="enrolled_body">From now on, when this machine boots and waits for attestation, Kira will show it here.</string>
+
+    <string name="verdict_match">%1$s — unchanged since %2$s</string>
+    <string name="verdict_match_first">%1$s — matches its enrolled state</string>
+    <string name="verdict_changed_title">%1$s booted something different</string>
+    <string name="verdict_failed_title">Attestation failed</string>
+    <string name="verdict_failed_intro">Do not type your passphrase unless you know why:</string>
+    <string name="what_changed">What changed</string>
+    <string name="compared_with">Compared with: %1$s</string>
+    <string name="pcr_label">PCR %1$d</string>
+    <string name="pcr_expected">expected %1$s</string>
+    <string name="pcr_actual">actual %1$s</string>
+    <string name="show_eventlog">Show event log</string>
+    <string name="eventlog_progress">Event log: %1$s of %2$s</string>
+    <string name="eventlog_complete">Event log received (%1$s)</string>
+    <string name="approve_once">Approve once</string>
+    <string name="approve_remember">Approve and remember</string>
+    <string name="reject">Reject</string>
+    <string name="approve_anyway">Approve anyway…</string>
+    <string name="more_options">More options</string>
+    <string name="approve_failed_title">Approve a failed attestation?</string>
+    <string name="approve_failed_body">A hard check failed. Approving tells the machine that this boot is trusted. Type the machine\'s name, %1$s, to confirm.</string>
+    <string name="machine_name_hint">Machine name</string>
+    <string name="approve">Approve</string>
+    <string name="warnings">Notes</string>
+    <string name="technical_details">Technical details</string>
+    <string name="tpm_counters">Reset count %1$d · restart count %2$d · firmware %3$d · clock safe: %4$s</string>
+    <string name="yes">yes</string>
+    <string name="no">no</string>
+
+    <string name="receipt_delivered">Receipt delivered</string>
+    <string name="session_failed">The session ended</string>
+
+    <!-- Receipt acknowledgement (PROTOCOL-BLE.md §7.3.8) -->
+    <string name="ack_accepted">The machine accepted the receipt.</string>
+    <string name="ack_bad_signature">The machine says the receipt is not from its enrolled phone.</string>
+    <string name="ack_binding_mismatch">The machine says the receipt does not belong to this session.</string>
+    <string name="ack_reject_noted">Rejection delivered.</string>
+    <string name="ack_malformed">The machine could not read the receipt.</string>
+    <string name="ack_unknown">The machine answered with result %1$d.</string>
+
+    <!-- Failures -->
+    <string name="fail_connect">Could not connect to the machine.</string>
+    <string name="fail_update_needed">This machine speaks a different protocol version. Please update the app or tpm2-kira.</string>
+    <string name="fail_wrong_mode">The machine is not in the expected mode. For enrolment run \'attest enrol\'; for verification, \'attest gate\'.</string>
+    <string name="fail_link_lost">Connection lost.</string>
+    <string name="fail_cancelled">Cancelled.</string>
+    <string name="fail_sas_mismatch">The numbers did not match, so nothing was stored. Someone may be interfering; try again in a different place.</string>
+    <string name="fail_auth_cancelled">Cancelled at the unlock check. Nothing was signed.</string>
+    <string name="fail_key_invalidated">The key for this machine was invalidated because the phone\'s fingerprints, face or screen lock changed. Delete the machine and enrol it again.</string>
+    <string name="fail_key_error">The phone\'s key store failed.</string>
+    <string name="fail_storage">The machine could not be stored on this phone.</string>
+    <string name="fail_protocol">The session failed.</string>
+
+    <!-- Error codes (PROTOCOL-BLE.md §7.3.14) -->
+    <string name="err_1">Protocol violation</string>
+    <string name="err_2">Unknown device</string>
+    <string name="err_3">This phone is not enrolled with the machine</string>
+    <string name="err_4">Confirmation code rejected</string>
+    <string name="err_5">TPM failure</string>
+    <string name="err_6">Credential activation failed: the TPM could not prove its key</string>
+    <string name="err_7">Storage failure</string>
+    <string name="err_8">Refused by policy</string>
+    <string name="err_9">Timeout</string>
+    <string name="err_10">Aborted by the user</string>
+    <string name="err_11">Not supported</string>
+    <string name="err_unknown">Error %1$d</string>
+
+    <!-- Verdict reasons (PROTOCOL-BLE.md §10.4) -->
+    <string name="reason_malformed">The evidence is malformed.</string>
+    <string name="reason_policy_invalid">The stored policy for this machine is invalid.</string>
+    <string name="reason_device_mismatch">A different machine answered.</string>
+    <string name="reason_ak_mismatch">The machine\'s attestation key is not the one it enrolled with.</string>
+    <string name="reason_bad_signature">The TPM signature does not verify.</string>
+    <string name="reason_bad_magic">The quote was not produced by a TPM.</string>
+    <string name="reason_bad_type">The TPM produced something other than a quote.</string>
+    <string name="reason_qd_mismatch">The quote was not made for this session; it may be replayed.</string>
+    <string name="reason_reset_count_decreased">The TPM\'s boot counter went backwards: a replayed quote or a cleared TPM.</string>
+    <string name="reason_clock_unsafe">The TPM\'s clock is not trustworthy.</string>
+    <string name="reason_firmware_changed">The TPM firmware changed.</string>
+    <string name="reason_selection_mismatch">The machine reported different registers than requested.</string>
+    <string name="reason_pcr_values_invalid">The reported register values are invalid.</string>
+    <string name="reason_pcr_digest_mismatch">The reported register values are not the ones the TPM signed.</string>
+    <string name="reason_secureboot_off">Secure Boot is off.</string>
+    <string name="reason_no_profile_match">The boot chain differs from every state you approved.</string>
+    <string name="reason_unknown">Check failed: %1$s</string>
+
+    <!-- Warnings -->
+    <string name="warning_reset_count_jump">The machine booted several times since the last check.</string>
+    <string name="warning_clock_unsafe">The TPM\'s clock is not trustworthy.</string>
+    <string name="warning_firmware_changed">The TPM firmware changed.</string>
+    <string name="warning_secureboot_off">Secure Boot is off.</string>
+    <string name="warning_unknown">Note: %1$s</string>
+
+    <!-- Unlock prompts (biometric or screen lock) -->
+    <string name="sign_enrol">Bind %1$s to this phone</string>
+    <string name="sign_confirm_unchanged">Confirm %1$s booted unchanged</string>
+    <string name="sign_approve_changed">Approve the changed boot of %1$s</string>
+    <string name="sign_subtitle">Signs a receipt with this phone\'s key</string>
+
+    <!-- Machine details -->
+    <string name="enrolled_at">Enrolled %1$s</string>
+    <string name="profiles">Approved boot states</string>
+    <string name="profile_added_by">Added by %1$s</string>
+    <string name="profile_valid_until">Valid until %1$s</string>
+    <plurals name="profile_uses_left">
+        <item quantity="one">%1$d use left</item>
+        <item quantity="other">%1$d uses left</item>
+    </plurals>
+    <string name="key_storage">Key storage</string>
+    <string name="key_strongbox">StrongBox (dedicated security chip)</string>
+    <string name="key_tee">Trusted Execution Environment</string>
+    <string name="key_software">Software (not hardware-backed)</string>
+    <string name="key_missing">No key on this phone</string>
+    <string name="key_auth_hw">Unlock for every signature, enforced by secure hardware</string>
+    <plurals name="key_attestation">
+        <item quantity="one">Key attestation certificate chain: %1$d certificate</item>
+        <item quantity="other">Key attestation certificate chain: %1$d certificates</item>
+    </plurals>
+    <string name="verify_now">Verify now</string>
+    <string name="delete_machine">Delete machine</string>
+    <string name="delete_machine_title">Delete %1$s?</string>
+    <string name="delete_machine_body">This phone forgets the machine and destroys its key. On the machine, also run:</string>
+    <string name="unenrol_command">sudo tpm2-kira attest unenrol</string>
+    <string name="delete">Delete</string>
+    <string name="demo_controls">Demo machine controls</string>
+    <string name="demo_next_boot">Reboot (match)</string>
+    <string name="demo_change_pcr">Update bootloader (changed)</string>
+    <string name="demo_rollback">Roll back TPM counter (failed)</string>
+    <string name="demo_hint">The demo machine exists only while the app runs. After a restart, delete it and enrol again.</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel">Attestation sessions</string>
+    <string name="notif_connecting">Connecting…</string>
+    <string name="notif_verifying">Verifying %1$s…</string>
+    <string name="notif_enrolling">Enrolling %1$s…</string>
+</resources>

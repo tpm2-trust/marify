@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: the swtpm machine test (androidTest, SwtpmMachineSessionTest)
+     talks TCP to the test machine through `adb reverse`; instrumented tests run
+     in the app's process, so the debug app needs network access. Release
+     builds have no network permission. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+</manifest>

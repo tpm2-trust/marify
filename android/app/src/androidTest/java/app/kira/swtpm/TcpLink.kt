@@ -1,0 +1,79 @@
+package app.kira.swtpm
+
+import app.kira.ble.InfoValue
+import app.kira.ble.Link
+import app.kira.ble.LinkEvent
+import app.kira.ble.LinkException
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.io.IOException
+import java.net.Socket
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.concurrent.thread
+
+/**
+ * A [Link] to the swtpm test machine over TCP (tpm2-kira cmd/attest_app_test.go),
+ * standing in for GATT: the machine sends the 8-byte INFO value first, then
+ * fragments travel both ways, each prefixed by a big-endian u16 length.
+ * Test sources only.
+ */
+class TcpLink private constructor(
+    private val socket: Socket,
+    override val maxFragment: Int,
+    override val info: InfoValue,
+) : Link {
+    private val input = DataInputStream(socket.getInputStream().buffered())
+    private val output = DataOutputStream(socket.getOutputStream().buffered())
+    private val channel = Channel<LinkEvent>(Channel.UNLIMITED)
+    private val closed = AtomicBoolean(false)
+    override val events: ReceiveChannel<LinkEvent> get() = channel
+
+    init {
+        thread(name = "kira-tcp-rx", isDaemon = true) {
+            try {
+                while (true) {
+                    val n = input.readUnsignedShort()
+                    val f = ByteArray(n)
+                    input.readFully(f)
+                    channel.trySend(LinkEvent.Notification(f))
+                }
+            } catch (_: IOException) {
+                // The machine ended the session, or we disconnected.
+            }
+            if (!closed.get()) channel.trySend(LinkEvent.Lost("machine closed the connection"))
+            channel.close()
+        }
+    }
+
+    override suspend fun write(fragment: ByteArray) {
+        if (closed.get()) throw LinkException("link closed")
+        if (fragment.size > maxFragment) throw LinkException("fragment exceeds MTU")
+        try {
+            synchronized(output) {
+                output.writeShort(fragment.size)
+                output.write(fragment)
+                output.flush()
+            }
+        } catch (e: IOException) {
+            throw LinkException("write failed", e)
+        }
+    }
+
+    override suspend fun disconnect() {
+        if (!closed.compareAndSet(false, true)) return
+        runCatching { socket.close() }
+        channel.close()
+    }
+
+    companion object {
+        fun connect(host: String, port: Int, mtu: Int): TcpLink {
+            val s = Socket(host, port)
+            s.tcpNoDelay = true
+            val info = ByteArray(InfoValue.SIZE)
+            DataInputStream(s.getInputStream()).readFully(info)
+            return TcpLink(s, mtu - 3, InfoValue.parse(info))
+        }
+    }
+}

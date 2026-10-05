@@ -1,0 +1,139 @@
+# Kira for Android
+
+The verifier app for [tpm2-kira](https://github.com/mrwiora/tpm2-kira)
+machines. Before you type your disk passphrase, the Linux machine advertises
+over Bluetooth LE; Kira connects, lets the machine's TPM prove what it
+booted, shows a verdict you can act on, and returns a receipt signed with a
+hardware key that needs a fresh unlock (fingerprint, face or PIN) for every signature.
+
+The normative contract is tpm2-kira's `docs/PROTOCOL-BLE.md`. This app
+implements the build brief `docs/mobile/AGENT-PROMPT-ANDROID.md`.
+
+## Build
+
+Requirements: JDK 17+ (Gradle uses or provisions a JDK 25 daemon), Android
+SDK with platform 37 and an NDK (`sdkmanager "ndk;30.0.16248370"`), Go ≥ 1.24,
+and a tpm2-kira checkout next to this repository (`../../tpm2-kira`) or network
+access to clone it.
+
+```sh
+./scripts/build-core.sh          # Go core → app/libs/*.aar, from the commit in core.properties
+./gradlew assembleDebug          # debug APK (includes the demo machine)
+./gradlew assembleRelease        # release APK (no kiratest code)
+./gradlew testDebugUnitTest      # JVM unit tests
+./gradlew connectedDebugAndroidTest   # instrumented tests (device or emulator)
+./scripts/test-swtpm.sh               # against a tpm2-kira machine on swtpm (needs go, swtpm)
+```
+
+Gradle needs about 3 GB of free RAM. `gradle.properties` is tuned for an 8 GB
+machine (one JVM, Kotlin compiled in-process); on such a machine run one task
+at a time (lint separately from builds).
+
+### The Go core
+
+`core.properties` pins the tpm2-kira commit and the `golang.org/x/mobile`
+version. `scripts/build-core.sh` exports that commit with `git archive`, adds
+`golang.org/x/mobile` to the *temporary* copy's module graph (the bind needs
+it; the pinned sources are not changed), and runs `gomobile bind`:
+
+| Output | Packages | Linked into |
+|---|---|---|
+| `app/libs/kiracore.aar` | `mobile/kiracore` | release |
+| `app/libs/kiracore-debug.aar` | `mobile/kiracore` + `mobile/kiratest` | debug, instrumented tests |
+
+**Deviation from the brief:** the brief asks for `kiracore.aar` plus a separate
+`kiratest.aar` in `androidTestImplementation`. Two separately bound gomobile
+libraries cannot be linked together — each carries its own `libgojni.so` and
+the `go.*` runtime classes — so the debug/test library is one bind of both
+packages. The release variant links only `kiracore.aar`; verify with
+`apkanalyzer dex packages app/build/outputs/apk/release/*.apk | grep kiratest`
+(must print nothing).
+
+To move to a new tpm2-kira commit, change `kira.commit` and rerun the script.
+
+## Architecture
+
+```
+app/src/main/java/app/kira/
+├── core/      KiraCore.kt     facade over the gomobile package `kiracore`
+│              CoreSession.kt  Session/Step as a Kotlin interface (+ GoCoreSession)
+│              Events.kt       event JSON → sealed Event, Verdict, RecordSummary
+├── ble/       BleScanner.kt   scan with the service-UUID filter only
+│              GattLink.kt     connect, MTU 517, discovery, INFO, CCCD, notifications
+│              WriteQueue.kt   one GATT write at a time, busy retry with backoff
+│              InfoValue.kt    INFO characteristic + version/mode check
+├── session/   SessionRunner.kt  drives one CoreSession over one Link (the loop)
+│              SessionManager.kt the app's one active session; scan-then-connect
+├── keys/      AnchorKeys.kt   StrongBox/TEE P-256 keys, BiometricPrompt per signature
+│              NoiseKeyStore.kt static Noise key + verifier_id, Keystore-wrapped
+│              KeystoreAead.kt AES-256-GCM under a Keystore key (data at rest)
+├── data/      MachineRepository.kt  encrypted record per machine, verbatim JSON
+├── service/   AttestationService.kt foreground service (connectedDevice)
+└── ui/        Compose screens: onboarding, machines, enrol, session/verdict, details
+app/src/debug/   demo machine (kiratest) wiring: DemoLink, DemoMachineSupport
+app/src/release/ DemoFactory → NoDemo
+```
+
+**The session loop.** Every input — a TX notification, a button press, an
+unlock result, a lost link — goes into one inbox and is handled by one
+coroutine on a single-threaded dispatcher, in arrival order. Each `Step`'s
+fragments are written in order *before* its events are acted on, also when
+`err()` is set. Steps produced while handling events (e.g. after creating the
+anchor key) are queued behind the current one. The unlock prompt runs
+outside the loop and posts its result back into the inbox, so notifications
+that arrive meanwhile (event log chunks) are not reordered or blocked.
+
+**No trust decisions in Kotlin.** The app shows `verdict.state`, `reasons`,
+`explanation` and passes the user's choice to `Session.decide`. It parses only
+the INFO characteristic (GATT layer) and the core's event JSON.
+
+**Debug builds** offer a "Demo machine" on the enrol screen: a simulated
+Thinkpad-X1 from kiratest, with controls on its details screen to produce
+*match* (reboot), *changed* (bootloader update) and *failed* (TPM counter
+rollback). Its identity lives only in memory: after an app restart, delete it
+and enrol again.
+
+## Security notes (from PROTOCOL-BLE.md §13)
+
+1. The app links `kiracore` and never decides trust itself.
+2. Every Step's fragments are written, in order, even when `Err()` is set
+   (unit-tested in `SessionRunnerTest`).
+3. No BLE pairing or bonding (`createBond` is never called), no encrypted
+   characteristics; the link is an untrusted pipe secured by Noise.
+4. Scans use only the service-UUID filter.
+5. Only machines whose advertisement matches a stored record are shown,
+   except ENROL advertisements on the enrol screen.
+6. Anchor keys: AndroidKeyStore EC P-256, StrongBox when available, TEE
+   otherwise; non-exportable; `setUserAuthenticationParameters(0,
+   AUTH_BIOMETRIC_STRONG | AUTH_DEVICE_CREDENTIAL)` — a fresh unlock for every
+   signature, by strong biometric **or the screen-lock PIN/pattern/password**;
+   invalidated by removal of the screen lock and, if a biometric was enrolled
+   when the key was created, by a new biometric enrolment (on a PIN-only phone
+   keystore has no biometric to bind, so adding a fingerprint later does not
+   invalidate the key).
+   Release builds refuse keys that are not in secure hardware. Rejects are
+   unsigned and need no prompt.
+
+   **Deviation from PROTOCOL-BLE.md §11.2 / §13.6**, which require biometry:
+   PIN-locked phones are supported on purpose. A phone that is merely
+   unlocked still cannot sign, but whoever knows (or watched) the PIN can.
+   This needs Android 11 (per-use keys accepting device credentials), hence
+   `minSdk 30` instead of the brief's 28.
+7. PCR hex is only shown behind "Details".
+8. A *failed* verdict offers Reject; "Approve anyway" sits in an overflow
+   menu and requires typing the machine's name (checked by the core).
+9. Records and the Noise key are AES-GCM encrypted under Keystore keys, in
+   `noBackupFilesDir` / DataStore; `allowBackup="false"` and data extraction
+   rules exclude everything.
+10. The app disconnects on `done`, `error` and whenever the core reports
+    `finished()`.
+
+Losing the phone means re-enrolling each machine (`sudo tpm2-kira attest
+enrol` with the new phone; `attest unenrol` removes the old entry).
+
+## Salt release (later)
+
+The session loop is event-driven: a future core event asking to release the
+hashpwd2 factor is one more branch in `SessionRunner.onEvent`, and
+`MachineRepository` already stores an optional opaque `factor_blob` per
+machine.
