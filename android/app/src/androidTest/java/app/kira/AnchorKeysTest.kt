@@ -9,6 +9,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import app.kira.keys.AndroidAnchorKeys
 import app.kira.keys.BiometricHost
+import app.kira.ui.Requirements
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -64,6 +65,24 @@ class AnchorKeysTest {
         val hasBiometric = BiometricManager.from(ctx).canAuthenticate(BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
         if (hasBiometric) assertTrue(info.isInvalidatedByBiometricEnrollment)
         assertEquals(created.storage, keys.details(id)!!.storage)
+    }
+
+    @Test fun biometricOnlyKeyRefusesThePin() = runBlocking {
+        if (Requirements.hasStrongBiometric(ctx)) {
+            keys.create(id, biometricOnly = true)
+            val priv = privateKey()
+            val info = KeyFactory.getInstance(priv.algorithm, "AndroidKeyStore").getKeySpec(priv, KeyInfo::class.java)
+            assertEquals(KeyProperties.AUTH_BIOMETRIC_STRONG, info.userAuthenticationType)
+            assertTrue(keys.details(id)!!.biometricOnly)
+        } else {
+            // Without an enrolled biometric such a key cannot exist; the bind
+            // screen hides the option.
+            try {
+                keys.create(id, biometricOnly = true)
+                fail("biometric-only key created without an enrolled biometric")
+            } catch (_: Exception) {
+            }
+        }
     }
 
     @Test fun cannotSignWithoutAuthentication() = runBlocking {

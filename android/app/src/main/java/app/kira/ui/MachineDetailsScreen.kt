@@ -117,6 +117,10 @@ fun MachineDetailsScreen(c: AppContainer, deviceId: String, onBack: () -> Unit, 
             } else {
                 Text(stringResource(Texts.keyStorage(k.storage)))
                 if (k.authEnforcedByHardware) Text(stringResource(R.string.key_auth_hw), style = MaterialTheme.typography.bodySmall)
+                Text(
+                    stringResource(if (k.biometricOnly) R.string.key_unlock_biometric_only else R.string.key_unlock_any),
+                    style = MaterialTheme.typography.bodySmall,
+                )
                 if (k.attestationChainLength > 1) Text(pluralStringResource(R.plurals.key_attestation, k.attestationChainLength, k.attestationChainLength), style = MaterialTheme.typography.bodySmall)
             }
 

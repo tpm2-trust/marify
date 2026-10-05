@@ -63,7 +63,7 @@ class SessionRunner(
     private sealed interface Input {
         class FromLink(val event: LinkEvent, val from: Link) : Input
         class ConfirmSas(val match: Boolean) : Input
-        class ConfirmBind(val bind: Boolean) : Input
+        class ConfirmBind(val bind: Boolean, val biometricOnly: Boolean) : Input
         class Decide(val decision: Decision, val confirmName: String) : Input
         data object RequestEventlog : Input
         class Abort(val reason: String, val kind: FailureKind) : Input
@@ -95,7 +95,9 @@ class SessionRunner(
     // ---- user actions (any thread) ----
 
     fun confirmSas(match: Boolean) { inbox.trySend(Input.ConfirmSas(match)) }
-    fun confirmBind(bind: Boolean) { inbox.trySend(Input.ConfirmBind(bind)) }
+    fun confirmBind(bind: Boolean, biometricOnly: Boolean = false) {
+        inbox.trySend(Input.ConfirmBind(bind, biometricOnly))
+    }
     fun decide(decision: Decision, confirmName: String = "") { inbox.trySend(Input.Decide(decision, confirmName)) }
     fun requestEventlog() { inbox.trySend(Input.RequestEventlog) }
     fun cancel(reason: String = "cancelled") { inbox.trySend(Input.Abort(reason, FailureKind.CANCELLED)) }
@@ -242,7 +244,7 @@ class SessionRunner(
                 }
                 _state.update { it.copy(phase = Phase.ENROLLING) }
                 val step = try {
-                    val key = keys.create(deviceId ?: error("no device id"))
+                    val key = keys.create(deviceId ?: error("no device id"), input.biometricOnly)
                     keyStorage = key.storage
                     core.provideAnchorKey(key.spkiDer)
                 } catch (ex: Exception) {

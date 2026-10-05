@@ -38,5 +38,9 @@ object Requirements {
             else -> UserAuth.UNAVAILABLE
         }
 
+    /** A strong (class 3) biometric is enrolled. */
+    fun hasStrongBiometric(ctx: Context) =
+        BiometricManager.from(ctx).canAuthenticate(BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
+
     fun allMet(ctx: Context) = hasBluetoothPermissions(ctx) && userAuth(ctx) == UserAuth.READY
 }

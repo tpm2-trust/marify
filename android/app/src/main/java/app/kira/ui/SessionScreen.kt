@@ -25,6 +25,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,9 +33,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -98,7 +101,7 @@ fun SessionContent(
     state: SessionState,
     canRetry: Boolean,
     onConfirmSas: (Boolean) -> Unit,
-    onConfirmBind: (Boolean) -> Unit = {},
+    onConfirmBind: (Boolean, Boolean) -> Unit = { _, _ -> },
     onDecide: (Decision, String) -> Unit,
     onRequestEventlog: () -> Unit,
     onRetry: () -> Unit,
@@ -197,8 +200,11 @@ fun SessionContent(
  * decided it, the screen only shows it.
  */
 @Composable
-private fun BindContent(b: Event.NeedAnchorKey, onConfirm: (Boolean) -> Unit) {
+private fun BindContent(b: Event.NeedAnchorKey, onConfirm: (Boolean, Boolean) -> Unit) {
     val colors = LocalVerdictColors.current
+    val ctx = LocalContext.current
+    val canBiometric = remember { Requirements.hasStrongBiometric(ctx) }
+    var biometricOnly by rememberSaveable { mutableStateOf(false) }
     Text(stringResource(R.string.bind_title, b.friendlyName), style = MaterialTheme.typography.headlineSmall)
     val verified = b.ekVerifiedBy.isNotEmpty()
     Card(
@@ -235,10 +241,19 @@ private fun BindContent(b: Event.NeedAnchorKey, onConfirm: (Boolean) -> Unit) {
         Event.INITRD_NONE -> Text(stringResource(R.string.bind_initrd_none), style = MaterialTheme.typography.bodyMedium)
         else -> Text(stringResource(R.string.bind_initrd_unknown), style = MaterialTheme.typography.bodyMedium)
     }
-    Button(onClick = { onConfirm(true) }, modifier = Modifier.fillMaxWidth().testTag("bind")) {
+    if (canBiometric) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.bind_biometric_only), style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.bind_biometric_only_body), style = MaterialTheme.typography.bodySmall)
+            }
+            Switch(checked = biometricOnly, onCheckedChange = { biometricOnly = it }, modifier = Modifier.testTag("biometric_only"))
+        }
+    }
+    Button(onClick = { onConfirm(true, biometricOnly) }, modifier = Modifier.fillMaxWidth().testTag("bind")) {
         Text(stringResource(R.string.bind_confirm))
     }
-    OutlinedButton(onClick = { onConfirm(false) }, modifier = Modifier.fillMaxWidth().testTag("bind_cancel")) {
+    OutlinedButton(onClick = { onConfirm(false, false) }, modifier = Modifier.fillMaxWidth().testTag("bind_cancel")) {
         Text(stringResource(R.string.cancel))
     }
 }

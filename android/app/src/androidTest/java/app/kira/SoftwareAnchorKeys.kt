@@ -20,7 +20,7 @@ class SoftwareAnchorKeys : AnchorKeyProvider {
     val requests = mutableListOf<SignRequest>()
     @Volatile var cancelNext = false
 
-    override suspend fun create(deviceIdHex: String): CreatedAnchorKey {
+    override suspend fun create(deviceIdHex: String, biometricOnly: Boolean): CreatedAnchorKey {
         val g = KeyPairGenerator.getInstance("EC")
         g.initialize(ECGenParameterSpec("secp256r1"))
         val kp = g.generateKeyPair()

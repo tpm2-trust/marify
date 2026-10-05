@@ -1,5 +1,6 @@
 package app.kira
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -60,6 +61,10 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        // Another app must not draw over the code comparison or the approve
+        // buttons and catch the taps (TODO-SEC.md S8.2).
+        window.decorView.filterTouchesWhenObscured = true
+        if (Build.VERSION.SDK_INT >= 31) window.setHideOverlayWindows(true)
         setContent {
             KiraTheme {
                 Surface(Modifier.fillMaxSize()) {

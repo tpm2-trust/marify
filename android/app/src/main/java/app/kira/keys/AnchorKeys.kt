@@ -33,6 +33,8 @@ data class AnchorKeyDetails(
     val storage: KeyStorage,
     val authEnforcedByHardware: Boolean,
     val attestationChainLength: Int,
+    /** Only a strong biometric unlocks it, never the screen-lock PIN. */
+    val biometricOnly: Boolean = false,
 )
 
 /** AndroidKeyStore anchor keys: StrongBox when present, TEE otherwise. */
@@ -45,13 +47,13 @@ class AndroidAnchorKeys(
 
     private fun keyStore() = KeyStore.getInstance(KeystoreAead.ANDROID_KEYSTORE).apply { load(null) }
 
-    override suspend fun create(deviceIdHex: String): CreatedAnchorKey = withContext(Dispatchers.IO) {
+    override suspend fun create(deviceIdHex: String, biometricOnly: Boolean): CreatedAnchorKey = withContext(Dispatchers.IO) {
         val alias = alias(deviceIdHex)
         keyStore().deleteEntry(alias)
         val pair = try {
-            generate(alias, strongBox = true)
+            generate(alias, strongBox = true, biometricOnly)
         } catch (_: StrongBoxUnavailableException) {
-            generate(alias, strongBox = false)
+            generate(alias, strongBox = false, biometricOnly)
         }
         val details = details(deviceIdHex) ?: error("anchor key vanished")
         if (!BuildConfig.DEBUG && (details.storage == KeyStorage.SOFTWARE || !details.authEnforcedByHardware)) {
@@ -61,7 +63,7 @@ class AndroidAnchorKeys(
         CreatedAnchorKey(pair.public.encoded, details.storage)
     }
 
-    private fun generate(alias: String, strongBox: Boolean): java.security.KeyPair {
+    private fun generate(alias: String, strongBox: Boolean, biometricOnly: Boolean): java.security.KeyPair {
         val b = KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_SIGN)
             .setAlgorithmParameterSpec(ECGenParameterSpec("secp256r1"))
             .setDigests(KeyProperties.DIGEST_SHA256)
@@ -71,7 +73,8 @@ class AndroidAnchorKeys(
             // password — so a phone that is merely unlocked cannot sign.
             .setUserAuthenticationParameters(
                 0,
-                KeyProperties.AUTH_BIOMETRIC_STRONG or KeyProperties.AUTH_DEVICE_CREDENTIAL,
+                if (biometricOnly) KeyProperties.AUTH_BIOMETRIC_STRONG
+                else KeyProperties.AUTH_BIOMETRIC_STRONG or KeyProperties.AUTH_DEVICE_CREDENTIAL,
             )
             .setInvalidatedByBiometricEnrollment(true)
             .setAttestationChallenge(alias.toByteArray())
@@ -102,6 +105,7 @@ class AndroidAnchorKeys(
             authEnforcedByHardware = info.isUserAuthenticationRequired &&
                 info.isUserAuthenticationRequirementEnforcedBySecureHardware,
             attestationChainLength = ks.getCertificateChain(alias)?.size ?: 0,
+            biometricOnly = info.userAuthenticationType == KeyProperties.AUTH_BIOMETRIC_STRONG,
         )
     }
 
@@ -114,6 +118,8 @@ class AndroidAnchorKeys(
         } catch (e: KeyPermanentlyInvalidatedException) {
             throw KeyInvalidated(e.message ?: "anchor key invalidated")
         }
+        // The prompt must offer exactly what the key accepts.
+        val biometricOnly = withContext(Dispatchers.IO) { details(deviceIdHex)?.biometricOnly ?: false }
         val activity = host.activity.filterNotNull().first()
         return withContext(Dispatchers.Main) {
             suspendCancellableCoroutine { cont ->
@@ -147,25 +153,29 @@ class AndroidAnchorKeys(
                     },
                 )
                 cont.invokeOnCancellation { prompt.cancelAuthentication() }
-                prompt.authenticate(promptInfo(request), BiometricPrompt.CryptoObject(sig))
+                prompt.authenticate(promptInfo(request, biometricOnly), BiometricPrompt.CryptoObject(sig))
             }
         }
     }
 
-    private fun promptInfo(r: SignRequest): BiometricPrompt.PromptInfo {
+    private fun promptInfo(r: SignRequest, biometricOnly: Boolean): BiometricPrompt.PromptInfo {
         val title = when {
             r.purpose == Event.PURPOSE_ENROL_ACCEPT -> context.getString(R.string.sign_enrol, r.machineName)
             r.verdictCode == VERDICT_APPROVED -> context.getString(R.string.sign_approve_changed, r.machineName)
             else -> context.getString(R.string.sign_confirm_unchanged, r.machineName)
         }
-        return BiometricPrompt.PromptInfo.Builder()
+        val b = BiometricPrompt.PromptInfo.Builder()
             .setTitle(title)
             .setSubtitle(context.getString(R.string.sign_subtitle))
+            .setConfirmationRequired(true)
+        if (biometricOnly) {
+            b.setAllowedAuthenticators(BIOMETRIC_STRONG).setNegativeButtonText(context.getString(R.string.cancel))
+        } else {
             // No negative button: with DEVICE_CREDENTIAL the system provides
             // "Use PIN" and cancel itself.
-            .setAllowedAuthenticators(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)
-            .setConfirmationRequired(true)
-            .build()
+            b.setAllowedAuthenticators(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)
+        }
+        return b.build()
     }
 
     override fun delete(deviceIdHex: String) {

@@ -400,6 +400,11 @@ no longer opens the disk).
    anchor key with `AUTH_BIOMETRIC_STRONG` only, for users who do not want
    the PIN to be enough (PROTOCOL-BLE.md §11.2 allows it). Requires
    re-enrolling that machine.
+   **Done (2, 3):** overlays are filtered (`filterTouchesWhenObscured`, and
+   `setHideOverlayWindows` with the `HIDE_OVERLAY_WINDOWS` permission). The
+   bind screen offers "Require fingerprint or face" when a strong biometric
+   is enrolled; the key is then created with `AUTH_BIOMETRIC_STRONG` only,
+   the prompt offers no PIN, and machine details shows the key's policy.
 4. **Half-finished enrolment**: if the machine commits but its confirmation
    does not reach the phone, the machine lists a phone that has no record.
    `attest status` should make stale entries visible; enrolling again with

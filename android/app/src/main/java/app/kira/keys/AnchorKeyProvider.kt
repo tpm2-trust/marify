@@ -20,8 +20,11 @@ class KeyInvalidated(message: String = "anchor key invalidated") : Exception(mes
  * signature. Tests substitute a software implementation.
  */
 interface AnchorKeyProvider {
-    /** Creates (or replaces) the key for this machine; returns SPKI DER (91 bytes). */
-    suspend fun create(deviceIdHex: String): CreatedAnchorKey
+    /**
+     * Creates (or replaces) the key for this machine; returns SPKI DER (91
+     * bytes). With [biometricOnly] the screen-lock PIN does not unlock it.
+     */
+    suspend fun create(deviceIdHex: String, biometricOnly: Boolean = false): CreatedAnchorKey
 
     /** DER ECDSA over SHA-256([tbs]) — the platform hashes, no raw r‖s. */
     suspend fun sign(deviceIdHex: String, tbs: ByteArray, request: SignRequest): ByteArray

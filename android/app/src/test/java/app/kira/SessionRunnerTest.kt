@@ -94,7 +94,11 @@ class SessionRunnerTest {
     private class FakeKeys(var signResult: () -> ByteArray = { byteArrayOf(0x30) }) : AnchorKeyProvider {
         val gate = CompletableDeferred<Unit>().apply { complete(Unit) }
         var requests = mutableListOf<SignRequest>()
-        override suspend fun create(deviceIdHex: String) = CreatedAnchorKey(ByteArray(91), KeyStorage.TEE)
+        var biometricOnly: Boolean? = null
+        override suspend fun create(deviceIdHex: String, biometricOnly: Boolean): CreatedAnchorKey {
+            this.biometricOnly = biometricOnly
+            return CreatedAnchorKey(ByteArray(91), KeyStorage.TEE)
+        }
         override suspend fun sign(deviceIdHex: String, tbs: ByteArray, request: SignRequest): ByteArray {
             requests += request
             gate.await()
@@ -381,6 +385,7 @@ class SessionRunnerTest {
         val core = FakeCore()
         val link = FakeLink(mode = InfoValue.MODE_ENROL)
         val records = FakeRecords()
+        val keys = FakeKeys()
         core.onNotification = { v ->
             when (v[0].toInt()) {
                 1 -> step(events = listOf(Event.Sas("123456")))
@@ -391,7 +396,7 @@ class SessionRunnerTest {
                 }
             }
         }
-        val r = runner(core, link, records = records, mode = SessionMode.Enrol)
+        val r = runner(core, link, keys, records = records, mode = SessionMode.Enrol)
         launch { r.run() }
         link.notify(1)
         advanceUntilIdle()
@@ -403,10 +408,11 @@ class SessionRunnerTest {
         // The user sees what is known about the machine before any key exists.
         assertEquals(Phase.CONFIRM_BIND, r.state.value.phase)
         assertFalse(core.calls.contains("anchorKey"))
-        r.confirmBind(true)
+        r.confirmBind(true, biometricOnly = true)
         link.notify(3)
         advanceUntilIdle()
         assertTrue(core.calls.containsAll(listOf("confirmSas(true)", "anchorKey")))
+        assertEquals(true, keys.biometricOnly)
         assertEquals(listOf("""{"r":1}"""), records.saved)
         assertEquals(Outcome.Succeeded, r.state.value.outcome)
         assertEquals("Thinkpad-X1", r.state.value.machineName)

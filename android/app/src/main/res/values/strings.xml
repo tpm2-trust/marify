@@ -81,6 +81,10 @@
     <string name="bind_initrd_unknown">The machine could not tell where its initrd was measured. Make sure the checked PCRs cover it.</string>
     <string name="bind_initrd_none">This machine boots without an initrd.</string>
     <string name="bind_confirm">Bind</string>
+    <string name="bind_biometric_only">Require fingerprint or face</string>
+    <string name="bind_biometric_only_body">For this machine the screen-lock PIN will not be enough. Changing it later means enrolling the machine again.</string>
+    <string name="key_unlock_any">Unlocked by fingerprint, face or screen-lock PIN</string>
+    <string name="key_unlock_biometric_only">Unlocked by fingerprint or face only</string>
     <string name="tpm_label">TPM</string>
     <string name="tpm_verified_short">Verified as genuine: %1$s</string>
     <string name="tpm_unverified_short">Not verified as genuine hardware</string>
