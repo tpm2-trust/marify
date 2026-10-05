@@ -104,6 +104,7 @@ class SessionRunner(
 
     /** Runs the session to its end. Cancelling the caller aborts the session. */
     suspend fun run() = withContext(dispatcher) {
+        Log.i(TAG, "session starts: ${mode::class.simpleName}")
         do {
             retryAfterRefusal = false
             if (!connectAndRun()) return@withContext
@@ -212,6 +213,7 @@ class SessionRunner(
     }
 
     private suspend fun handle(input: Input, scope: CoroutineScope) {
+        if (input !is Input.FromLink) Log.i(TAG, "input ${input::class.simpleName} (phase ${_state.value.phase})")
         when (input) {
             // Events of an earlier connection (before a retry) are stale.
             is Input.FromLink -> if (input.from !== link) Unit else when (val ev = input.event) {
@@ -337,6 +339,7 @@ class SessionRunner(
     }
 
     private suspend fun onEvent(e: Event, queue: ArrayDeque<StepResult>, scope: CoroutineScope?) {
+        Log.i(TAG, "core event ${e::class.simpleName} (phase ${_state.value.phase})")
         when (e) {
             is Event.Sas -> _state.update { it.copy(phase = Phase.CONFIRM_SAS, sas = e.sas) }
             is Event.NeedAnchorKey -> {
@@ -406,6 +409,7 @@ class SessionRunner(
 
     private suspend fun end(outcome: Outcome) {
         if (ended) return
+        Log.i(TAG, "session ends in phase ${_state.value.phase}: $outcome")
         ended = true
         var final = outcome
         if (refusedByMachine(outcome)) {

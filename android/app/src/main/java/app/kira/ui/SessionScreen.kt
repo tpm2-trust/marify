@@ -94,6 +94,7 @@ fun SessionScreen(manager: SessionManager, onClose: () -> Unit) {
         onRequestEventlog = r::requestEventlog,
         onRetry = { manager.dismiss(); manager.retry() },
         onDone = { manager.dismiss(); onClose() },
+        onStop = { confirmLeave = true },
     )
 }
 
@@ -107,6 +108,7 @@ fun SessionContent(
     onRequestEventlog: () -> Unit,
     onRetry: () -> Unit,
     onDone: () -> Unit,
+    onStop: () -> Unit = {},
 ) {
     val name = state.machineName ?: stringResource(R.string.a_machine)
     Column(
@@ -136,16 +138,22 @@ fun SessionContent(
                     }
                 }
             }
-            !state.finished && state.unreachable != null -> Unreachable(state.machineName, state.unreachable)
-            !state.finished -> Progress(
-                when (state.phase) {
-                    Phase.CONNECTING -> stringResource(R.string.phase_connecting)
-                    Phase.SECURING -> stringResource(R.string.phase_securing)
-                    Phase.SIGNING -> stringResource(R.string.phase_signing)
-                    Phase.ENROLLING, Phase.CONFIRM_SAS -> stringResource(R.string.phase_enrolling)
-                    else -> stringResource(R.string.phase_verifying, name)
-                },
-            )
+            !state.finished && state.unreachable != null -> {
+                Unreachable(state.machineName, state.unreachable)
+                StopButton(onStop)
+            }
+            !state.finished -> {
+                Progress(
+                    when (state.phase) {
+                        Phase.CONNECTING -> stringResource(R.string.phase_connecting)
+                        Phase.SECURING -> stringResource(R.string.phase_securing)
+                        Phase.SIGNING -> stringResource(R.string.phase_signing)
+                        Phase.ENROLLING, Phase.CONFIRM_SAS -> stringResource(R.string.phase_enrolling)
+                        else -> stringResource(R.string.phase_verifying, name)
+                    },
+                )
+                StopButton(onStop)
+            }
         }
 
         state.notice?.let {
@@ -331,6 +339,12 @@ private fun Unreachable(machineName: String?, u: app.kira.session.Unreachable) {
         )
         Text(stringResource(R.string.unreachable_attempt, u.attempt, u.reason), style = MaterialTheme.typography.bodySmall)
     }
+}
+
+/** Leaves a session that is waiting; the caller asks for confirmation first. */
+@Composable
+private fun StopButton(onStop: () -> Unit) {
+    OutlinedButton(onClick = onStop, modifier = Modifier.testTag("stop")) { Text(stringResource(R.string.stop)) }
 }
 
 @Composable

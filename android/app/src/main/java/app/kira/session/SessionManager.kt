@@ -20,6 +20,7 @@ import app.kira.service.AttestationService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
@@ -143,7 +144,20 @@ class SessionManager(
     fun cancel() {
         val r = _active.value ?: return
         if (r.state.value.finished) return
-        if (r.state.value.phase == Phase.CONNECTING) job?.cancel() else r.cancel()
+        val s = r.state.value
+        val j = job
+        // While it is still connecting the runner reads no input, so an
+        // abort request would wait unread: cancel the job instead.
+        if (s.phase == Phase.CONNECTING || s.unreachable != null) {
+            j?.cancel()
+            return
+        }
+        r.cancel()
+        // A stalled link must not keep the session alive either.
+        scope.launch {
+            delay(CANCEL_GRACE_MS)
+            if (!r.state.value.finished && job === j) j?.cancel()
+        }
     }
 
     /** Forgets a finished session. */
@@ -187,4 +201,9 @@ class SessionManager(
     }
 
     @Volatile private var identity: app.kira.keys.VerifierIdentity? = null
+
+    private companion object {
+        /** How long an abort may take before the session is cancelled outright. */
+        const val CANCEL_GRACE_MS = 3_000L
+    }
 }

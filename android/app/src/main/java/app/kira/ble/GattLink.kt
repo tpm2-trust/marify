@@ -117,7 +117,10 @@ class GattLink private constructor(private val device: BluetoothDevice) : Link {
         override fun onCharacteristicChanged(
             g: BluetoothGatt, c: BluetoothGattCharacteristic, value: ByteArray,
         ) {
-            if (c.uuid == KiraCore.TX_UUID) eventsChannel.trySend(LinkEvent.Notification(value.copyOf()))
+            if (c.uuid == KiraCore.TX_UUID) {
+                Log.d(TAG, "rx fragment ${fragInfo(value)}")
+                eventsChannel.trySend(LinkEvent.Notification(value.copyOf()))
+            }
         }
 
         @Deprecated("API < 33")
@@ -125,7 +128,9 @@ class GattLink private constructor(private val device: BluetoothDevice) : Link {
         override fun onCharacteristicChanged(g: BluetoothGatt, c: BluetoothGattCharacteristic) {
             // The characteristic's value buffer is reused: copy it right here.
             if (c.uuid == KiraCore.TX_UUID) {
-                eventsChannel.trySend(LinkEvent.Notification(c.value?.copyOf() ?: ByteArray(0)))
+                val v = c.value?.copyOf() ?: ByteArray(0)
+                Log.d(TAG, "rx fragment ${fragInfo(v)}")
+                eventsChannel.trySend(LinkEvent.Notification(v))
             }
         }
     }
@@ -142,6 +147,7 @@ class GattLink private constructor(private val device: BluetoothDevice) : Link {
         if (!g.requestMtu(MAX_MTU)) throw LinkException("MTU request failed")
         mtu = withTimeout(STEP_TIMEOUT_MS) { mtuChanged.await() }
         if (mtu < 23) throw LinkException("disconnected during MTU exchange")
+        Log.d(TAG, "MTU $mtu")
 
         if (!g.discoverServices()) throw LinkException("service discovery failed to start")
         if (withTimeout(STEP_TIMEOUT_MS) { discovered.await() } != BluetoothGatt.GATT_SUCCESS) {
@@ -200,6 +206,7 @@ class GattLink private constructor(private val device: BluetoothDevice) : Link {
 
     override suspend fun write(fragment: ByteArray) {
         if (closed.get()) throw LinkException("link closed")
+        Log.d(TAG, "tx fragment ${fragInfo(fragment)}")
         queue.write(fragment)
     }
 
@@ -229,6 +236,15 @@ class GattLink private constructor(private val device: BluetoothDevice) : Link {
         private const val STATUS_DISCONNECTED = -1
         private const val STATUS_TIMEOUT = -2
         private const val GATT_ERROR_133 = 133
+
+        /** Fragment header (u16le total ‖ u8 flags ‖ u16le seq) for the debug log. */
+        fun fragInfo(f: ByteArray): String {
+            if (f.size < 5) return "of ${f.size} bytes (short)"
+            val total = (f[0].toInt() and 0xff) or ((f[1].toInt() and 0xff) shl 8)
+            val seq = (f[3].toInt() and 0xff) or ((f[4].toInt() and 0xff) shl 8)
+            val start = if (f[2].toInt() and 1 != 0) " start" else ""
+            return "seq $seq$start, record $total bytes, ${f.size} bytes"
+        }
         val CCCD_UUID: UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
 
         /**

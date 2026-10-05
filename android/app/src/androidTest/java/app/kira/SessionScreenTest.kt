@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.kira.session.FailureKind
 import app.kira.session.Outcome
@@ -20,13 +21,44 @@ import org.junit.runner.RunWith
 class SessionScreenTest {
     @get:Rule val rule = createComposeRule()
 
-    private fun show(state: SessionState) = rule.setContent {
+    private fun show(state: SessionState, onStop: () -> Unit = {}) = rule.setContent {
         KiraTheme {
             SessionContent(
                 state = state, canRetry = true,
                 onConfirmSas = {}, onDecide = { _, _ -> }, onRequestEventlog = {}, onRetry = {}, onDone = {},
+                onStop = onStop,
             )
         }
+    }
+
+    /** Regression: a session that kept looking for its machine had no way out on screen. */
+    @Test fun unreachableSessionCanBeStopped() {
+        var stopped = false
+        show(
+            SessionState(
+                mode = SessionMode.Attest("a0".repeat(16), "Thinkpad-X1"),
+                unreachable = app.kira.session.Unreachable(105, "Thinkpad-X1 was not seen nearby", 520_000),
+            ),
+            onStop = { stopped = true },
+        )
+        rule.onNodeWithTag("unreachable").assertIsDisplayed()
+        rule.onNodeWithTag("stop").assertIsDisplayed().performClick()
+        assert(stopped)
+    }
+
+    @Test fun waitingSessionCanBeStopped() {
+        show(SessionState(mode = SessionMode.Enrol, phase = Phase.ENROLLING))
+        rule.onNodeWithTag("stop").assertIsDisplayed()
+    }
+
+    @Test fun finishedSessionHasNoStop() {
+        show(
+            SessionState(
+                mode = SessionMode.Enrol, phase = Phase.FINISHED,
+                outcome = Outcome.Failed(FailureKind.LINK_LOST, 0, "connection lost"),
+            ),
+        )
+        rule.onNodeWithTag("stop").assertDoesNotExist()
     }
 
     @Test fun refusalIsARedWarningWithoutRetry() {
