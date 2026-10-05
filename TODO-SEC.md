@@ -15,7 +15,7 @@ tpm2-kira.
 | [S2](#s2-the-machines-attestation-blob-can-be-replaced-and-its-signature-is-never-checked) | Machine blob replaceable; its signature is never verified | High | tpm2-kira | done |
 | [S3](#s3-enrolment-does-not-verify-that-the-tpm-is-genuine) | Enrolment trusts the TPM on first use (EK certificate not verified) | Medium | core, tpm2-kira, app | open |
 | [S4](#s4-phone-debug-builds-and-data-at-rest) | Debug build usable for real machines; stored policy editable by code running as the app | Medium | app | 1–2 done |
-| [S5](#s5-the-pcr-selection-may-not-cover-the-initrd) | PCR selection may not cover the initrd | Medium | tpm2-kira, app | open |
+| [S5](#s5-the-pcr-selection-may-not-cover-the-initrd) | PCR selection may not cover the initrd | Medium | tpm2-kira, app | 1, 3 done; 2 with S3 |
 | [S6](#s6-the-blob-is-readable-by-anyone-with-tpm-access) | Blob (machine Noise key, advertising key) readable with TPM access | Low, accepted | docs | open |
 | [S7](#s7-relay-to-a-look-alike-machine) | Relay to a look-alike machine | Inherent | docs | open |
 | [S8](#s8-smaller-hardening) | Noise test vectors, overlay taps, biometric-only option | Low | both | open |
@@ -299,6 +299,14 @@ covered, a modified initrd (the classic passphrase logger) verifies as
    field) so the core can add a warning, and show the quoted PCRs with their
    descriptions on the app's bind screen under "Details".
 3. Add a `docs/` table: boot setup → PCRs that must be quoted.
+
+**Done: 1 and 3** (tpm2-kira `e90fab9`). `attest enrol` recognises GRUB
+(PCR 9 file), the EFI stub's LoadFile2 tag (PCR 9) and a UKI (PCR 11
+`.initrd`, PCR 4 image), prints whether the selection covers the initrd and
+asks (default no) when it does not; the table is in tpm2-kira's README.
+Checked on real event logs from go-attestation's test data. **Step 2** changes
+the protocol (an optional EnrolOffer field) and needs a rebuilt core: it is
+done together with S3, which changes the same message.
 
 ---
 
