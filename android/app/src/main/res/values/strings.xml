@@ -41,6 +41,8 @@
     <string name="enrol_searching">Searching…</string>
     <string name="enrol_waiting_machine">tpm2-kira machine waiting for enrolment</string>
     <string name="enrol_signal">Signal %1$d dBm</string>
+    <string name="debug_banner">DEBUG BUILD — demo only, do not enrol real machines</string>
+    <string name="debug_real_machines">Show real machines. This debug build is debuggable and may keep keys outside secure hardware; use the signed release build for machines you rely on.</string>
     <string name="demo_machine">Demo machine (debug build)</string>
     <string name="demo_machine_sub">Simulated Thinkpad-X1, no hardware needed</string>
 

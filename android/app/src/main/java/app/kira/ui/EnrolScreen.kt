@@ -25,12 +25,14 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -38,11 +40,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import app.kira.AppContainer
+import app.kira.BuildConfig
 import app.kira.R
 import app.kira.ble.Advertisement
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.map
@@ -52,7 +57,13 @@ import kotlinx.coroutines.flow.stateIn
 class EnrolViewModel(private val c: AppContainer) : ViewModel() {
     val demoAvailable = c.sessions.demo.available
 
-    val waiting: StateFlow<List<Advertisement>> = c.scanner.scan()
+    /**
+     * Debug builds hide real machines until the developer opts in: their
+     * data and keys are not protected like a release build's (TODO-SEC.md S4.2).
+     */
+    val realMachinesAllowed = MutableStateFlow(!BuildConfig.DEBUG)
+
+    private val seen: StateFlow<List<Advertisement>> = c.scanner.scan()
         .catch { }
         .filter { it.isEnrol }
         .runningFold(LinkedHashMap<String, Advertisement>()) { acc, adv ->
@@ -64,6 +75,10 @@ class EnrolViewModel(private val c: AppContainer) : ViewModel() {
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(1_000), emptyList())
 
+    val waiting: StateFlow<List<Advertisement>> = combine(seen, realMachinesAllowed) { list, allowed ->
+        if (allowed) list else emptyList()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(1_000), emptyList())
+
     fun enrol(adv: Advertisement) = c.sessions.startEnrol(adv)
     fun enrolDemo() = c.sessions.startDemoEnrol()
 }
@@ -72,6 +87,7 @@ class EnrolViewModel(private val c: AppContainer) : ViewModel() {
 @Composable
 fun EnrolScreen(vm: EnrolViewModel, onBack: () -> Unit, onSession: () -> Unit) {
     val waiting by vm.waiting.collectAsStateWithLifecycle()
+    val realAllowed by vm.realMachinesAllowed.collectAsStateWithLifecycle()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -105,6 +121,24 @@ fun EnrolScreen(vm: EnrolViewModel, onBack: () -> Unit, onSession: () -> Unit) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
                     Text(stringResource(R.string.enrol_searching), style = MaterialTheme.typography.labelLarge)
+                }
+            }
+            if (BuildConfig.DEBUG) {
+                item {
+                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
+                        Row(
+                            Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Text(stringResource(R.string.debug_real_machines), Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                            Switch(
+                                checked = realAllowed,
+                                onCheckedChange = { vm.realMachinesAllowed.value = it },
+                                modifier = Modifier.testTag("allow_real_machines"),
+                            )
+                        }
+                    }
                 }
             }
             items(waiting, key = { it.address }) { adv ->

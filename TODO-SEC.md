@@ -14,7 +14,7 @@ tpm2-kira.
 | [S1](#s1-the-phone-does-not-say-that-the-machines-enrolment-changed) | Phone gives a generic error when the machine's blob was replaced, and one text falsely reassures | High | app | done |
 | [S2](#s2-the-machines-attestation-blob-can-be-replaced-and-its-signature-is-never-checked) | Machine blob replaceable; its signature is never verified | High | tpm2-kira | open |
 | [S3](#s3-enrolment-does-not-verify-that-the-tpm-is-genuine) | Enrolment trusts the TPM on first use (EK certificate not verified) | Medium | core, tpm2-kira, app | open |
-| [S4](#s4-phone-debug-builds-and-data-at-rest) | Debug build usable for real machines; stored policy editable by code running as the app | Medium | app | open |
+| [S4](#s4-phone-debug-builds-and-data-at-rest) | Debug build usable for real machines; stored policy editable by code running as the app | Medium | app | 1–2 done |
 | [S5](#s5-the-pcr-selection-may-not-cover-the-initrd) | PCR selection may not cover the initrd | Medium | tpm2-kira, app | open |
 | [S6](#s6-the-blob-is-readable-by-anyone-with-tpm-access) | Blob (machine Noise key, advertising key) readable with TPM access | Low, accepted | docs | open |
 | [S7](#s7-relay-to-a-look-alike-machine) | Relay to a look-alike machine | Inherent | docs | open |
@@ -260,6 +260,15 @@ on the bus of a discrete TPM or firmware bugs in the TPM itself.
 **Tests.** `apkanalyzer`: release not debuggable, no `INTERNET`.
 Instrumented: record with a flipped profile fails to load; load while
 locked is deferred.
+
+**Done: 1–2.** Signing reads `KIRA_KEYSTORE`, `KIRA_KEYSTORE_PASSWORD`,
+`KIRA_KEY_ALIAS`, `KIRA_KEY_PASSWORD` or `keystore.properties`; without them
+the release stays unsigned. Checked with a throwaway key (deleted
+afterwards): `apksigner` verifies, release `debuggable=false` and no
+`INTERNET`, the minified release starts. Debug is `eu.x7e.kira.debug`
+("Kira debug"), has a red banner on every screen, and lists real machines on
+the enrol screen only after a switch (off by default, not persisted). The
+release key itself is still to be created by the owner (README.md).
 
 ---
 

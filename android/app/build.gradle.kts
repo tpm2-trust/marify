@@ -1,8 +1,21 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
 }
+
+// Release signing (TODO-SEC.md S4.1). The key never goes into the repository:
+// it is read from environment variables, or from an untracked
+// keystore.properties next to settings.gradle.kts (see README.md). Without
+// either, the release APK is built unsigned and cannot be installed.
+val keystoreProps = Properties().apply {
+    rootProject.file("keystore.properties").takeIf { it.isFile }?.inputStream()?.use { load(it) }
+}
+fun signingValue(env: String, prop: String): String? =
+    System.getenv(env)?.takeIf { it.isNotEmpty() } ?: keystoreProps.getProperty(prop)
+val releaseStoreFile = signingValue("KIRA_KEYSTORE", "storeFile")
 
 android {
     namespace = "app.kira"
@@ -25,11 +38,28 @@ android {
         }
     }
 
+    signingConfigs {
+        if (releaseStoreFile != null) {
+            create("release") {
+                storeFile = rootProject.file(releaseStoreFile)
+                storePassword = signingValue("KIRA_KEYSTORE_PASSWORD", "storePassword")
+                keyAlias = signingValue("KIRA_KEY_ALIAS", "keyAlias")
+                keyPassword = signingValue("KIRA_KEY_PASSWORD", "keyPassword")
+            }
+        }
+    }
+
     buildTypes {
+        debug {
+            // Installs beside the release app, so a demo build can never
+            // replace (or read the data of) the one holding real machines.
+            applicationIdSuffix = ".debug"
+        }
         release {
             optimization {
                 enable = true
             }
+            if (releaseStoreFile != null) signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {

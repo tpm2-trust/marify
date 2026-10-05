@@ -25,6 +25,34 @@ access to clone it.
 ./scripts/test-swtpm.sh               # against a tpm2-kira machine on swtpm (needs go, swtpm)
 ```
 
+### Release signing
+
+Only a signed release build belongs on a phone that holds real machines
+(the debug build is debuggable, shows a red banner and hides real machines
+behind a switch). Create the key once and keep it safe — Android installs
+updates only when they are signed with the same key:
+
+```sh
+keytool -genkeypair -v -keystore ~/keys/kira-release.jks -alias kira \
+    -keyalg EC -groupname secp256r1 -validity 10000
+```
+
+Then either export the four values for the build
+
+```sh
+export KIRA_KEYSTORE=~/keys/kira-release.jks KIRA_KEY_ALIAS=kira
+export KIRA_KEYSTORE_PASSWORD=… KIRA_KEY_PASSWORD=…
+./gradlew assembleRelease     # app/build/outputs/apk/release/app-release.apk
+```
+
+or put them in `keystore.properties` next to `settings.gradle.kts`
+(git-ignored; `storeFile`, `storePassword`, `keyAlias`, `keyPassword`).
+Without them the release APK is built unsigned. Keep the keystore out of
+this directory.
+
+The debug app is `eu.x7e.kira.debug` and installs beside the release app
+`eu.x7e.kira`; neither can read the other's data.
+
 Gradle needs about 3 GB of free RAM. `gradle.properties` is tuned for an 8 GB
 machine (one JVM, Kotlin compiled in-process); on such a machine run one task
 at a time (lint separately from builds).
