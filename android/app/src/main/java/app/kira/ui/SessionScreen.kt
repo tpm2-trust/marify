@@ -49,6 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.kira.R
 import app.kira.core.Decision
 import app.kira.core.Event
+import app.kira.core.KiraCore
 import app.kira.session.FailureKind
 import app.kira.session.Outcome
 import app.kira.session.Phase
@@ -224,6 +225,16 @@ private fun BindContent(b: Event.NeedAnchorKey, onConfirm: (Boolean, Boolean) ->
                 if (verified) stringResource(R.string.bind_tpm_verified_body)
                 else stringResource(R.string.bind_tpm_unverified_body, b.ekNote),
             )
+            if (!verified) {
+                val vendors = remember { runCatching { KiraCore.ekVendors() }.getOrDefault(emptyList()) }
+                if (vendors.isNotEmpty()) {
+                    Text(
+                        stringResource(R.string.bind_tpm_known_vendors, vendors.joinToString(", ")),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.testTag("known_vendors"),
+                    )
+                }
+            }
         }
     }
     val pcrs = b.initrdPcrs.joinToString(" or ")

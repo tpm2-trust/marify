@@ -244,6 +244,16 @@ Steps 1–5 as described, with these decisions:
   between the code comparison and the key/unlock prompt, and in machine
   details.
 
+**Vendors are data** (tpm2-kira `203a65c`, `a4db157`): roots and
+intermediates live in `attest/ekroots/<vendor>/`, listed in
+`attest/ekroots/vendors.json` with sources and pinned SHA-256 values. The
+core, which runs in the phone app, ignores a vendor whose files do not match
+their pins. `attest/ekroots/README.md` describes adding a vendor (two
+independent sources, a manifest entry, an app core rebuild). Roots are only
+ever compiled into the app, never added at runtime. The bind screen lists the
+vendors the installed app can verify; `CoreOnDeviceTest` checks on a device
+that the roots are embedded.
+
 **Still open:** no real Intel EK certificate was available here, so the full
 chain (EK ← per-machine CAs ← embedded CAs) is tested only with a synthetic
 hierarchy. On a laptop with Intel PTT, run `sudo tpm2-kira attest ekcert`:

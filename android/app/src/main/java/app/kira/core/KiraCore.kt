@@ -18,6 +18,10 @@ object KiraCore {
     val protocolVersion: Long get() = kiracore.Kiracore.protocolVersion()
     val schemaVersion: Long get() = kiracore.Kiracore.schemaVersion()
 
+    /** TPM vendors whose EK certificates the core in this app can verify. */
+    fun ekVendors(): List<String> =
+        kotlinx.serialization.json.Json.decodeFromString<List<String>>(kiracore.Kiracore.ekVendors())
+
     fun generateNoiseKey(): ByteArray = kiracore.Kiracore.generateNoiseKey()
 
     fun newEnrolSession(configJson: String, noisePriv: ByteArray): CoreSession =

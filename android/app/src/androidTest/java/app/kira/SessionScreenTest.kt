@@ -62,6 +62,8 @@ class SessionScreenTest {
         rule.onNodeWithText("no certificate", substring = true).assertIsDisplayed()
         rule.onNodeWithTag("initrd_not_covered").assertIsDisplayed()
         rule.onNodeWithText("measured into PCR 9", substring = true).assertIsDisplayed()
+        // The vendor list comes from the core compiled into this app.
+        rule.onNodeWithText("can verify TPMs from: Intel PTT", substring = true).assertIsDisplayed()
         rule.onNodeWithTag("bind").assertIsDisplayed()
         rule.onNodeWithTag("bind_cancel").assertIsDisplayed()
     }
