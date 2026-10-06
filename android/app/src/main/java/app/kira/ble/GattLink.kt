@@ -43,7 +43,15 @@ class GattLink private constructor(private val device: BluetoothDevice) : Link {
 
     private var gatt: BluetoothGatt? = null
     private var rx: BluetoothGattCharacteristic? = null
-    private var rxWriteType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+    /**
+     * Fragments go out as Write Requests: each waits for the machine's Write
+     * Response, which paces the phone to what the machine's controller can
+     * take. Unacknowledged writes let Android send a whole record in one
+     * burst, and an Intel 7265 lost the link (supervision timeout) on the
+     * first such burst, a 3.9 KB EnrolAccept. A record costs about one
+     * connection interval per fragment more, well under a second.
+     */
+    private var rxWriteType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
     private var mtu = 23
     private lateinit var infoValue: InfoValue
     private val closed = AtomicBoolean(false)
@@ -162,8 +170,8 @@ class GattLink private constructor(private val device: BluetoothDevice) : Link {
             throw LinkException("the tpm2-kira service is incomplete")
         }
         rx = rxChar
-        if (rxChar.properties and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE == 0) {
-            rxWriteType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+        if (rxChar.properties and BluetoothGattCharacteristic.PROPERTY_WRITE == 0) {
+            rxWriteType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
         }
 
         if (!g.readCharacteristic(infoChar)) throw LinkException("INFO read failed to start")
