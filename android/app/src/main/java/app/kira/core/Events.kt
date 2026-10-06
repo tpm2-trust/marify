@@ -118,11 +118,21 @@ data class Verdict(
     @SerialName("restart_count") val restartCount: Long = 0,
     @SerialName("clock_safe") val clockSafe: Boolean = false,
     @SerialName("firmware_version") val firmwareVersion: Long = 0,
+    /** What the machine's TPM made of the boot challenge (PROTOCOL-BLE.md §7.6). */
+    @SerialName("boot_key") val bootKey: String = BOOT_KEY_UNUSED,
+    /** The code the machine's screen must show, "ABCD-EFGH"; only with [BOOT_KEY_PROVED]. */
+    val code: String = "",
 ) {
     companion object {
         const val MATCH = "match"
         const val CHANGED = "changed"
         const val FAILED = "failed"
+
+        const val BOOT_KEY_PROVED = "proved"
+        const val BOOT_KEY_REFUSED = "refused"
+        const val BOOT_KEY_INVALID = "invalid"
+        const val BOOT_KEY_FAILED = "failed"
+        const val BOOT_KEY_UNUSED = "unused"
 
         private val json = Json { ignoreUnknownKeys = true }
         fun parse(text: String): Verdict = json.decodeFromString(serializer(), text)
@@ -175,6 +185,8 @@ enum class Decision(val code: Long) {
     APPROVE_ONCE(1),
     APPROVE_REMEMBER(2),
     REJECT(3),
+    /** A matching boot: the person has compared the code and wants the receipt signed. */
+    CONTINUE(4),
 }
 
 /** Answers in a receipt_ack event (PROTOCOL-BLE.md §7.3.8). */

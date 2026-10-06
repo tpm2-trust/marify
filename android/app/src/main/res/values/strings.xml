@@ -172,6 +172,16 @@
     <string name="reason_bad_type">The TPM produced something other than a quote.</string>
     <string name="reason_qd_mismatch">The quote was not made for this session; it may be replayed.</string>
     <string name="reason_reset_count_decreased">The TPM\'s boot counter went backwards: a replayed quote or a cleared TPM.</string>
+    <string name="reason_boot_proof_invalid">The machine claimed to hold its boot key but could not prove it.</string>
+    <string name="boot_code_title">Code on the machine\'s screen</string>
+    <string name="boot_code_body">The machine must show exactly this code. Only its TPM, in a boot state its own key approved, could recover it: a different machine, or this one booted differently, cannot. Compare before you continue.</string>
+    <string name="boot_code_demo_screen">The demo machine\'s screen shows: %1$s</string>
+    <string name="boot_key_approved_change">The machine\'s signing key has approved this changed state (an update that was resealed). Approve it here too if you expected the change.</string>
+    <string name="boot_key_refused">The machine\'s TPM did not release its boot key: this boot state is not one its signing key approved. There is no code to compare. That is expected after an update that was not resealed, or when asked after the code screen; otherwise be careful.</string>
+    <string name="boot_key_unavailable">The machine could not answer with its boot key, so there is no code to compare with its screen.</string>
+    <string name="codes_match_continue">The codes match — continue</string>
+    <string name="codes_differ_reject">The codes differ — reject</string>
+    <string name="continue_to_sign">Continue</string>
     <string name="reason_clock_unsafe">The TPM\'s clock is not trustworthy.</string>
     <string name="reason_firmware_changed">The TPM firmware changed.</string>
     <string name="reason_selection_mismatch">The machine reported different registers than requested.</string>

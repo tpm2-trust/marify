@@ -29,6 +29,7 @@ object Texts {
         "reset_count_decreased" to R.string.reason_reset_count_decreased,
         "clock_unsafe" to R.string.reason_clock_unsafe,
         "firmware_changed" to R.string.reason_firmware_changed,
+        "boot_proof_invalid" to R.string.reason_boot_proof_invalid,
         "selection_mismatch" to R.string.reason_selection_mismatch,
         "pcr_values_invalid" to R.string.reason_pcr_values_invalid,
         "pcr_digest_mismatch" to R.string.reason_pcr_digest_mismatch,

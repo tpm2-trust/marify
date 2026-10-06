@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -44,14 +45,65 @@ class VerdictScreenTest {
 
     @Test fun match() {
         show(
-            """{"type":"verdict","verdict":{"ok":true,"state":"match","profile":"enrolment baseline",
-               "reset_count":13,"restart_count":0,"clock_safe":true,"firmware_version":1}}""",
+            """{"type":"verdict","needs_decision":true,"verdict":{"ok":true,"state":"match","profile":"enrolment baseline",
+               "reset_count":13,"restart_count":0,"clock_safe":true,"firmware_version":1,
+               "boot_key":"proved","code":"K7QM-2XHD"}}""",
             lastAttested = "2026-08-12T09:30:00Z",
         )
         rule.onNodeWithTag("verdict_match").assertIsDisplayed()
         rule.onNodeWithText("Thinkpad-X1 — unchanged since", substring = true).assertIsDisplayed()
+        // The code the machine's screen must show, before any button.
+        rule.onNodeWithTag("boot_code").assertIsDisplayed()
+        rule.onNodeWithTag("boot_code_value").assertTextEquals("K7QM-2XHD")
         rule.onNodeWithTag("approve_once").assertDoesNotExist()
-        rule.onNodeWithTag("reject").assertDoesNotExist()
+        // Nothing is signed by itself: the person continues, or rejects.
+        rule.onNodeWithText("The codes match — continue").assertIsDisplayed()
+        rule.onNodeWithTag("continue").performClick()
+        assertEquals(listOf(Decision.CONTINUE to ""), decisions)
+    }
+
+    @Test fun matchRejectedBecauseTheCodesDiffer() {
+        show(
+            """{"type":"verdict","needs_decision":true,"verdict":{"ok":true,"state":"match",
+               "reset_count":13,"restart_count":0,"clock_safe":true,"firmware_version":1,
+               "boot_key":"proved","code":"K7QM-2XHD"}}""",
+        )
+        rule.onNodeWithText("The codes differ — reject").assertIsDisplayed()
+        rule.onNodeWithTag("reject").performClick()
+        assertEquals(listOf(Decision.REJECT to ""), decisions)
+    }
+
+    /** A refused boot key: said so, no code, the boot can still be continued. */
+    @Test fun matchWithARefusedBootKey() {
+        show(
+            """{"type":"verdict","needs_decision":true,"verdict":{"ok":true,"state":"match",
+               "reset_count":13,"restart_count":0,"clock_safe":true,"firmware_version":1,"boot_key":"refused"}}""",
+        )
+        rule.onNodeWithTag("boot_key_refused").assertIsDisplayed()
+        rule.onNodeWithTag("boot_code").assertDoesNotExist()
+        rule.onNodeWithText("Continue").assertIsDisplayed()
+        rule.onNodeWithTag("continue").performClick()
+        assertEquals(listOf(Decision.CONTINUE to ""), decisions)
+    }
+
+    /** The demo machine has no screen: the app says what it would show. */
+    @Test fun demoMachineScreen() {
+        val e = Event.parse(
+            """{"type":"verdict","needs_decision":true,"verdict":{"ok":true,"state":"match",
+               "reset_count":1,"restart_count":0,"clock_safe":true,"firmware_version":1,
+               "boot_key":"proved","code":"K7QM-2XHD"}}""",
+        ) as Event.VerdictEvent
+        rule.setContent {
+            KiraTheme {
+                VerdictContent(
+                    event = e, machineName = "Demo", lastAttested = null, decisionEnabled = true,
+                    eventlogRequested = false, eventlog = null, onDecide = { _, _ -> }, onRequestEventlog = {},
+                    demoScreenCode = "K7QM-2XHD",
+                )
+            }
+        }
+        rule.onNodeWithTag("demo_screen_code").assertIsDisplayed()
+        rule.onNodeWithText("The demo machine's screen shows: K7QM-2XHD").assertIsDisplayed()
     }
 
     @Test fun changed() {

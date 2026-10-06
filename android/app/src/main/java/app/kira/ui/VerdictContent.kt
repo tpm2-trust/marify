@@ -1,5 +1,6 @@
 package app.kira.ui
 
+import androidx.compose.ui.text.style.TextAlign
 import android.text.format.Formatter
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -64,6 +65,8 @@ fun VerdictContent(
     onDecide: (Decision, String) -> Unit,
     onRequestEventlog: () -> Unit,
     modifier: Modifier = Modifier,
+    /** What the machine's screen shows, where that screen is simulated (the demo machine). */
+    demoScreenCode: String? = null,
 ) {
     val v = event.verdict
     val colors = LocalVerdictColors.current
@@ -96,6 +99,8 @@ fun VerdictContent(
                 }
             }
         }
+
+        BootKeyCard(v, demoScreenCode)
 
         if (v.state == Verdict.CHANGED && v.pcrDiff.isNotEmpty()) {
             Text(stringResource(R.string.what_changed), style = MaterialTheme.typography.titleMedium)
@@ -135,6 +140,7 @@ fun VerdictContent(
 
         if (decisionEnabled && event.needsDecision) {
             when (v.state) {
+                Verdict.MATCH -> MatchDecisions(v, onDecide)
                 Verdict.CHANGED -> ChangedDecisions(onDecide)
                 else -> FailedDecisions(machineName, onDecide)
             }
@@ -163,6 +169,73 @@ private fun Headline(
             Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
             if (body != null) Text(body, style = MaterialTheme.typography.bodyLarge)
             extra()
+        }
+    }
+}
+
+/**
+ * The code the machine recovered with its boot key, and what the TPM said
+ * about that key. Shown before any decision, for every state: the person
+ * compares the code with the machine's screen before touching a button.
+ */
+@Composable
+private fun BootKeyCard(v: Verdict, demoScreenCode: String?) {
+    val colors = LocalVerdictColors.current
+    when (v.bootKey) {
+        Verdict.BOOT_KEY_PROVED -> Card(
+            Modifier.fillMaxWidth().testTag("boot_code"),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        ) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.boot_code_title), style = MaterialTheme.typography.titleMedium)
+                Text(
+                    v.code,
+                    style = MaterialTheme.typography.displaySmall,
+                    fontFamily = FontFamily.Monospace,
+                    modifier = Modifier.fillMaxWidth().testTag("boot_code_value"),
+                    textAlign = TextAlign.Center,
+                )
+                Text(stringResource(R.string.boot_code_body), style = MaterialTheme.typography.bodyMedium)
+                if (demoScreenCode != null) {
+                    Text(
+                        stringResource(R.string.boot_code_demo_screen, demoScreenCode),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.testTag("demo_screen_code"),
+                    )
+                }
+                if (v.state == Verdict.CHANGED) {
+                    Text(stringResource(R.string.boot_key_approved_change), style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+        Verdict.BOOT_KEY_REFUSED -> BootKeyNote(stringResource(R.string.boot_key_refused), colors.onChanged, colors.changedContainer, "boot_key_refused")
+        Verdict.BOOT_KEY_INVALID -> Unit // among the hard failures
+        else -> BootKeyNote(stringResource(R.string.boot_key_unavailable), colors.onChanged, colors.changedContainer, "boot_key_unavailable")
+    }
+}
+
+@Composable
+private fun BootKeyNote(text: String, content: Color, container: Color, tag: String) {
+    Card(Modifier.fillMaxWidth().testTag(tag), colors = CardDefaults.cardColors(containerColor = container)) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Icon(Icons.Filled.Warning, null, tint = content)
+            Text(text, color = content, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+/**
+ * A matching boot still waits for the person: they compare the code with the
+ * machine's screen and only then let the receipt be signed.
+ */
+@Composable
+private fun MatchDecisions(v: Verdict, onDecide: (Decision, String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(onClick = { onDecide(Decision.CONTINUE, "") }, Modifier.fillMaxWidth().testTag("continue")) {
+            Text(stringResource(if (v.bootKey == Verdict.BOOT_KEY_PROVED) R.string.codes_match_continue else R.string.continue_to_sign))
+        }
+        OutlinedButton(onClick = { onDecide(Decision.REJECT, "") }, Modifier.fillMaxWidth().testTag("reject")) {
+            Text(stringResource(if (v.bootKey == Verdict.BOOT_KEY_PROVED) R.string.codes_differ_reject else R.string.reject))
         }
     }
 }

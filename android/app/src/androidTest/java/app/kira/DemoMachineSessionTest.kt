@@ -78,7 +78,16 @@ class DemoMachineSessionTest {
             coreSchema = KiraCore.schemaVersion,
         )
         val user = CoroutineScope(Dispatchers.Default).launch {
-            runner.state.collect { react(runner, it) }
+            runner.state.collect {
+                // The person: compares the code with the machine's screen and
+                // continues a matching boot. Other verdicts are the test's.
+                if (it.phase == Phase.DECIDING && !it.decisionSent && it.verdict?.verdict?.state == Verdict.MATCH) {
+                    val v = it.verdict.verdict
+                    codesSeen += v.code to demo.lastBootCode()
+                    runner.decide(Decision.CONTINUE)
+                }
+                react(runner, it)
+            }
         }
         withTimeout(30_000) { runner.run() }
         user.cancel()
@@ -86,6 +95,9 @@ class DemoMachineSessionTest {
     }
 
     private var bindShown: Event.NeedAnchorKey? = null
+
+    /** (code on the phone, code on the machine's screen) of every matching boot. */
+    private val codesSeen = mutableListOf<Pair<String, String>>()
 
     private fun enrol(mtu: Int = 517) {
         var sasShown: String? = null
@@ -122,10 +134,29 @@ class DemoMachineSessionTest {
         demo.nextBoot()
         val s = session(attestMode(), mtu)
         assertEquals(Verdict.MATCH, s.verdict?.verdict?.state)
+        // The machine's TPM released its boot key: the phone shows the code
+        // the machine shows, and nothing was signed before the decision.
+        assertEquals(Verdict.BOOT_KEY_PROVED, s.verdict?.verdict?.bootKey)
+        assertEquals(9, s.verdict?.verdict?.code?.length)
+        assertEquals(listOf(s.verdict!!.verdict.code to s.verdict.verdict.code), codesSeen)
         assertEquals(Outcome.Succeeded, s.outcome)
         assertEquals(ReceiptResult.ACCEPTED, s.receiptAck?.result)
         assertEquals("receipt: verdict=ok authentic=true", demo.outcome(5000))
         assertTrue(KiraCore.recordSummary(record).lastAttested != null)
+    }
+
+    /** A TPM that refuses the key: no code, and the verdict says so; the boot still matches. */
+    @Test fun matchWithoutBootKey() {
+        enrol()
+        demo.nextBoot()
+        demo.refuseBootKey(true)
+        val s = session(attestMode(), 517)
+        assertEquals(Verdict.MATCH, s.verdict?.verdict?.state)
+        assertEquals(Verdict.BOOT_KEY_REFUSED, s.verdict?.verdict?.bootKey)
+        assertEquals("", s.verdict?.verdict?.code)
+        assertEquals("", demo.lastBootCode())
+        assertEquals(Outcome.Succeeded, s.outcome)
+        demo.refuseBootKey(false)
     }
 
     @Test fun changedWithEventlogApproveAndRememberThenMatch() {

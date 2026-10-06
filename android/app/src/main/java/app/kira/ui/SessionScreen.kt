@@ -88,6 +88,7 @@ fun SessionScreen(manager: SessionManager, onClose: () -> Unit) {
     SessionContent(
         state = state,
         canRetry = manager.canRetry,
+        demoScreenCode = if (state.verdict != null) manager.demoScreenCode() else null,
         onConfirmSas = r::confirmSas,
         onConfirmBind = r::confirmBind,
         onDecide = r::decide,
@@ -103,6 +104,7 @@ fun SessionContent(
     state: SessionState,
     canRetry: Boolean,
     onConfirmSas: (Boolean) -> Unit,
+    demoScreenCode: String? = null,
     onConfirmBind: (Boolean, Boolean) -> Unit = { _, _ -> },
     onDecide: (Decision, String) -> Unit,
     onRequestEventlog: () -> Unit,
@@ -125,6 +127,7 @@ fun SessionContent(
                     machineName = name,
                     lastAttested = (state.mode as? SessionMode.Attest)?.lastAttested,
                     decisionEnabled = !state.decisionSent && !state.finished && state.phase == Phase.DECIDING,
+                    demoScreenCode = demoScreenCode,
                     eventlogRequested = state.eventlogRequested,
                     eventlog = state.eventlog,
                     onDecide = onDecide,

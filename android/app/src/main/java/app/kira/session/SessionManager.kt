@@ -74,9 +74,11 @@ class SessionManager(
         retry = { startAttest(machine) }
         val mode = SessionMode.Attest(machine.deviceId, machine.name, machine.summary.lastAttested)
         if (demo.owns(machine.recordJson)) {
+            demoSession = true
             start(mode, demo.attestLink(), machine.recordJson)
             return
         }
+        demoSession = false
         val finder = MachineFinder(machine.name) {
             it.isAttest && KiraCore.matchAdvertisement(it.serviceData, machine.recordJson)
         }
@@ -165,6 +167,16 @@ class SessionManager(
         val r = _active.value ?: return
         if (r.state.value.finished) _active.value = null
     }
+
+    /** Whether the active attestation is against the demo machine. */
+    @Volatile private var demoSession = false
+
+    /**
+     * What the machine's screen shows for the running session, where that
+     * screen is simulated: the demo machine's boot code. Null for a real
+     * machine, whose screen the person looks at.
+     */
+    fun demoScreenCode(): String? = if (demoSession) demo.screenCode().ifEmpty { null } else null
 
     private fun start(
         mode: SessionMode,

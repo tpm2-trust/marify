@@ -10,7 +10,7 @@ class TextsTest {
         "malformed", "policy_invalid", "device_mismatch", "ak_mismatch", "bad_signature",
         "bad_magic", "bad_type", "qd_mismatch", "reset_count_decreased", "clock_unsafe",
         "firmware_changed", "selection_mismatch", "pcr_values_invalid", "pcr_digest_mismatch",
-        "secureboot_off", "no_profile_match",
+        "secureboot_off", "no_profile_match", "boot_proof_invalid",
     )
     private val warningCodes = listOf("reset_count_jump", "clock_unsafe", "firmware_changed", "secureboot_off")
 

@@ -26,4 +26,6 @@ class DemoMachineSupport : DemoSupport {
     override fun nextBoot() = demo.nextBoot()
     override fun changePcr(index: Int) = demo.changePCR(index.toLong())
     override fun rollbackResetCount() = demo.rollbackResetCount()
+    override fun screenCode(): String = demo.lastBootCode()
+    override fun refuseBootKey(refuse: Boolean) = demo.refuseBootKey(refuse)
 }

@@ -80,6 +80,14 @@ class SwtpmMachineSessionTest {
         startServing: Boolean = true,
         react: suspend (SessionRunner, SessionState) -> Unit = { _, _ -> },
     ): SessionState = runBlocking {
+        val person: suspend (SessionRunner, SessionState) -> Unit = { r, st ->
+            // Compares the code with the machine's screen and continues a
+            // matching boot; other verdicts are the test's.
+            if (st.phase == Phase.DECIDING && !st.decisionSent && st.verdict?.verdict?.state == Verdict.MATCH) {
+                r.decide(Decision.CONTINUE)
+            }
+            react(r, st)
+        }
         val runner = SessionRunner(
             mode = mode,
             connect = {
@@ -100,7 +108,7 @@ class SwtpmMachineSessionTest {
             coreSchema = KiraCore.schemaVersion,
         )
         val user = CoroutineScope(Dispatchers.Default).launch {
-            runner.state.collect { react(runner, it) }
+            runner.state.collect { person(runner, it) }
         }
         withTimeout(120_000) { runner.run() }
         user.cancel()
@@ -145,6 +153,9 @@ class SwtpmMachineSessionTest {
         machine.reboot()
         val s = session(attestMode(), mtu)
         assertEquals(s.verdict?.verdict?.reasons.toString(), Verdict.MATCH, s.verdict?.verdict?.state)
+        // A real TPM key under the slot's policy answered the phone's challenge.
+        assertEquals(Verdict.BOOT_KEY_PROVED, s.verdict?.verdict?.bootKey)
+        assertEquals(9, s.verdict?.verdict?.code?.length)
         assertEquals(Outcome.Succeeded, s.outcome)
         assertEquals(ReceiptResult.ACCEPTED, s.receiptAck?.result)
         assertEquals("receipt: verdict=ok authentic=true", machine.outcome())

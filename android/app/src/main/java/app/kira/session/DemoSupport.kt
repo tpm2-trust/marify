@@ -16,6 +16,10 @@ interface DemoSupport {
     fun nextBoot()
     fun changePcr(index: Int)
     fun rollbackResetCount()
+    /** What the demo machine's screen shows during an attestation: its boot code, or "" (it has no real screen). */
+    fun screenCode(): String
+    /** Make the demo machine's TPM refuse its boot key, as in an unapproved boot state. */
+    fun refuseBootKey(refuse: Boolean)
 }
 
 object NoDemo : DemoSupport {
@@ -26,4 +30,6 @@ object NoDemo : DemoSupport {
     override fun nextBoot() = Unit
     override fun changePcr(index: Int) = Unit
     override fun rollbackResetCount() = Unit
+    override fun screenCode() = ""
+    override fun refuseBootKey(refuse: Boolean) = Unit
 }

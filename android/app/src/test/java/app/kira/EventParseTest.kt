@@ -1,5 +1,6 @@
 package app.kira
 
+import app.kira.core.Decision
 import app.kira.core.Event
 import app.kira.core.Verdict
 import org.junit.Assert.assertEquals
@@ -76,6 +77,19 @@ class EventParseTest {
         assertEquals(4, e.verdict.pcrDiff.single().index)
         assertEquals("PCR 4 changed.", e.verdict.explanation)
         assertEquals(1234L, e.verdict.firmwareVersion)
+        assertEquals(Verdict.BOOT_KEY_UNUSED, e.verdict.bootKey)
+        assertEquals("", e.verdict.code)
+    }
+
+    @Test fun verdictCarriesTheBootKeyAndCode() {
+        val e = Event.parse(
+            """{"type":"verdict","needs_decision":true,"verdict":{"ok":true,"state":"match","profile":"enrolment baseline",
+              "reset_count":13,"restart_count":0,"clock_safe":true,"firmware_version":1,"boot_key":"proved","code":"K7QM-2XHD"}}""",
+        ) as Event.VerdictEvent
+        assertTrue(e.needsDecision)
+        assertEquals(Verdict.BOOT_KEY_PROVED, e.verdict.bootKey)
+        assertEquals("K7QM-2XHD", e.verdict.code)
+        assertEquals(4L, Decision.CONTINUE.code)
     }
 
     @Test fun verdictMatchOmitsEmptyFields() {
