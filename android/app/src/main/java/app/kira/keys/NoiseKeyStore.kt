@@ -49,13 +49,7 @@ class NoiseKeyStore(private val context: Context) {
         val id = prefs[VERIFIER_ID]
         val name = Build.MODEL ?: "Android"
         if (ct != null && id != null) {
-            val d = aead.decrypt(Base64.decode(ct, Base64.NO_WRAP), AAD)
-            if (d.legacy) {
-                // Re-wrap under the key that needs an unlocked phone.
-                val blob = aead.encrypt(d.plain, AAD)
-                context.identityStore.edit { it[NOISE_CT] = Base64.encodeToString(blob, Base64.NO_WRAP) }
-            }
-            return VerifierIdentity(d.plain, id, name)
+            return VerifierIdentity(aead.decrypt(Base64.decode(ct, Base64.NO_WRAP), AAD), id, name)
         }
         val priv = KiraCore.generateNoiseKey()
         val newId = ByteArray(16).also { SecureRandom().nextBytes(it) }.toHex()

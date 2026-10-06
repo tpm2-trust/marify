@@ -345,13 +345,12 @@ are used for here. What remains to keep a debug build from being mistaken for
 a release: the banner ("not for machines you rely on"), a warning card on the
 enrol screen, the `.debug` application id and the "Kira debug" name.
 
-**Done: 3.** New data is encrypted under `<alias>-v2` with
-`setUnlockedDeviceRequired(true)`, marked with a `K2` prefix; data from the
-first version's key is still read and re-encrypted on first use, so existing
-installs keep their machines. Records load when the screen starts instead of
-at process start, and retry if the phone is locked. `KeystoreAeadTest` covers
-new, legacy and wrong-AAD data; the locked-phone refusal itself relies on the
-platform and was not exercised on the emulator.
+**Done: 3.** Data at rest is encrypted under a Keystore key with
+`setUnlockedDeviceRequired(true)` and carries a `K2` prefix; anything else is
+refused. Records load when the screen starts instead of at process start, and
+retry if the phone is locked. `KeystoreAeadTest` covers the round trip, data
+in another format, wrong associated data and altered data; the locked-phone
+refusal itself relies on the platform and was not exercised on the emulator.
 
 **Not done: 4, by decision.** Signing the profile list only stops an attacker
 who can change Kira's files *without* running code as Kira. With backups

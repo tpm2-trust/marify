@@ -124,14 +124,8 @@ class MachineRepository(context: Context) {
 
     private fun read(f: File): Machine {
         val id = f.name.removeSuffix(SUFFIX)
-        val d = aead.decrypt(f.readBytes(), aad(id))
-        if (d.legacy) {
-            // Re-encrypt under the key that needs an unlocked phone.
-            val tmp = File(dir, f.name + ".tmp")
-            tmp.writeBytes(aead.encrypt(d.plain, aad(id)))
-            if (!tmp.renameTo(f)) tmp.delete()
-        }
-        val env = json.decodeFromString(Envelope.serializer(), String(d.plain))
+        val plain = aead.decrypt(f.readBytes(), aad(id))
+        val env = json.decodeFromString(Envelope.serializer(), String(plain))
         val summary = KiraCore.recordSummary(env.record)
         check(summary.deviceId == id) { "record does not belong to its file" }
         return Machine(env.record, summary, env.keyStorage, env.factorBlob)
