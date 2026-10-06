@@ -50,7 +50,7 @@
     <!-- Session -->
     <string name="phase_connecting">Connecting…</string>
     <string name="unreachable_title">%1$s is not reachable</string>
-    <string name="unreachable_body">Kira keeps looking for it until you cancel. The machine asks for a phone only once it is at the passphrase prompt: if it still shows its one-time code, press Enter there first. Otherwise it is out of range, or (if you test by hand) not running “sudo tpm2-kira attest gate”. If its screen shows a red tpm2-kira line saying the enrolment record was not accepted, do not type your passphrase. Kira cannot say anything about this machine until it reaches it — a missing result is not a good result.</string>
+    <string name="unreachable_body">Kira keeps looking for it until you cancel. The machine asks for a phone from the moment it shows its one-time code until the disk is unlocked. If it is at that point, it is out of range, its Bluetooth did not start, or (if you test by hand) it is not running “sudo tpm2-kira attest gate”. If its screen shows a red tpm2-kira line saying the enrolment record was not accepted, do not type your passphrase. Kira cannot say anything about this machine until it reaches it — a missing result is not a good result.</string>
     <string name="bluetooth_off_title">Bluetooth is off</string>
     <string name="bluetooth_off_body">Turn on Bluetooth on this phone. Kira continues looking for %1$s as soon as it is on.</string>
     <string name="unreachable_attempt">Attempt %1$d · %2$s</string>

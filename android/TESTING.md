@@ -77,7 +77,9 @@ Fill in per device:
 | Enrol screen lists the real machine without any switch (debug build: with its warning card) | | | |
 | Machine details show StrongBox / TEE, hardware-enforced auth | | | |
 | `sudo tpm2-kira attest gate` → "asking" banner → match → receipt accepted | | | |
-| At boot: machine shows its code → Enter → passphrase prompt; the phone is asked only from then on ("not reachable" while the code is shown) | | | |
+| At boot: machine shows its code and the phone is asked at the same time → match → the machine continues to the passphrase prompt without Enter | | | |
+| At boot, phone ignored: Enter (or 90 s) continues; the phone is still asked at the passphrase prompt and reports a match, not "changed" | | | |
+| At boot, reject on the phone: the machine shows the rejection and does not continue early | | | |
 | Second phone enrolled, initramfs **not** rebuilt → both phones attest at the next boot | | | |
 | Phone removed with `attest unenrol`, re-enrolled → old entry deleted in the app, new one attests | | | |
 | Machine's gate unit runs confined (`journalctl -b -u tpm2-kira-attest.service` shows no refused operation) | | | |
