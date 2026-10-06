@@ -1,15 +1,15 @@
-# Kira for Android
+# Marify for Android
 
 The verifier app for [tpm2-kira](https://github.com/mrwiora/tpm2-kira)
 machines. Before you type your disk passphrase, the Linux machine advertises
-over Bluetooth LE; Kira connects, lets the machine's TPM prove what it
+over Bluetooth LE; Marify connects, lets the machine's TPM prove what it
 booted, shows a verdict you can act on, and returns a receipt signed with a
 hardware key that needs a fresh unlock (fingerprint, face or PIN) for every signature.
 
 ## What a check looks like
 
 The machine shows its one-time code at boot and asks for a phone at the same
-time. Kira lists it as "asking for attestation" while its advertisement is
+time. Marify lists it as "asking for attestation" while its advertisement is
 heard (and drops it ten seconds after the last one); tap to verify, or let a
 running session connect by itself.
 
@@ -47,7 +47,7 @@ and a tpm2-kira checkout next to this repository (`../../tpm2-kira`) or network
 access to clone it.
 
 ```sh
-./scripts/build-core.sh          # Go core → app/libs/*.aar, from the commit in core.properties
+./scripts/build-core.sh          # Go core → app/libs/*.aar, from the commit in ../core.properties
 ./gradlew assembleDebug          # debug APK (includes the demo machine)
 ./gradlew assembleRelease        # release APK (no kiratest code)
 ./gradlew testDebugUnitTest      # JVM unit tests
@@ -80,8 +80,8 @@ or put them in `keystore.properties` next to `settings.gradle.kts`
 Without them the release APK is built unsigned. Keep the keystore out of
 this directory.
 
-The debug app is `eu.x7e.kira.debug` and installs beside the release app
-`eu.x7e.kira`; neither can read the other's data.
+The debug app is `io.wiora.marify.debug` and installs beside the release app
+`io.wiora.marify`; neither can read the other's data.
 
 Gradle needs about 3 GB of free RAM. `gradle.properties` is tuned for an 8 GB
 machine (one JVM, Kotlin compiled in-process); on such a machine run one task
@@ -89,7 +89,7 @@ at a time (lint separately from builds).
 
 ### The Go core
 
-`core.properties` pins the tpm2-kira commit and the `golang.org/x/mobile`
+`../core.properties` (shared with the iOS app) pins the tpm2-kira commit and the `golang.org/x/mobile`
 version. `scripts/build-core.sh` exports that commit with `git archive`, adds
 `golang.org/x/mobile` to the *temporary* copy's module graph (the bind needs
 it; the pinned sources are not changed), and runs `gomobile bind`:

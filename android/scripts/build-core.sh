@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Builds the Go core for the app from the tpm2-kira commit pinned in
-# core.properties:
+# ../core.properties (shared with the iOS app):
 #
 #   app/libs/kiracore.aar        mobile/kiracore            -> release builds
 #   app/libs/kiracore-debug.aar  mobile/kiracore + kiratest -> debug and test builds
@@ -18,7 +18,7 @@
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")/.." && pwd)"
-prop() { sed -n "s/^$1=//p" "$here/core.properties"; }
+prop() { sed -n "s/^$1=//p" "$here/../core.properties"; }
 repo="$(prop kira.repo)"
 commit="$(prop kira.commit)"
 mobile_ver="$(prop gomobile.version)"

@@ -3,13 +3,13 @@
 ## Status (2026-10-06)
 
 The figures below are from the first full run on 2026-10-05; the commit of the
-core in use is in `core.properties`. Re-run on 2026-10-06 against tpm2-kira's
+core in use is in `../core.properties`. Re-run on 2026-10-06 against tpm2-kira's
 current tree: lint clean, all JVM tests, all emulator tests (now including the
 enrol list and the permission request) and all 7 swtpm tests pass.
 
 | Check | Result |
 |---|---|
-| `scripts/build-core.sh` (the commit in `core.properties`, NDK 30, gomobile 2026-09-08) | ✅ both .aar built; generated Java API matches the brief |
+| `scripts/build-core.sh` (the commit in `../core.properties`, NDK 30, gomobile 2026-09-08) | ✅ both .aar built; generated Java API matches the brief |
 | `assembleDebug`, `assembleRelease`, `assembleDebugAndroidTest` (AGP 9.4.1 / Gradle 9.8.0, JDK 25) | ✅ |
 | `testDebugUnitTest` — 46 JVM tests | ✅ all pass |
 | `lintDebug`, `lintRelease` | ✅ no issues |
@@ -101,7 +101,7 @@ Fill in per device:
 
 ## 5. Against a machine on a software TPM (swtpm)
 
-`scripts/test-swtpm.sh` runs `app.kira.swtpm.SwtpmMachineSessionTest`: the
+`scripts/test-swtpm.sh` runs `app.marify.swtpm.SwtpmMachineSessionTest`: the
 app's `SessionRunner` and the real Go core on the emulator or a phone,
 against tpm2-kira's **production machine code** (`tpmBackend`) on swtpm —
 real EK and AK, real `TPM2_Quote`, real `ActivateCredential`, the
@@ -141,4 +141,4 @@ Isolation:
   log is `app/build/swtpm-machine.log`.
 
 The machine runs from the tpm2-kira working tree, the app's core from the
-commit in `core.properties`; keep them on the same protocol version.
+commit in `../core.properties`; keep them on the same protocol version.

@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Kira"
+rootProject.name = "Marify"
 include(":app")

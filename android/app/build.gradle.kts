@@ -18,23 +18,23 @@ fun signingValue(env: String, prop: String): String? =
 val releaseStoreFile = signingValue("KIRA_KEYSTORE", "storeFile")
 
 android {
-    namespace = "app.kira"
+    namespace = "app.marify"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "eu.x7e.kira"
+        applicationId = "io.wiora.marify"
         minSdk = 30
         targetSdk = 37
         versionCode = 1
         versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        // The swtpm machine tests (androidTest app.kira.swtpm) need a host-side
+        // The swtpm machine tests (androidTest app.marify.swtpm) need a host-side
         // machine; they run only through scripts/test-swtpm.sh (-Pkira.swtpm).
         if (!project.hasProperty("kira.swtpm")) {
-            testInstrumentationRunnerArguments["notPackage"] = "app.kira.swtpm"
+            testInstrumentationRunnerArguments["notPackage"] = "app.marify.swtpm"
         }
     }
 

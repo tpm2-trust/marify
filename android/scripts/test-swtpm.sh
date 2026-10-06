@@ -5,7 +5,7 @@
 #   1. starts TestAppMachine (tpm2-kira cmd/attest_app_test.go, build tag
 #      apptest) on the host: swtpm + the real tpmBackend, served over TCP
 #   2. forwards its two ports into the emulator/phone with `adb reverse`
-#   3. runs only app.kira.swtpm.SwtpmMachineSessionTest
+#   3. runs only app.marify.swtpm.SwtpmMachineSessionTest
 #   4. stops the machine and removes the forwards
 #
 # Needs: go, swtpm, a device or emulator in `adb devices`.
@@ -53,5 +53,5 @@ grep -m1 'ready' "$log" || true
 
 cd "$here"
 ./gradlew connectedDebugAndroidTest -Pkira.swtpm \
-    -Pandroid.testInstrumentationRunnerArguments.class=app.kira.swtpm.SwtpmMachineSessionTest \
+    -Pandroid.testInstrumentationRunnerArguments.class=app.marify.swtpm.SwtpmMachineSessionTest \
     -Pandroid.testInstrumentationRunnerArguments.swtpm="$port"

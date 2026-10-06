@@ -68,7 +68,7 @@ The last text (added in `a4f4205`) is wrong in exactly this case.
    reasons during the handshake): retry once silently, show the card on the
    second refusal.
 4. `strings.xml` `unreachable_body`: remove "This is not a problem with the
-   machine's boot or its TPM". Replace with: *"Kira cannot say anything
+   machine's boot or its TPM". Replace with: *"Marify cannot say anything
    about this machine until it reaches it. A missing result is not a good
    result."* Same change for the notification text if it implies safety.
 5. Machines list: when a machine was verified before and has asked for
@@ -333,8 +333,8 @@ locked is deferred.
 `KIRA_KEY_ALIAS`, `KIRA_KEY_PASSWORD` or `keystore.properties`; without them
 the release stays unsigned. Checked with a throwaway key (deleted
 afterwards): `apksigner` verifies, release `debuggable=false` and no
-`INTERNET`, the minified release starts. Debug is `eu.x7e.kira.debug`
-("Kira debug") and has a red banner on every screen. The release key itself
+`INTERNET`, the minified release starts. Debug is `io.wiora.marify.debug`
+("Marify debug") and has a red banner on every screen. The release key itself
 is still to be created by the owner (README.md).
 
 **Changed on 2026-10-06, by decision:** the debug build used to list real
@@ -343,7 +343,7 @@ found over Bluetooth are always listed, as in a release build, and the switch
 now shows the *demo* machine. Testing on real hardware is what debug builds
 are used for here. What remains to keep a debug build from being mistaken for
 a release: the banner ("not for machines you rely on"), a warning card on the
-enrol screen, the `.debug` application id and the "Kira debug" name.
+enrol screen, the `.debug` application id and the "Marify debug" name.
 
 **Done: 3.** Data at rest is encrypted under a Keystore key with
 `setUnlockedDeviceRequired(true)` and carries a `K2` prefix; anything else is
@@ -353,11 +353,11 @@ in another format, wrong associated data and altered data; the locked-phone
 refusal itself relies on the platform and was not exercised on the emulator.
 
 **Not done: 4, by decision.** Signing the profile list only stops an attacker
-who can change Kira's files *without* running code as Kira. With backups
+who can change Marify's files *without* running code as Marify. With backups
 disabled and no exported providers that attacker has no way in; one who runs
-code as Kira (root) can also replace the Keystore key the signature is
+code as Marify (root) can also replace the Keystore key the signature is
 checked against. The cost would be an extra unlock prompt at enrolment and at
-every "approve and remember". Revisit if Kira ever shares its files.
+every "approve and remember". Revisit if Marify ever shares its files.
 
 ---
 

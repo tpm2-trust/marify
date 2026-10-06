@@ -5,4 +5,4 @@ Thumbs.db
 *~
 .vscode/
 
-# Per-platform build outputs are ignored in android/.gitignore (and ios/ later).
+# Per-platform build outputs are ignored in android/.gitignore and ios/.gitignore.

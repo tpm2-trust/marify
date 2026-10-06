@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <string name="app_name">Kira</string>
+    <string name="app_name">Marify</string>
     <string name="cancel">Cancel</string>
     <string name="done">Done</string>
     <string name="back">Back</string>
@@ -10,14 +10,14 @@
 
     <!-- Onboarding -->
     <string name="onboarding_title">Know what your computer booted</string>
-    <string name="onboarding_body">Before you type your disk passphrase, your Linux machine asks this phone to check it. The machine\'s TPM signs a statement of what it booted; Kira compares it with what it recorded when you bound the machine, shows you the result, and sends back a receipt signed with a key that only your fingerprint, face or screen-lock PIN can unlock.</string>
+    <string name="onboarding_body">Before you type your disk passphrase, your Linux machine asks this phone to check it. The machine\'s TPM signs a statement of what it booted; Marify compares it with what it recorded when you bound the machine, shows you the result, and sends back a receipt signed with a key that only your fingerprint, face or screen-lock PIN can unlock.</string>
     <string name="onboarding_permissions">Allow Bluetooth</string>
-    <string name="onboarding_permissions_rationale">Kira talks to your machine over Bluetooth Low Energy. It only looks for tpm2-kira machines and never uses your location.</string>
-    <string name="onboarding_permissions_rationale_legacy">Kira talks to your machine over Bluetooth Low Energy. On this Android version, Bluetooth scanning requires the location permission; Kira does not use your location.</string>
+    <string name="onboarding_permissions_rationale">Marify talks to your machine over Bluetooth Low Energy. It only looks for tpm2-kira machines and never uses your location.</string>
+    <string name="onboarding_permissions_rationale_legacy">Marify talks to your machine over Bluetooth Low Energy. On this Android version, Bluetooth scanning requires the location permission; Marify does not use your location.</string>
     <string name="onboarding_bluetooth_on">Turn on Bluetooth</string>
     <string name="onboarding_screen_lock">Set up a screen lock</string>
     <string name="onboarding_screen_lock_rationale">Every receipt is signed with a key that needs a fresh unlock — your PIN, pattern, password, fingerprint or face — so that someone holding your unlocked phone cannot vouch for a machine without knowing your PIN.</string>
-    <string name="onboarding_screen_lock_unavailable">This phone cannot protect keys with its screen lock. Kira cannot be used on it.</string>
+    <string name="onboarding_screen_lock_unavailable">This phone cannot protect keys with its screen lock. Marify cannot be used on it.</string>
     <string name="onboarding_continue">Continue</string>
     <string name="onboarding_open_settings">Open settings</string>
     <string name="granted">Done</string>
@@ -50,9 +50,9 @@
     <!-- Session -->
     <string name="phase_connecting">Connecting…</string>
     <string name="unreachable_title">%1$s is not reachable</string>
-    <string name="unreachable_body">Kira keeps looking for it until you cancel. The machine asks for a phone only while it shows its one-time code at boot (about 90 seconds); once it is at the passphrase prompt, it has stopped asking for this boot. If it is showing the code, it is out of range, its Bluetooth did not start, or (if you test by hand) it is not running “sudo tpm2-kira attest gate”. If its screen shows a red tpm2-kira line saying the enrolment record was not accepted, do not type your passphrase. Kira cannot say anything about this machine until it reaches it — a missing result is not a good result.</string>
+    <string name="unreachable_body">Marify keeps looking for it until you cancel. The machine asks for a phone only while it shows its one-time code at boot (about 90 seconds); once it is at the passphrase prompt, it has stopped asking for this boot. If it is showing the code, it is out of range, its Bluetooth did not start, or (if you test by hand) it is not running “sudo tpm2-kira attest gate”. If its screen shows a red tpm2-kira line saying the enrolment record was not accepted, do not type your passphrase. Marify cannot say anything about this machine until it reaches it — a missing result is not a good result.</string>
     <string name="bluetooth_off_title">Bluetooth is off</string>
-    <string name="bluetooth_off_body">Turn on Bluetooth on this phone. Kira continues looking for %1$s as soon as it is on.</string>
+    <string name="bluetooth_off_body">Turn on Bluetooth on this phone. Marify continues looking for %1$s as soon as it is on.</string>
     <string name="unreachable_attempt">Attempt %1$d · %2$s</string>
     <string name="the_machine">the machine</string>
     <string name="phase_securing">Establishing a secure channel…</string>
@@ -74,8 +74,8 @@
     <string name="bind_tpm_verified">TPM verified as genuine: %1$s</string>
     <string name="bind_tpm_verified_body">The machine\'s TPM proved it holds an endorsement key certified by its manufacturer.</string>
     <string name="bind_tpm_unverified">TPM not verified as genuine hardware</string>
-    <string name="bind_tpm_known_vendors">This version of Kira can verify TPMs from: %1$s.</string>
-    <string name="bind_tpm_unverified_body">Kira could not confirm that this machine\'s TPM is real hardware (%1$s). This is common for firmware TPMs without a usable certificate. Only continue if you trust the machine\'s current state: a machine that is already compromised could pretend to have a TPM.</string>
+    <string name="bind_tpm_known_vendors">This version of Marify can verify TPMs from: %1$s.</string>
+    <string name="bind_tpm_unverified_body">Marify could not confirm that this machine\'s TPM is real hardware (%1$s). This is common for firmware TPMs without a usable certificate. Only continue if you trust the machine\'s current state: a machine that is already compromised could pretend to have a TPM.</string>
     <string name="bind_initrd_not_covered">The checked boot measurements do not include the initrd</string>
     <!-- The double hyphen in the pcrs option is a command-line flag, not a dash. -->
     <string name="bind_initrd_not_covered_body" tools:ignore="TypographyDashes">On this boot the initrd was measured into PCR %1$s, which this enrolment does not check. A modified initrd, for example one that records your passphrase, would then show as unchanged. Cancel, and enrol again with “--pcrs” including PCR %1$s.</string>
@@ -91,7 +91,7 @@
     <string name="tpm_verified_short">Verified as genuine: %1$s</string>
     <string name="tpm_unverified_short">Not verified as genuine hardware</string>
     <string name="enrolled_title">%1$s is bound to this phone</string>
-    <string name="enrolled_body">From now on, when this machine boots and waits for attestation, Kira will show it here.</string>
+    <string name="enrolled_body">From now on, when this machine boots and waits for attestation, Marify will show it here.</string>
 
     <string name="verdict_match">%1$s — unchanged since %2$s</string>
     <string name="verdict_match_first">%1$s — matches its enrolled state</string>
@@ -136,7 +136,7 @@
     <string name="refused_title">%1$s did not accept this phone</string>
     <string name="refused_body">The machine is advertising as yours but refused the secure connection, twice. Its enrolment data was changed or removed, or this is a different machine imitating it.</string>
     <string name="refused_action">Do not type your passphrase. If you did not change the enrolment yourself (for example by running “attest enrol” with another phone), treat the machine as tampered with.</string>
-    <string name="fail_connect">Kira reached the machine, but setting up the connection failed.</string>
+    <string name="fail_connect">Marify reached the machine, but setting up the connection failed.</string>
     <string name="fail_update_needed">This machine speaks a different protocol version. Please update the app or tpm2-kira.</string>
     <string name="fail_wrong_mode">The machine is not in the expected mode. For enrolment run \'attest enrol\'; for verification, \'attest gate\'.</string>
     <string name="fail_link_lost">Connection lost.</string>
