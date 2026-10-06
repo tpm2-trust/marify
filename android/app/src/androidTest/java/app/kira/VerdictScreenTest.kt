@@ -52,8 +52,10 @@ class VerdictScreenTest {
         )
         rule.onNodeWithTag("verdict_match").assertIsDisplayed()
         rule.onNodeWithText("Thinkpad-X1 — unchanged since", substring = true).assertIsDisplayed()
-        // The code the machine's screen must show, before any button.
-        rule.onNodeWithTag("boot_code").assertIsDisplayed()
+        // A green card: the boot state is validly signed; the code the
+        // machine's screen must show, before any button.
+        rule.onNodeWithTag("boot_key_valid").assertIsDisplayed()
+        rule.onNodeWithText("Boot state signed by the machine's TPM: valid").assertIsDisplayed()
         rule.onNodeWithTag("boot_code_value").assertTextEquals("K7QM-2XHD")
         rule.onNodeWithTag("approve_once").assertDoesNotExist()
         // Nothing is signed by itself: the person continues, or rejects.
@@ -79,8 +81,11 @@ class VerdictScreenTest {
             """{"type":"verdict","needs_decision":true,"verdict":{"ok":true,"state":"match",
                "reset_count":13,"restart_count":0,"clock_safe":true,"firmware_version":1,"boot_key":"refused"}}""",
         )
-        rule.onNodeWithTag("boot_key_refused").assertIsDisplayed()
-        rule.onNodeWithTag("boot_code").assertDoesNotExist()
+        // A red card: no valid signature of the boot state, no code.
+        rule.onNodeWithTag("boot_key_invalid").assertIsDisplayed()
+        rule.onNodeWithText("Boot state NOT signed by the machine's TPM").assertIsDisplayed()
+        rule.onNodeWithTag("boot_key_valid").assertDoesNotExist()
+        rule.onNodeWithTag("boot_code_value").assertDoesNotExist()
         rule.onNodeWithText("Continue").assertIsDisplayed()
         rule.onNodeWithTag("continue").performClick()
         assertEquals(listOf(Decision.CONTINUE to ""), decisions)

@@ -174,52 +174,66 @@ private fun Headline(
 }
 
 /**
- * The code the machine recovered with its boot key, and what the TPM said
- * about that key. Shown before any decision, for every state: the person
- * compares the code with the machine's screen before touching a button.
+ * Whether the machine's TPM signed off this boot state - the boot key proof
+ * (PROTOCOL-BLE.md §7.6) - as a green or a red card, and with it the code
+ * the machine's screen must show. Shown before any decision, for every
+ * state: the person reads the colour and compares the code before touching
+ * a button.
  */
 @Composable
 private fun BootKeyCard(v: Verdict, demoScreenCode: String?) {
     val colors = LocalVerdictColors.current
-    when (v.bootKey) {
-        Verdict.BOOT_KEY_PROVED -> Card(
-            Modifier.fillMaxWidth().testTag("boot_code"),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        ) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.boot_code_title), style = MaterialTheme.typography.titleMedium)
+    val valid = v.bootKey == Verdict.BOOT_KEY_PROVED
+    val container = if (valid) colors.matchContainer else colors.failedContainer
+    val content = if (valid) colors.onMatch else colors.onFailed
+    Card(
+        Modifier.fillMaxWidth().testTag(if (valid) "boot_key_valid" else "boot_key_invalid"),
+        colors = CardDefaults.cardColors(containerColor = container),
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Icon(if (valid) Icons.Filled.CheckCircle else Icons.Filled.Error, null, tint = content)
+                Text(
+                    stringResource(if (valid) R.string.boot_key_valid_title else R.string.boot_key_invalid_title),
+                    color = content,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            }
+            if (valid) {
+                Text(stringResource(R.string.boot_code_title), color = content, style = MaterialTheme.typography.bodyMedium)
                 Text(
                     v.code,
+                    color = content,
                     style = MaterialTheme.typography.displaySmall,
                     fontFamily = FontFamily.Monospace,
                     modifier = Modifier.fillMaxWidth().testTag("boot_code_value"),
                     textAlign = TextAlign.Center,
                 )
-                Text(stringResource(R.string.boot_code_body), style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.boot_code_body), color = content, style = MaterialTheme.typography.bodyMedium)
                 if (demoScreenCode != null) {
                     Text(
                         stringResource(R.string.boot_code_demo_screen, demoScreenCode),
+                        color = content,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.testTag("demo_screen_code"),
                     )
                 }
                 if (v.state == Verdict.CHANGED) {
-                    Text(stringResource(R.string.boot_key_approved_change), style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.boot_key_approved_change), color = content, style = MaterialTheme.typography.bodyMedium)
                 }
+            } else {
+                Text(
+                    stringResource(
+                        when (v.bootKey) {
+                            Verdict.BOOT_KEY_REFUSED -> R.string.boot_key_refused
+                            Verdict.BOOT_KEY_INVALID -> R.string.reason_boot_proof_invalid
+                            else -> R.string.boot_key_unavailable
+                        },
+                    ),
+                    color = content,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
             }
-        }
-        Verdict.BOOT_KEY_REFUSED -> BootKeyNote(stringResource(R.string.boot_key_refused), colors.onChanged, colors.changedContainer, "boot_key_refused")
-        Verdict.BOOT_KEY_INVALID -> Unit // among the hard failures
-        else -> BootKeyNote(stringResource(R.string.boot_key_unavailable), colors.onChanged, colors.changedContainer, "boot_key_unavailable")
-    }
-}
-
-@Composable
-private fun BootKeyNote(text: String, content: Color, container: Color, tag: String) {
-    Card(Modifier.fillMaxWidth().testTag(tag), colors = CardDefaults.cardColors(containerColor = container)) {
-        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Icon(Icons.Filled.Warning, null, tint = content)
-            Text(text, color = content, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
