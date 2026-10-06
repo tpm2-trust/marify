@@ -151,6 +151,11 @@ the detection itself now happens in the initrd, before the gate advertises:
   cannot be turned back, even by deleting it, which refuses an older,
   genuinely signed record put back.
 
+Since 2026-10-06 the enrolment is not a record of its own any more: it is a
+section of the slot's blob, next to the TOTP key and under the same signature
+(one blob per slot; the counter stays a separate NV index). The two checks are
+the same, applied to that blob.
+
 Enrolling or removing a phone therefore needs no initramfs rebuild. A refused
 record means the gate does not advertise: the phone shows "not reachable" and
 the machine's console a red line (exit status 6). The swtpm test performs the

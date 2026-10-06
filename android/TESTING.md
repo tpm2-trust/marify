@@ -82,7 +82,10 @@ Fill in per device:
 | At boot, phone connects in the last seconds of the 90: the machine waits for the answer (up to a minute more), then continues | | | |
 | At boot, reject on the phone: the machine shows the rejection and does not continue early | | | |
 | Second phone enrolled, initramfs **not** rebuilt → both phones attest at the next boot | | | |
-| Phone removed with `attest unenrol`, re-enrolled → old entry deleted in the app, new one attests | | | |
+| Phone removed with `attest unenrol` (asks for the signing key; the TOTP code is unchanged), re-enrolled → old entry deleted in the app, new one attests | | | |
+| `attest enrol` on a slot without a sealed TOTP key → refused with the `seal` command to run | | | |
+| Kernel update → reseal hook runs → the phone is still enrolled and attests (changed, approve once) | | | |
+| `nvram delete --nvram N` → slot gone whole; the phone shows the machine as not reachable | | | |
 | Machine's gate unit runs confined (`journalctl -b -u tpm2-kira-attest.service` shows no refused operation) | | | |
 | Kernel/bootloader update → changed → approve and remember → next boot matches | | | |
 | Bluetooth off mid-session → "Connection lost", Try again | | | |
