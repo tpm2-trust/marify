@@ -6,6 +6,36 @@ over Bluetooth LE; Kira connects, lets the machine's TPM prove what it
 booted, shows a verdict you can act on, and returns a receipt signed with a
 hardware key that needs a fresh unlock (fingerprint, face or PIN) for every signature.
 
+## What a check looks like
+
+The machine shows its one-time code at boot and asks for a phone at the same
+time. Kira lists it as "asking for attestation" while its advertisement is
+heard (and drops it ten seconds after the last one); tap to verify, or let a
+running session connect by itself.
+
+The verdict screen then shows, before anything is signed:
+
+- **The headline card**: green *match* (what it booted is what you approved),
+  orange *changed* (with what changed and why that may be), or red *failed*.
+- **A badge on that card**: a green check **Signed** when the machine's TPM
+  signed this boot state as one its owner approved, a red cross **Not
+  signed** when it did not. The colour answers "is this signature valid"
+  before you read anything. An orange card with a green check is a state new
+  to this phone that the machine's owner approved (a resealed update).
+- **The code card** with an eight-character code. The machine's screen must
+  show the same code, as the slot's second code under the one-time code:
+  only that machine's TPM, in an approved boot state, could recover it. A
+  red card says why there is none (the TPM refused the key, or the machine
+  could not answer).
+- **The buttons**: "The codes match - continue" or "The codes differ -
+  reject" on a match; approve once, approve and remember, or reject on a
+  change. Nothing is signed by itself: the PIN or biometric prompt comes
+  after your choice.
+
+The construction behind this is tpm2-kira's `docs/SECURITY-BACKGROUND.md`
+§3.4 (the boot key) and §13 (who signs what, and why the phone believes it);
+the wire format is `docs/PROTOCOL-BLE.md` §7.6.
+
 The normative contract is tpm2-kira's `docs/PROTOCOL-BLE.md`. This app
 implements the build brief `docs/mobile/AGENT-PROMPT-ANDROID.md`.
 
@@ -112,14 +142,17 @@ outside the loop and posts its result back into the inbox, so notifications
 that arrive meanwhile (event log chunks) are not reordered or blocked.
 
 **No trust decisions in Kotlin.** The app shows `verdict.state`, `reasons`,
-`explanation` and passes the user's choice to `Session.decide`. It parses only
-the INFO characteristic (GATT layer) and the core's event JSON.
+`explanation`, `boot_key` and `code`, and passes the user's choice to
+`Session.decide` (continue, approve once, approve and remember, reject). It
+parses only the INFO characteristic (GATT layer) and the core's event JSON.
+The boot key's signature and the code's proof are verified in the core.
 
-**Debug builds** offer a "Demo machine" on the enrol screen: a simulated
-Thinkpad-X1 from kiratest, with controls on its details screen to produce
-*match* (reboot), *changed* (bootloader update) and *failed* (TPM counter
-rollback). Its identity lives only in memory: after an app restart, delete it
-and enrol again.
+**Debug builds** offer a "Demo machine" behind a switch on the enrol screen:
+a simulated Thinkpad-X1 from kiratest, with controls on its details screen to
+produce *match* (reboot), *changed* (bootloader update) and *failed* (TPM
+counter rollback). It has no screen, so the code card says what its screen
+would show. Its identity lives only in memory: after an app restart, delete
+it and enrol again.
 
 ## Security notes (from PROTOCOL-BLE.md §13)
 
@@ -149,7 +182,10 @@ and enrol again.
    `minSdk 30` instead of the brief's 28.
 7. PCR hex is only shown behind "Details".
 8. A *failed* verdict offers Reject; "Approve anyway" sits in an overflow
-   menu and requires typing the machine's name (checked by the core).
+   menu and requires typing the machine's name (checked by the core). A
+   *match* is not signed by itself either: the person continues or rejects
+   after comparing the code with the machine's screen (`Decision.CONTINUE`,
+   enforced by the core for matching boots only).
 9. Records and the Noise key are AES-GCM encrypted under Keystore keys, in
    `noBackupFilesDir` / DataStore; `allowBackup="false"` and data extraction
    rules exclude everything.
