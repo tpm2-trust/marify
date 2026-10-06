@@ -1,10 +1,15 @@
 # Testing
 
-## Status (2026-10-05)
+## Status (2026-10-06)
+
+The figures below are from the first full run on 2026-10-05; the commit of the
+core in use is in `core.properties`. Re-run on 2026-10-06 against tpm2-kira's
+current tree: lint clean, all JVM tests, all emulator tests (now including the
+enrol list and the permission request) and all 7 swtpm tests pass.
 
 | Check | Result |
 |---|---|
-| `scripts/build-core.sh` (tpm2-kira b0e9871, NDK 30, gomobile 2026-09-08) | ✅ both .aar built; generated Java API matches the brief |
+| `scripts/build-core.sh` (the commit in `core.properties`, NDK 30, gomobile 2026-09-08) | ✅ both .aar built; generated Java API matches the brief |
 | `assembleDebug`, `assembleRelease`, `assembleDebugAndroidTest` (AGP 9.4.1 / Gradle 9.8.0, JDK 25) | ✅ |
 | `testDebugUnitTest` — 46 JVM tests | ✅ all pass |
 | `lintDebug`, `lintRelease` | ✅ no issues |
@@ -69,8 +74,13 @@ Fill in per device:
 | Scenario | Pixel (StrongBox) | non-Pixel | Notes |
 |---|---|---|---|
 | `sudo tpm2-kira attest enrol` → SAS matches → bound | | | |
+| Enrol screen lists the real machine without any switch (debug build: with its warning card) | | | |
 | Machine details show StrongBox / TEE, hardware-enforced auth | | | |
 | `sudo tpm2-kira attest gate` → "asking" banner → match → receipt accepted | | | |
+| At boot: machine shows its code → Enter → passphrase prompt; the phone is asked only from then on ("not reachable" while the code is shown) | | | |
+| Second phone enrolled, initramfs **not** rebuilt → both phones attest at the next boot | | | |
+| Phone removed with `attest unenrol`, re-enrolled → old entry deleted in the app, new one attests | | | |
+| Machine's gate unit runs confined (`journalctl -b -u tpm2-kira-attest.service` shows no refused operation) | | | |
 | Kernel/bootloader update → changed → approve and remember → next boot matches | | | |
 | Bluetooth off mid-session → "Connection lost", Try again | | | |
 | App killed mid-session → machine times out, next session works | | | |

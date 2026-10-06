@@ -11,6 +11,7 @@ import app.kira.core.CoreSession
 import app.kira.core.Decision
 import app.kira.core.Event
 import app.kira.core.StepResult
+import app.kira.debugLog
 import app.kira.keys.AnchorKeyProvider
 import app.kira.keys.KeyInvalidated
 import app.kira.keys.KeyStorage
@@ -104,7 +105,7 @@ class SessionRunner(
 
     /** Runs the session to its end. Cancelling the caller aborts the session. */
     suspend fun run() = withContext(dispatcher) {
-        Log.i(TAG, "session starts: ${mode::class.simpleName}")
+        debugLog(TAG) { "session starts: ${mode::class.simpleName}" }
         do {
             retryAfterRefusal = false
             if (!connectAndRun()) return@withContext
@@ -205,7 +206,7 @@ class SessionRunner(
     }
 
     private suspend fun notReachable(attempt: Int, e: Exception, start: Long, began: Long, bluetoothOff: Boolean) {
-        Log.i(TAG, "machine not reachable (attempt $attempt): ${e.message}")
+        debugLog(TAG) { "machine not reachable (attempt $attempt): ${e.message}" }
         _state.update {
             it.copy(unreachable = Unreachable(attempt, e.message ?: "", clock() - start, bluetoothOff))
         }
@@ -213,7 +214,7 @@ class SessionRunner(
     }
 
     private suspend fun handle(input: Input, scope: CoroutineScope) {
-        if (input !is Input.FromLink) Log.i(TAG, "input ${input::class.simpleName} (phase ${_state.value.phase})")
+        if (input !is Input.FromLink) debugLog(TAG) { "input ${input::class.simpleName} (phase ${_state.value.phase})" }
         when (input) {
             // Events of an earlier connection (before a retry) are stale.
             is Input.FromLink -> if (input.from !== link) Unit else when (val ev = input.event) {
@@ -339,7 +340,7 @@ class SessionRunner(
     }
 
     private suspend fun onEvent(e: Event, queue: ArrayDeque<StepResult>, scope: CoroutineScope?) {
-        Log.i(TAG, "core event ${e::class.simpleName} (phase ${_state.value.phase})")
+        debugLog(TAG) { "core event ${e::class.simpleName} (phase ${_state.value.phase})" }
         when (e) {
             is Event.Sas -> _state.update { it.copy(phase = Phase.CONFIRM_SAS, sas = e.sas) }
             is Event.NeedAnchorKey -> {
@@ -390,7 +391,7 @@ class SessionRunner(
                 },
             )
             is Event.Error -> end(Outcome.Failed(failureKind ?: FailureKind.PROTOCOL, e.code, e.message))
-            is Event.Unknown -> Log.i(TAG, "ignoring event ${e.type}")
+            is Event.Unknown -> debugLog(TAG) { "ignoring event ${e.type}" }
         }
     }
 
@@ -409,13 +410,13 @@ class SessionRunner(
 
     private suspend fun end(outcome: Outcome) {
         if (ended) return
-        Log.i(TAG, "session ends in phase ${_state.value.phase}: $outcome")
+        debugLog(TAG) { "session ends in phase ${_state.value.phase}: $outcome" }
         ended = true
         var final = outcome
         if (refusedByMachine(outcome)) {
             if (refusals++ == 0) {
                 // Once could be the radio: try a fresh connection silently.
-                Log.i(TAG, "session ended before the machine identified itself; retrying once")
+                debugLog(TAG) { "session ended before the machine identified itself; retrying once" }
                 retryAfterRefusal = true
                 if (::link.isInitialized) link.disconnect()
                 return

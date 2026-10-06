@@ -3,6 +3,7 @@ package app.kira.ui
 import android.os.SystemClock
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -47,7 +48,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.map
@@ -55,15 +55,13 @@ import kotlinx.coroutines.flow.stateIn
 
 /** ENROL-mode advertisements are shown only on this screen (PROTOCOL-BLE.md §2.3). */
 class EnrolViewModel(private val c: AppContainer) : ViewModel() {
+    /** The simulated machine exists in debug builds only. */
     val demoAvailable = c.sessions.demo.available
 
-    /**
-     * Debug builds hide real machines until the developer opts in: their
-     * data and keys are not protected like a release build's (TODO-SEC.md S4.2).
-     */
-    val realMachinesAllowed = MutableStateFlow(!BuildConfig.DEBUG)
+    /** Real hardware is the default; the demo machine is listed on request. */
+    val showDemo = MutableStateFlow(false)
 
-    private val seen: StateFlow<List<Advertisement>> = c.scanner.scan()
+    val waiting: StateFlow<List<Advertisement>> = c.scanner.scan()
         .catch { }
         .filter { it.isEnrol }
         .runningFold(LinkedHashMap<String, Advertisement>()) { acc, adv ->
@@ -75,19 +73,18 @@ class EnrolViewModel(private val c: AppContainer) : ViewModel() {
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(1_000), emptyList())
 
-    val waiting: StateFlow<List<Advertisement>> = combine(seen, realMachinesAllowed) { list, allowed ->
-        if (allowed) list else emptyList()
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(1_000), emptyList())
-
     fun enrol(adv: Advertisement) = c.sessions.startEnrol(adv)
     fun enrolDemo() = c.sessions.startDemoEnrol()
 }
+
+/** A machine advertising for enrolment, as the list shows it. */
+data class WaitingMachine(val address: String, val rssi: Int)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EnrolScreen(vm: EnrolViewModel, onBack: () -> Unit, onSession: () -> Unit) {
     val waiting by vm.waiting.collectAsStateWithLifecycle()
-    val realAllowed by vm.realMachinesAllowed.collectAsStateWithLifecycle()
+    val showDemo by vm.showDemo.collectAsStateWithLifecycle()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -100,60 +97,98 @@ fun EnrolScreen(vm: EnrolViewModel, onBack: () -> Unit, onSession: () -> Unit) {
             )
         },
     ) { padding ->
-        LazyColumn(
-            Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            item { Text(stringResource(R.string.enrol_instructions), style = MaterialTheme.typography.bodyLarge) }
-            item {
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                    SelectionContainer {
-                        Text(
-                            stringResource(R.string.enrol_command),
-                            fontFamily = FontFamily.Monospace,
-                            modifier = Modifier.padding(12.dp),
-                        )
-                    }
-                }
-            }
-            item { Text(stringResource(R.string.enrol_instructions_2), style = MaterialTheme.typography.bodyMedium) }
-            item {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                    Text(stringResource(R.string.enrol_searching), style = MaterialTheme.typography.labelLarge)
-                }
-            }
-            if (BuildConfig.DEBUG) {
-                item {
-                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
-                        Row(
-                            Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            Text(stringResource(R.string.debug_real_machines), Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-                            Switch(
-                                checked = realAllowed,
-                                onCheckedChange = { vm.realMachinesAllowed.value = it },
-                                modifier = Modifier.testTag("allow_real_machines"),
-                            )
-                        }
-                    }
-                }
-            }
-            items(waiting, key = { it.address }) { adv ->
-                Card(Modifier.fillMaxWidth().clickable { vm.enrol(adv); onSession() }) {
-                    ListItem(
-                        leadingContent = { Icon(Icons.Filled.Computer, contentDescription = null) },
-                        headlineContent = { Text(stringResource(R.string.enrol_waiting_machine)) },
-                        supportingContent = { Text(stringResource(R.string.enrol_signal, adv.rssi)) },
-                        colors = ListItemDefaults.colors(containerColor = CardDefaults.cardColors().containerColor),
+        EnrolContent(
+            waiting = waiting.map { WaitingMachine(it.address, it.rssi) },
+            debugBuild = BuildConfig.DEBUG,
+            demoAvailable = vm.demoAvailable,
+            showDemo = showDemo,
+            onShowDemo = { vm.showDemo.value = it },
+            onEnrol = { address -> waiting.firstOrNull { it.address == address }?.let { vm.enrol(it); onSession() } },
+            onEnrolDemo = { vm.enrolDemo(); onSession() },
+            padding = padding,
+        )
+    }
+}
+
+/**
+ * The enrol list. Machines found over Bluetooth are always listed; the demo
+ * machine of a debug build only after its switch is turned on.
+ */
+@Composable
+fun EnrolContent(
+    waiting: List<WaitingMachine>,
+    debugBuild: Boolean,
+    demoAvailable: Boolean,
+    showDemo: Boolean,
+    onShowDemo: (Boolean) -> Unit,
+    onEnrol: (String) -> Unit,
+    onEnrolDemo: () -> Unit,
+    padding: PaddingValues = PaddingValues(),
+) {
+    LazyColumn(
+        Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item { Text(stringResource(R.string.enrol_instructions), style = MaterialTheme.typography.bodyLarge) }
+        item {
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                SelectionContainer {
+                    Text(
+                        stringResource(R.string.enrol_command),
+                        fontFamily = FontFamily.Monospace,
+                        modifier = Modifier.padding(12.dp),
                     )
                 }
             }
-            if (vm.demoAvailable) {
+        }
+        item { Text(stringResource(R.string.enrol_instructions_2), style = MaterialTheme.typography.bodyMedium) }
+        if (debugBuild) {
+            // A debug build lists real machines like a release build does,
+            // so it has to say what it is (TODO-SEC.md S4.2).
+            item {
+                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
+                    Text(
+                        stringResource(R.string.debug_build_warning),
+                        Modifier.padding(12.dp).testTag("debug_build_warning"),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+        }
+        item {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                Text(stringResource(R.string.enrol_searching), style = MaterialTheme.typography.labelLarge)
+            }
+        }
+        items(waiting, key = { it.address }) { machine ->
+            Card(Modifier.fillMaxWidth().testTag("waiting_machine").clickable { onEnrol(machine.address) }) {
+                ListItem(
+                    leadingContent = { Icon(Icons.Filled.Computer, contentDescription = null) },
+                    headlineContent = { Text(stringResource(R.string.enrol_waiting_machine)) },
+                    supportingContent = { Text(stringResource(R.string.enrol_signal, machine.rssi)) },
+                    colors = ListItemDefaults.colors(containerColor = CardDefaults.cardColors().containerColor),
+                )
+            }
+        }
+        if (demoAvailable) {
+            item {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(stringResource(R.string.show_demo_machine), Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                    Switch(
+                        checked = showDemo,
+                        onCheckedChange = onShowDemo,
+                        modifier = Modifier.testTag("show_demo_machine"),
+                    )
+                }
+            }
+            if (showDemo) {
                 item {
-                    Card(Modifier.fillMaxWidth().clickable { vm.enrolDemo(); onSession() }) {
+                    Card(Modifier.fillMaxWidth().testTag("demo_machine").clickable(onClick = onEnrolDemo)) {
                         ListItem(
                             leadingContent = { Icon(Icons.Filled.BugReport, contentDescription = null) },
                             headlineContent = { Text(stringResource(R.string.demo_machine)) },

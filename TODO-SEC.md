@@ -137,12 +137,33 @@ that `attest status` and `attest check` flag it.
 
 The phone side of this finding is S1.
 
-**Done** (tpm2-kira, see its log). As described, plus: `attest check --accept`
-records a validly signed blob after a deliberate change; `attest unenrol`
-forgets the recorded state; the unit is installed by the AUR and Debian
-packages but not enabled (`systemctl enable tpm2-kira-attest-check.service`).
-The swtpm test performs the attack (undefine through the owner hierarchy,
-write a blob signed with another key) and confirms both detections.
+**Done, then redone differently** (tpm2-kira, see its log). The first version
+was `attest check` plus a unit that ran after unlock. That was withdrawn on
+2026-10-06: after unlock the passphrase has already been typed, so a check
+there helps nobody. `attest status` and the refusal in `attest enrol` remain;
+the detection itself now happens in the initrd, before the gate advertises:
+
+- the record's **signature** is checked against the machine's signing public
+  key, a copy of which the initramfs hooks put into the image
+  (`attest signer`), which refuses a record written by anyone else;
+- the record's **count** is checked against an NV counter the TPM holds for
+  the slot. Every record carries the counter's next value, and a TPM counter
+  cannot be turned back, even by deleting it, which refuses an older,
+  genuinely signed record put back.
+
+Enrolling or removing a phone therefore needs no initramfs rebuild. A refused
+record means the gate does not advertise: the phone shows "not reachable" and
+the machine's console a red line (exit status 6). The swtpm test performs the
+attacks through the owner hierarchy: a foreign record, an older genuine one,
+and that one with the counter deleted, recreated or replaced by an ordinary
+index holding the old count.
+
+Limits, stated in tpm2-kira's SECURITY.md: the public key is as trustworthy
+as the initramfs carrying it (a Secure Boot-signed UKI, or PCRs covering the
+initrd in the seal or the phone's selection); and someone with the owner
+hierarchy can raise the counter, which makes the genuine record stale until
+the user enrols again, a denial of the phone check that never yields an
+accepted record.
 
 ---
 
@@ -308,9 +329,16 @@ locked is deferred.
 the release stays unsigned. Checked with a throwaway key (deleted
 afterwards): `apksigner` verifies, release `debuggable=false` and no
 `INTERNET`, the minified release starts. Debug is `eu.x7e.kira.debug`
-("Kira debug"), has a red banner on every screen, and lists real machines on
-the enrol screen only after a switch (off by default, not persisted). The
-release key itself is still to be created by the owner (README.md).
+("Kira debug") and has a red banner on every screen. The release key itself
+is still to be created by the owner (README.md).
+
+**Changed on 2026-10-06, by decision:** the debug build used to list real
+machines on the enrol screen only after a switch. That is reversed: machines
+found over Bluetooth are always listed, as in a release build, and the switch
+now shows the *demo* machine. Testing on real hardware is what debug builds
+are used for here. What remains to keep a debug build from being mistaken for
+a release: the banner ("not for machines you rely on"), a warning card on the
+enrol screen, the `.debug` application id and the "Kira debug" name.
 
 **Done: 3.** New data is encrypted under `<alias>-v2` with
 `setUnlockedDeviceRequired(true)`, marked with a `K2` prefix; data from the
@@ -441,7 +469,8 @@ the phone's anchor key on trust: it could not tell a StrongBox key on a
 locked phone from a key in software on a rooted one. And `attest enrol` did
 not show the machine's own TPM verdict before enrolling.
 
-**Done** (tpm2-kira `aac0ef6`, `a360fbd`; app pinned to `a360fbd`):
+**Done** (tpm2-kira `aac0ef6`, `a360fbd`; the app's pinned core is in
+`android/core.properties`):
 
 - The core gives the app an attestation challenge bound to the session; the
   app creates the anchor key with it and sends the key's attestation chain
@@ -475,7 +504,9 @@ enrols it.
 - S3: run `sudo tpm2-kira attest ekcert` on a laptop with Intel PTT to check
   the full Intel chain on real hardware; add roots for other vendors.
 - S4.1: create the release signing key (see `android/README.md`).
-- Real-hardware checks in `android/TESTING.md` §4.
+- Real-hardware checks in `android/TESTING.md` §4, including what only a
+  boot with a Bluetooth adapter shows on the machine: the gate's confined
+  unit, and its check of the enrolment record (signature and counter).
 
 ## Suggested order
 

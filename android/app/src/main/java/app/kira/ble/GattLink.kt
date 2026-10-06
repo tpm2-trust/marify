@@ -10,8 +10,8 @@ import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothStatusCodes
 import android.content.Context
 import android.os.Build
-import android.util.Log
 import app.kira.core.KiraCore
+import app.kira.debugLog
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.NonCancellable
@@ -72,7 +72,7 @@ class GattLink private constructor(private val device: BluetoothDevice) : Link {
 
     private val callback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(g: BluetoothGatt, status: Int, newState: Int) {
-            Log.d(TAG, "connection state $newState status $status")
+            debugLog(TAG) { "connection state $newState status $status" }
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> connected.complete(status)
                 BluetoothProfile.STATE_DISCONNECTED -> {
@@ -126,7 +126,7 @@ class GattLink private constructor(private val device: BluetoothDevice) : Link {
             g: BluetoothGatt, c: BluetoothGattCharacteristic, value: ByteArray,
         ) {
             if (c.uuid == KiraCore.TX_UUID) {
-                Log.d(TAG, "rx fragment ${fragInfo(value)}")
+                debugLog(TAG) { "rx fragment ${fragInfo(value)}" }
                 eventsChannel.trySend(LinkEvent.Notification(value.copyOf()))
             }
         }
@@ -137,7 +137,7 @@ class GattLink private constructor(private val device: BluetoothDevice) : Link {
             // The characteristic's value buffer is reused: copy it right here.
             if (c.uuid == KiraCore.TX_UUID) {
                 val v = c.value?.copyOf() ?: ByteArray(0)
-                Log.d(TAG, "rx fragment ${fragInfo(v)}")
+                debugLog(TAG) { "rx fragment ${fragInfo(v)}" }
                 eventsChannel.trySend(LinkEvent.Notification(v))
             }
         }
@@ -155,7 +155,7 @@ class GattLink private constructor(private val device: BluetoothDevice) : Link {
         if (!g.requestMtu(MAX_MTU)) throw LinkException("MTU request failed")
         mtu = withTimeout(STEP_TIMEOUT_MS) { mtuChanged.await() }
         if (mtu < 23) throw LinkException("disconnected during MTU exchange")
-        Log.d(TAG, "MTU $mtu")
+        debugLog(TAG) { "MTU $mtu" }
 
         if (!g.discoverServices()) throw LinkException("service discovery failed to start")
         if (withTimeout(STEP_TIMEOUT_MS) { discovered.await() } != BluetoothGatt.GATT_SUCCESS) {
@@ -214,7 +214,7 @@ class GattLink private constructor(private val device: BluetoothDevice) : Link {
 
     override suspend fun write(fragment: ByteArray) {
         if (closed.get()) throw LinkException("link closed")
-        Log.d(TAG, "tx fragment ${fragInfo(fragment)}")
+        debugLog(TAG) { "tx fragment ${fragInfo(fragment)}" }
         queue.write(fragment)
     }
 
