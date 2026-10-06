@@ -52,10 +52,11 @@ class VerdictScreenTest {
         )
         rule.onNodeWithTag("verdict_match").assertIsDisplayed()
         rule.onNodeWithText("Thinkpad-X1 — unchanged since", substring = true).assertIsDisplayed()
-        // A green card: the boot state is validly signed; the code the
-        // machine's screen must show, before any button.
+        // A green check on the headline: the boot state is validly signed;
+        // the code the machine's screen must show, before any button.
+        rule.onNodeWithTag("signature_valid").assertIsDisplayed()
+        rule.onNodeWithTag("signature_invalid").assertDoesNotExist()
         rule.onNodeWithTag("boot_key_valid").assertIsDisplayed()
-        rule.onNodeWithText("Boot state signed by the machine's TPM: valid").assertIsDisplayed()
         rule.onNodeWithTag("boot_code_value").assertTextEquals("K7QM-2XHD")
         rule.onNodeWithTag("boot_key_signer").assertIsDisplayed()
         rule.onNodeWithTag("approve_once").assertDoesNotExist()
@@ -82,9 +83,10 @@ class VerdictScreenTest {
             """{"type":"verdict","needs_decision":true,"verdict":{"ok":true,"state":"match",
                "reset_count":13,"restart_count":0,"clock_safe":true,"firmware_version":1,"boot_key":"refused"}}""",
         )
-        // A red card: no valid signature of the boot state, no code.
+        // A red cross on the headline: no valid signature, no code.
+        rule.onNodeWithTag("signature_invalid").assertIsDisplayed()
+        rule.onNodeWithTag("signature_valid").assertDoesNotExist()
         rule.onNodeWithTag("boot_key_invalid").assertIsDisplayed()
-        rule.onNodeWithText("Boot state NOT signed by the machine's TPM").assertIsDisplayed()
         rule.onNodeWithTag("boot_key_valid").assertDoesNotExist()
         rule.onNodeWithTag("boot_code_value").assertDoesNotExist()
         rule.onNodeWithText("Continue").assertIsDisplayed()
@@ -110,6 +112,24 @@ class VerdictScreenTest {
         }
         rule.onNodeWithTag("demo_screen_code").assertIsDisplayed()
         rule.onNodeWithText("The demo machine's screen shows: K7QM-2XHD").assertIsDisplayed()
+    }
+
+    /** The changed (orange) card with a green check: new values, validly signed as approved. */
+    @Test fun changedButSigned() {
+        show(
+            """{"type":"verdict","needs_decision":true,"verdict":{
+               "ok":false,"state":"changed",
+               "reasons":[{"code":"no_profile_match","detail":"no profile","hard":false}],
+               "pcr_diff":[{"index":11,"expected":"aaaa","actual":"bbbb","description":"Kernel"}],
+               "explanation":"PCR 11 changed.",
+               "reset_count":14,"restart_count":0,"clock_safe":true,"firmware_version":1,
+               "boot_key":"proved","code":"K7QM-2XHD","signing_key":"000b0123456789abcdef"}}""",
+        )
+        rule.onNodeWithTag("verdict_changed").assertIsDisplayed()
+        rule.onNodeWithTag("signature_valid").assertIsDisplayed()
+        rule.onNodeWithText("New to this phone, but signed", substring = true).assertIsDisplayed()
+        rule.onNodeWithTag("boot_code_value").assertTextEquals("K7QM-2XHD")
+        rule.onNodeWithTag("approve_remember").assertIsDisplayed()
     }
 
     @Test fun changed() {

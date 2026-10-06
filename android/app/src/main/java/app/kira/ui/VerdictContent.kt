@@ -1,5 +1,9 @@
 package app.kira.ui
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material3.Surface
 import androidx.compose.ui.text.style.TextAlign
 import android.text.format.Formatter
 import androidx.compose.foundation.layout.Arrangement
@@ -71,6 +75,7 @@ fun VerdictContent(
     val v = event.verdict
     val colors = LocalVerdictColors.current
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        val badge: @Composable () -> Unit = { SignatureBadge(v) }
         when (v.state) {
             Verdict.MATCH -> Headline(
                 icon = { Icon(Icons.Filled.CheckCircle, null, Modifier.size(40.dp), tint = colors.onMatch) },
@@ -79,13 +84,15 @@ fun VerdictContent(
                 body = null,
                 container = colors.matchContainer, content = colors.onMatch,
                 tag = "verdict_match",
+                badge = badge,
             )
             Verdict.CHANGED -> Headline(
                 icon = { Icon(Icons.Filled.Warning, null, Modifier.size(40.dp), tint = colors.onChanged) },
                 title = v.explanation.ifBlank { stringResource(R.string.verdict_changed_title, machineName) },
-                body = null,
+                body = if (v.bootKey == Verdict.BOOT_KEY_PROVED) stringResource(R.string.changed_but_signed) else null,
                 container = colors.changedContainer, content = colors.onChanged,
                 tag = "verdict_changed",
+                badge = badge,
             )
             else -> Headline(
                 icon = { Icon(Icons.Filled.Error, null, Modifier.size(40.dp), tint = colors.onFailed) },
@@ -93,6 +100,7 @@ fun VerdictContent(
                 body = stringResource(R.string.verdict_failed_intro),
                 container = colors.failedContainer, content = colors.onFailed,
                 tag = "verdict_failed",
+                badge = badge,
             ) {
                 for (r in v.reasons.filter { it.hard }) {
                     Text("• " + reasonText(r.code), color = colors.onFailed, style = MaterialTheme.typography.bodyLarge)
@@ -158,6 +166,7 @@ private fun Headline(
     container: Color,
     content: Color,
     tag: String,
+    badge: @Composable () -> Unit = {},
     extra: @Composable () -> Unit = {},
 ) {
     Card(
@@ -165,7 +174,11 @@ private fun Headline(
         colors = CardDefaults.cardColors(containerColor = container, contentColor = content),
     ) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            icon()
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                icon()
+                Spacer(Modifier.weight(1f))
+                badge()
+            }
             Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
             if (body != null) Text(body, style = MaterialTheme.typography.bodyLarge)
             extra()
@@ -174,60 +187,73 @@ private fun Headline(
 }
 
 /**
- * Whether the machine's TPM signed off this boot state - the boot key proof
- * (PROTOCOL-BLE.md §7.6) - as a green or a red card, and with it the code
- * the machine's screen must show. Shown before any decision, for every
- * state: the person reads the colour and compares the code before touching
- * a button.
+ * The one thing to see at a glance, on every card: a green check when the
+ * machine's TPM signed this boot state as approved, a red cross when it did
+ * not. The words below say why.
+ */
+@Composable
+private fun SignatureBadge(v: Verdict) {
+    val colors = LocalVerdictColors.current
+    val valid = v.bootKey == Verdict.BOOT_KEY_PROVED
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = if (valid) colors.matchContainer else colors.failedContainer,
+        contentColor = if (valid) colors.onMatch else colors.onFailed,
+        modifier = Modifier.testTag(if (valid) "signature_valid" else "signature_invalid"),
+    ) {
+        Row(
+            Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(if (valid) Icons.Filled.CheckCircle else Icons.Filled.Cancel, null, Modifier.size(20.dp))
+            Text(
+                stringResource(if (valid) R.string.badge_signed else R.string.badge_not_signed),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
+
+/**
+ * The code the machine's screen must show, or one line on why there is
+ * none. The signature itself is the badge on the headline; this card is
+ * for the comparison.
  */
 @Composable
 private fun BootKeyCard(v: Verdict, demoScreenCode: String?) {
     val colors = LocalVerdictColors.current
     val valid = v.bootKey == Verdict.BOOT_KEY_PROVED
-    val container = if (valid) colors.matchContainer else colors.failedContainer
-    val content = if (valid) colors.onMatch else colors.onFailed
     Card(
         Modifier.fillMaxWidth().testTag(if (valid) "boot_key_valid" else "boot_key_invalid"),
-        colors = CardDefaults.cardColors(containerColor = container),
+        colors = CardDefaults.cardColors(
+            containerColor = if (valid) colors.matchContainer else colors.failedContainer,
+            contentColor = if (valid) colors.onMatch else colors.onFailed,
+        ),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Icon(if (valid) Icons.Filled.CheckCircle else Icons.Filled.Error, null, tint = content)
-                Text(
-                    stringResource(if (valid) R.string.boot_key_valid_title else R.string.boot_key_invalid_title),
-                    color = content,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            }
             if (valid) {
-                Text(stringResource(R.string.boot_code_title), color = content, style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.boot_code_title), style = MaterialTheme.typography.titleMedium)
                 Text(
                     v.code,
-                    color = content,
                     style = MaterialTheme.typography.displaySmall,
                     fontFamily = FontFamily.Monospace,
                     modifier = Modifier.fillMaxWidth().testTag("boot_code_value"),
                     textAlign = TextAlign.Center,
                 )
-                Text(stringResource(R.string.boot_code_body), color = content, style = MaterialTheme.typography.bodyMedium)
-                if (demoScreenCode != null) {
-                    Text(
-                        stringResource(R.string.boot_code_demo_screen, demoScreenCode),
-                        color = content,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.testTag("demo_screen_code"),
-                    )
-                }
+                Text(
+                    demoScreenCode?.let { stringResource(R.string.boot_code_demo_screen, it) }
+                        ?: stringResource(R.string.boot_code_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.testTag(if (demoScreenCode != null) "demo_screen_code" else "boot_code_hint"),
+                )
                 if (v.signingKey.isNotEmpty()) {
                     Text(
                         stringResource(R.string.boot_key_signed_by, v.signingKey.takeLast(16).chunked(4).joinToString(" ")),
-                        color = content,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.testTag("boot_key_signer"),
                     )
-                }
-                if (v.state == Verdict.CHANGED) {
-                    Text(stringResource(R.string.boot_key_approved_change), color = content, style = MaterialTheme.typography.bodyMedium)
                 }
             } else {
                 Text(
@@ -238,7 +264,6 @@ private fun BootKeyCard(v: Verdict, demoScreenCode: String?) {
                             else -> R.string.boot_key_unavailable
                         },
                     ),
-                    color = content,
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
