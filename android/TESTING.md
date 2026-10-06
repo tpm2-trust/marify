@@ -78,7 +78,8 @@ Fill in per device:
 | Machine details show StrongBox / TEE, hardware-enforced auth | | | |
 | `sudo tpm2-kira attest gate` → "asking" banner → match → receipt accepted | | | |
 | At boot: machine shows its code and the phone is asked at the same time → match → the machine continues to the passphrase prompt without Enter | | | |
-| At boot, phone ignored: Enter (or 90 s) continues; the phone is still asked at the passphrase prompt and reports a match, not "changed" | | | |
+| At boot, phone ignored: Enter (or 90 s) continues to the passphrase prompt; from then on the phone shows "not reachable" (the machine has stopped asking for this boot) | | | |
+| At boot, phone connects in the last seconds of the 90: the machine waits for the answer (up to a minute more), then continues | | | |
 | At boot, reject on the phone: the machine shows the rejection and does not continue early | | | |
 | Second phone enrolled, initramfs **not** rebuilt → both phones attest at the next boot | | | |
 | Phone removed with `attest unenrol`, re-enrolled → old entry deleted in the app, new one attests | | | |
