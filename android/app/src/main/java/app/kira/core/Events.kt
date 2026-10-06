@@ -122,6 +122,8 @@ data class Verdict(
     @SerialName("boot_key") val bootKey: String = BOOT_KEY_UNUSED,
     /** The code the machine's screen must show, "ABCD-EFGH"; only with [BOOT_KEY_PROVED]. */
     val code: String = "",
+    /** TPM Name (hex) of the machine's signing key whose approval the TPM enforced; only with [BOOT_KEY_PROVED]. */
+    @SerialName("signing_key") val signingKey: String = "",
 ) {
     companion object {
         const val MATCH = "match"

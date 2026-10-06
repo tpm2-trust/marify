@@ -218,6 +218,14 @@ private fun BootKeyCard(v: Verdict, demoScreenCode: String?) {
                         modifier = Modifier.testTag("demo_screen_code"),
                     )
                 }
+                if (v.signingKey.isNotEmpty()) {
+                    Text(
+                        stringResource(R.string.boot_key_signed_by, v.signingKey.takeLast(16).chunked(4).joinToString(" ")),
+                        color = content,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.testTag("boot_key_signer"),
+                    )
+                }
                 if (v.state == Verdict.CHANGED) {
                     Text(stringResource(R.string.boot_key_approved_change), color = content, style = MaterialTheme.typography.bodyMedium)
                 }

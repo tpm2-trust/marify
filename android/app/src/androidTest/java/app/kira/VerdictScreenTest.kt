@@ -47,7 +47,7 @@ class VerdictScreenTest {
         show(
             """{"type":"verdict","needs_decision":true,"verdict":{"ok":true,"state":"match","profile":"enrolment baseline",
                "reset_count":13,"restart_count":0,"clock_safe":true,"firmware_version":1,
-               "boot_key":"proved","code":"K7QM-2XHD"}}""",
+               "boot_key":"proved","code":"K7QM-2XHD","signing_key":"000b0123456789abcdef0123456789abcdef"}}""",
             lastAttested = "2026-08-12T09:30:00Z",
         )
         rule.onNodeWithTag("verdict_match").assertIsDisplayed()
@@ -57,6 +57,7 @@ class VerdictScreenTest {
         rule.onNodeWithTag("boot_key_valid").assertIsDisplayed()
         rule.onNodeWithText("Boot state signed by the machine's TPM: valid").assertIsDisplayed()
         rule.onNodeWithTag("boot_code_value").assertTextEquals("K7QM-2XHD")
+        rule.onNodeWithTag("boot_key_signer").assertIsDisplayed()
         rule.onNodeWithTag("approve_once").assertDoesNotExist()
         // Nothing is signed by itself: the person continues, or rejects.
         rule.onNodeWithText("The codes match — continue").assertIsDisplayed()
