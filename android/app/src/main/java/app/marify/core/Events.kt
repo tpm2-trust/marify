@@ -38,12 +38,12 @@ sealed interface Event {
         val verdict: Verdict,
         val needsDecision: Boolean,
         val eventlogAvailable: Boolean,
-        /** The machine asks this phone to keep a new disk factor; kept when the verdict is accepted. */
+        /** The machine asks this phone to keep a new remote salt; kept when the verdict is accepted. */
         val factorOffered: Boolean = false,
     ) : Event
     data class Eventlog(val received: Long, val total: Long, val complete: Boolean) : Event
     data class ReceiptAck(val result: Int, val message: String) : Event
-    /** What the machine made of the disk factor this phone released (PROTOCOL-BLE.md §7.3.9). */
+    /** What the machine made of the remote salt this phone released (PROTOCOL-BLE.md §7.3.9). */
     data class ReleaseAck(val status: Int, val message: String) : Event
     data class RecordUpdated(val recordJson: String) : Event
     data object Done : Event
@@ -172,7 +172,7 @@ data class RecordSummary(
     val profiles: List<Profile> = emptyList(),
     /** TPM vendor whose certificate vouched for the EK at enrolment; empty if not verified. */
     @SerialName("ek_verified_by") val ekVerifiedBy: String = "",
-    /** When this phone kept the machine's disk factor; null when it keeps none. */
+    /** When this phone kept the machine's remote salt; null when it keeps none. */
     @SerialName("factor_kept_at") val factorKeptAt: String? = null,
 ) {
     @Serializable

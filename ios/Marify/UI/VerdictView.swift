@@ -210,14 +210,14 @@ private struct BootKeyCard: View {
 
 /// A matching boot still waits for the person: they compare the code with the
 /// machine's screen and only then let the receipt be signed.
-/// The machine asks this phone to keep its disk factor: a wrapped secret only
+/// The machine asks this phone to keep its remote salt: a wrapped secret only
 /// that machine's TPM can open, returned after every accepted verdict so the
 /// disk's key can be derived. Kept when this verdict is accepted.
 private struct FactorOfferCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Keep this machine's disk factor").font(.headline)
-            Text("The machine asks this phone to keep one half of its disk key: a sealed value only its own TPM can open, in a boot it has approved. Accepting this verdict keeps it, replacing any kept before. From then on it is handed back after every verdict you accept, and the machine needs it together with your password to unlock the disk.")
+            Text("Keep this machine's remote salt").font(.headline)
+            Text("The machine asks this phone to keep the salt of its disk key - the remote salt: a sealed value only its own TPM can open, in a boot it has approved. Accepting this verdict keeps it, replacing any kept before. From then on it is handed back after every verdict you accept, and the machine needs it together with your password to unlock the disk.")
                 .font(.body)
         }
         .padding(16)

@@ -132,18 +132,18 @@ it and enrol again. Release builds do not link kiratest.
 Losing the phone means re-enrolling each machine (`sudo tpm2-kira attest
 enrol` with the new phone; `attest unenrol` removes the old entry).
 
-## The disk factor
+## The remote salt
 
-Same as the Android app (`../android/README.md`, "The disk factor"): the
-verdict view shows the "Keep this machine's disk factor" card when the
+Same as the Android app (`../android/README.md`, "The remote salt"): the
+verdict view shows the "Keep this machine's remote salt" card when the
 evidence offers one, the session view shows what the machine made of the
-released factor, and the machine's details say since when one is kept.
+released salt, and the machine's details say since when one is kept.
 All of it comes from the core; the app has no key material of its own.
 
 ## Open: build and test on a Mac
 
 The app has not been compiled. Everything since the first write - the
-Marify name, the boot-key badge, the kept disk factor (card, release line,
+Marify name, the boot-key badge, the kept remote salt (card, release line,
 details row) - was added blind, mirroring the Android app. First build in
 Xcode, fix what the compiler finds, then the simulator tests, then a real
 phone against a machine (`TESTING.md`). Tracked as an open item in

@@ -114,7 +114,7 @@ struct SessionContent: View {
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor)
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Disk factor handed back").font(.headline)
+                            Text("Remote salt handed back").font(.headline)
                             Text(Texts.releaseStatus(ack.status))
                             if !ack.message.isEmpty { Text(ack.message).font(.footnote) }
                         }

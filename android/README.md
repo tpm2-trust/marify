@@ -195,24 +195,24 @@ it and enrol again.
 Losing the phone means re-enrolling each machine (`sudo tpm2-kira attest
 enrol` with the new phone; `attest unenrol` removes the old entry).
 
-## The disk factor
+## The remote salt
 
-A machine can ask this phone to keep one half of its disk key
+A machine can ask this phone to keep the salt of its disk key - the remote salt
 (tpm2-kira's `docs/PLAN-FACTORRELEASE.md`): a wrapped secret that only
 that machine's TPM can open, and only in a boot its owner approved. The
 phone never sees the secret itself.
 
-- **Keeping it**: `tpm2-kira factor enrol` on the machine runs an
+- **Keeping it**: `tpm2-kira remote-salt enrol` on the machine runs an
   ordinary check in which the verdict screen shows the card "Keep this
-  machine's disk factor". Accepting the verdict keeps it (replacing any
+  machine's remote salt". Accepting the verdict keeps it (replacing any
   kept before); rejecting keeps nothing. It is part of the machine's
   record, in the app's protected storage, like the rest of the record.
 - **Handing it back**: after every verdict you accept, once the machine
-  has accepted the receipt, the phone sends the factor and the session
-  shows what the machine made of it ("The machine took the factor", or
+  has accepted the receipt, the phone sends the remote salt and the session
+  shows what the machine made of it ("The machine took the remote salt", or
   that it takes none, or that its TPM refused it because this boot is not
   one its owner approved). The machine still needs your password: the
-  factor alone opens nothing.
+  salt alone opens nothing.
 - **Seeing it**: the machine's details say since when a factor is kept.
 - **Without the phone**: the machine's recovery passphrase, in a second
   LUKS keyslot, opens the disk at systemd's own prompt.

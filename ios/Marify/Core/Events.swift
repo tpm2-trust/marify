@@ -13,7 +13,7 @@ enum Event: Sendable, Equatable {
     case verdict(VerdictEvent)
     case eventlog(Eventlog)
     case receiptAck(result: Int, message: String)
-    /// What the machine made of the disk factor this phone released (PROTOCOL-BLE.md §7.3.9).
+    /// What the machine made of the remote salt this phone released (PROTOCOL-BLE.md §7.3.9).
     case releaseAck(status: Int, message: String)
     case recordUpdated(recordJSON: String)
     case done
@@ -45,7 +45,7 @@ enum Event: Sendable, Equatable {
         var verdict: Verdict
         var needsDecision: Bool
         var eventlogAvailable: Bool
-        /// The machine asks this phone to keep a new disk factor; kept when the verdict is accepted.
+        /// The machine asks this phone to keep a new remote salt; kept when the verdict is accepted.
         var factorOffered: Bool = false
     }
 
@@ -229,7 +229,7 @@ struct RecordSummary: Sendable, Equatable {
     var profiles: [Profile] = []
     /// TPM vendor whose certificate vouched for the EK at enrolment; empty if not verified.
     var ekVerifiedBy: String = ""
-    /// When this phone kept the machine's disk factor; nil when it keeps none.
+    /// When this phone kept the machine's remote salt; nil when it keeps none.
     var factorKeptAt: String?
 
     struct Profile: Sendable, Equatable {

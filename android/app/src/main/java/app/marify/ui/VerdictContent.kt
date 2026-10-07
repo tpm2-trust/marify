@@ -274,7 +274,7 @@ private fun BootKeyCard(v: Verdict, demoScreenCode: String?) {
 }
 
 /**
- * The machine asks this phone to keep its disk factor: a wrapped secret only
+ * The machine asks this phone to keep its remote salt: a wrapped secret only
  * that machine's TPM can open, returned after every accepted verdict so the
  * disk's key can be derived. Kept when this verdict is accepted.
  */

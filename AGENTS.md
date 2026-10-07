@@ -37,8 +37,8 @@ The same rule, with tpm2-kira's other standing decisions, is in
   the demo machine is behind a switch. Release builds do not link kiratest.
 - **Diagnostic logging is debug-only** (`debugLog`); release builds log
   warnings and errors only.
-- **The phone keeps the machine's wrapped disk factor, never the salt.**
-  What a machine hands over at `factor enrol` is a TPM credential the
+- **The phone keeps the machine's wrapped remote salt, never the salt in the clear.**
+  What a machine hands over at `remote-salt enrol` is a TPM credential the
   phone cannot open; it is kept with the record, replaced only when a
   verdict offering a new one is accepted, and released after an accepted
   receipt. The salt and the derived key exist on the machine only.
