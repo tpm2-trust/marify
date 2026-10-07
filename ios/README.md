@@ -139,3 +139,12 @@ verdict view shows the "Keep this machine's disk factor" card when the
 evidence offers one, the session view shows what the machine made of the
 released factor, and the machine's details say since when one is kept.
 All of it comes from the core; the app has no key material of its own.
+
+## Open: build and test on a Mac
+
+The app has not been compiled. Everything since the first write - the
+Marify name, the boot-key badge, the kept disk factor (card, release line,
+details row) - was added blind, mirroring the Android app. First build in
+Xcode, fix what the compiler finds, then the simulator tests, then a real
+phone against a machine (`TESTING.md`). Tracked as an open item in
+tpm2-kira's `docs/PLAN-FACTORRELEASE.md` §13.
