@@ -41,7 +41,7 @@
     <string name="enrol_searching">Searching…</string>
     <string name="enrol_waiting_machine">tpm2-kira machine waiting for enrolment</string>
     <string name="enrol_signal">Signal %1$d dBm</string>
-    <string name="debug_banner">DEBUG BUILD — not for machines you rely on</string>
+    <string name="debug_chip">DEBUG</string>
     <string name="debug_build_warning">This is a debug build: it is debuggable and may keep keys outside secure hardware. Use the signed release build for machines you rely on.</string>
     <string name="show_demo_machine">Show the demo machine (simulated, no hardware needed)</string>
     <string name="demo_machine">Demo machine (debug build)</string>
