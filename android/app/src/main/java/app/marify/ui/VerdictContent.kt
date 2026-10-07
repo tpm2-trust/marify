@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
@@ -191,26 +192,56 @@ private fun Headline(
 /**
  * The one thing to see at a glance, on every card: a green check when the
  * machine's TPM signed this boot state as approved, a red cross when it did
- * not. The words below say why.
+ * not - and a grey "after boot" when the key is locked until the next boot
+ * by design (a check of the running system, as at a remote salt's
+ * enrolment). The words below say why.
  */
 @Composable
 private fun SignatureBadge(v: Verdict) {
     val colors = LocalVerdictColors.current
     val valid = v.bootKey == Verdict.BOOT_KEY_PROVED
+    val locked = v.bootKey == Verdict.BOOT_KEY_LOCKED
     Surface(
         shape = RoundedCornerShape(50),
-        color = if (valid) colors.matchContainer else colors.failedContainer,
-        contentColor = if (valid) colors.onMatch else colors.onFailed,
-        modifier = Modifier.testTag(if (valid) "signature_valid" else "signature_invalid"),
+        color = when {
+            valid -> colors.matchContainer
+            locked -> MaterialTheme.colorScheme.surfaceVariant
+            else -> colors.failedContainer
+        },
+        contentColor = when {
+            valid -> colors.onMatch
+            locked -> MaterialTheme.colorScheme.onSurfaceVariant
+            else -> colors.onFailed
+        },
+        modifier = Modifier.testTag(
+            when {
+                valid -> "signature_valid"
+                locked -> "signature_locked"
+                else -> "signature_invalid"
+            },
+        ),
     ) {
         Row(
             Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Icon(if (valid) Icons.Filled.CheckCircle else Icons.Filled.Cancel, null, Modifier.size(20.dp))
+            Icon(
+                when {
+                    valid -> Icons.Filled.CheckCircle
+                    locked -> Icons.Filled.Lock
+                    else -> Icons.Filled.Cancel
+                },
+                null, Modifier.size(20.dp),
+            )
             Text(
-                stringResource(if (valid) R.string.badge_signed else R.string.badge_not_signed),
+                stringResource(
+                    when {
+                        valid -> R.string.badge_signed
+                        locked -> R.string.badge_after_boot
+                        else -> R.string.badge_not_signed
+                    },
+                ),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -227,11 +258,26 @@ private fun SignatureBadge(v: Verdict) {
 private fun BootKeyCard(v: Verdict, demoScreenCode: String?) {
     val colors = LocalVerdictColors.current
     val valid = v.bootKey == Verdict.BOOT_KEY_PROVED
+    val locked = v.bootKey == Verdict.BOOT_KEY_LOCKED
     Card(
-        Modifier.fillMaxWidth().testTag(if (valid) "boot_key_valid" else "boot_key_invalid"),
+        Modifier.fillMaxWidth().testTag(
+            when {
+                valid -> "boot_key_valid"
+                locked -> "boot_key_locked"
+                else -> "boot_key_invalid"
+            },
+        ),
         colors = CardDefaults.cardColors(
-            containerColor = if (valid) colors.matchContainer else colors.failedContainer,
-            contentColor = if (valid) colors.onMatch else colors.onFailed,
+            containerColor = when {
+                valid -> colors.matchContainer
+                locked -> MaterialTheme.colorScheme.surfaceVariant
+                else -> colors.failedContainer
+            },
+            contentColor = when {
+                valid -> colors.onMatch
+                locked -> MaterialTheme.colorScheme.onSurfaceVariant
+                else -> colors.onFailed
+            },
         ),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -263,6 +309,7 @@ private fun BootKeyCard(v: Verdict, demoScreenCode: String?) {
                         when (v.bootKey) {
                             Verdict.BOOT_KEY_REFUSED -> R.string.boot_key_refused
                             Verdict.BOOT_KEY_INVALID -> R.string.reason_boot_proof_invalid
+                            Verdict.BOOT_KEY_LOCKED -> R.string.boot_key_locked
                             else -> R.string.boot_key_unavailable
                         },
                     ),

@@ -140,22 +140,26 @@ extension Headline where Extra == EmptyView {
 
 /// The one thing to see at a glance, on every card: a green check when the
 /// machine's TPM signed this boot state as approved, a red cross when it did
-/// not. The words below say why.
+/// not - and a grey "after boot" when the key is locked until the next boot
+/// by design (a check of the running system, as at a remote salt's
+/// enrolment). The words below say why.
 private struct SignatureBadge: View {
     var v: Verdict
     var colors: VerdictColors
 
     var body: some View {
         let valid = v.bootKey == Verdict.bootKeyProved
+        let locked = v.bootKey == Verdict.bootKeyLocked
         HStack(spacing: 6) {
-            Image(systemName: valid ? "checkmark.circle.fill" : "xmark.circle.fill")
-            Text(valid ? String(localized: "Signed") : String(localized: "Not signed")).font(.subheadline.weight(.semibold))
+            Image(systemName: valid ? "checkmark.circle.fill" : (locked ? "lock.fill" : "xmark.circle.fill"))
+            Text(valid ? String(localized: "Signed") : (locked ? String(localized: "After boot") : String(localized: "Not signed")))
+                .font(.subheadline.weight(.semibold))
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(valid ? colors.matchContainer : colors.failedContainer, in: Capsule())
-        .foregroundStyle(valid ? colors.onMatch : colors.onFailed)
-        .accessibilityIdentifier(valid ? "signature_valid" : "signature_invalid")
+        .background(valid ? colors.matchContainer : (locked ? Color(.secondarySystemFill) : colors.failedContainer), in: Capsule())
+        .foregroundStyle(valid ? colors.onMatch : (locked ? Color.secondary : colors.onFailed))
+        .accessibilityIdentifier(valid ? "signature_valid" : (locked ? "signature_locked" : "signature_invalid"))
     }
 }
 
@@ -169,8 +173,9 @@ private struct BootKeyCard: View {
 
     var body: some View {
         let valid = v.bootKey == Verdict.bootKeyProved
-        CardView(container: valid ? colors.matchContainer : colors.failedContainer,
-                 content: valid ? colors.onMatch : colors.onFailed) {
+        let locked = v.bootKey == Verdict.bootKeyLocked
+        CardView(container: valid ? colors.matchContainer : (locked ? Color(.secondarySystemFill) : colors.failedContainer),
+                 content: valid ? colors.onMatch : (locked ? Color.primary : colors.onFailed)) {
             if valid {
                 Text("Code on the machine's screen").font(.headline)
                 Text(v.code)
@@ -189,13 +194,15 @@ private struct BootKeyCard: View {
                     String(localized: "No code: the TPM did not release the boot key. This boot state is not approved by the machine's owner (an update not yet resealed, or asked after the code screen).")
                 case Verdict.bootKeyInvalid:
                     Texts.reason("boot_proof_invalid")
+                case Verdict.bootKeyLocked:
+                    String(localized: "No code: the machine is up, and its TPM keeps the boot key locked until the next boot, by design. The quote above says this is the running system of a boot you know; it does not say the boot was approved. The next boot shows a code again.")
                 default:
                     String(localized: "No code: the machine could not answer with its boot key.")
                 }
                 Text(why).font(.callout)
             }
         }
-        .accessibilityIdentifier(valid ? "boot_key_valid" : "boot_key_invalid")
+        .accessibilityIdentifier(valid ? "boot_key_valid" : (locked ? "boot_key_locked" : "boot_key_invalid"))
     }
 
     static func shortKey(_ hex: String) -> String {

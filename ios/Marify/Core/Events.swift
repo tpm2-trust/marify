@@ -157,6 +157,8 @@ struct Verdict: Sendable, Equatable {
     static let bootKeyInvalid = "invalid"
     static let bootKeyFailed = "failed"
     static let bootKeyUnused = "unused"
+    /// After boot: the TPM keeps the boot key locked until the next boot, by design. No code, no signature; the quote still says which boot this is.
+    static let bootKeyLocked = "locked"
 
     struct Reason: Sendable, Equatable {
         var code: String

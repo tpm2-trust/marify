@@ -187,6 +187,7 @@
     <string name="reason_boot_proof_invalid">The machine claimed to hold its boot key but could not prove it.</string>
     <string name="badge_signed">Signed</string>
     <string name="badge_not_signed">Not signed</string>
+    <string name="badge_after_boot">After boot</string>
     <string name="changed_but_signed">New to this phone, but signed by the machine\'s TPM as approved by its owner.</string>
     <string name="boot_key_signed_by">Signing key …%1$s</string>
     <string name="boot_code_title">Code on the machine\'s screen</string>
@@ -194,6 +195,7 @@
     <string name="boot_code_demo_screen">The demo machine\'s screen shows: %1$s</string>
     <string name="boot_key_refused">No code: the TPM did not release the boot key. This boot state is not approved by the machine\'s owner (an update not yet resealed, or asked after the code screen).</string>
     <string name="boot_key_unavailable">No code: the machine could not answer with its boot key.</string>
+    <string name="boot_key_locked">No code: the machine is up, and its TPM keeps the boot key locked until the next boot, by design. The quote above says this is the running system of a boot you know; it does not say the boot was approved. The next boot shows a code again.</string>
     <string name="codes_match_continue">The codes match — continue</string>
     <string name="codes_differ_reject">The codes differ — reject</string>
     <string name="continue_to_sign">Continue</string>
