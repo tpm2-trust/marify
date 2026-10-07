@@ -132,6 +132,18 @@
     <string name="ack_malformed">The machine could not read the receipt.</string>
     <string name="ack_unknown">The machine answered with result %1$d.</string>
 
+    <!-- The disk factor (PLAN-FACTORRELEASE.md): kept by this phone, released after an accepted verdict -->
+    <string name="factor_offer_title">Keep this machine\'s disk factor</string>
+    <string name="factor_offer_body">The machine asks this phone to keep one half of its disk key: a sealed value only its own TPM can open, in a boot it has approved. Accepting this verdict keeps it, replacing any kept before. From then on it is handed back after every verdict you accept, and the machine needs it together with your password to unlock the disk.</string>
+    <string name="factor_released">Disk factor handed back</string>
+    <string name="release_ok">The machine took the factor.</string>
+    <string name="release_unsupported">This machine takes no disk factor.</string>
+    <string name="release_tpm_refused">The machine\'s TPM refused to open the factor: this boot is not one its owner approved.</string>
+    <string name="release_no_receipt">The machine had no accepted receipt for it.</string>
+    <string name="factor_label">Disk factor</string>
+    <string name="factor_kept">Kept on this phone since %1$s. Only the machine\'s TPM can open it.</string>
+    <string name="factor_none">None kept. Run \"tpm2-kira factor enrol\" on the machine to add one.</string>
+
     <!-- Failures -->
     <string name="refused_title">%1$s did not accept this phone</string>
     <string name="refused_body">The machine is advertising as yours but refused the secure connection, twice. Its enrolment data was changed or removed, or this is a different machine imitating it.</string>

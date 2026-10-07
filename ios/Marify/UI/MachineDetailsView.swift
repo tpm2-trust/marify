@@ -35,6 +35,13 @@ struct MachineDetailsView: View {
                 Section("TPM") {
                     Text(s.ekVerifiedBy.isEmpty ? String(localized: "Not verified as genuine hardware") : String(localized: "Verified as genuine: \(s.ekVerifiedBy)"))
                 }
+                Section("Disk factor") {
+                    if let kept = Texts.dateTime(s.factorKeptAt) {
+                        Text("Kept on this phone since \(kept). Only the machine's TPM can open it.")
+                    } else {
+                        Text("None kept. Run \"tpm2-kira factor enrol\" on the machine to add one.")
+                    }
+                }
                 Section("Key storage") {
                     if let key {
                         Text(Texts.keyStorage(key.storage))

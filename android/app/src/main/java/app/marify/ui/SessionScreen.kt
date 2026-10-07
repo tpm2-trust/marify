@@ -174,6 +174,17 @@ fun SessionContent(
             }
         }
 
+        state.releaseAck?.let { ack ->
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Column {
+                    Text(stringResource(R.string.factor_released), style = MaterialTheme.typography.titleMedium)
+                    Text(releaseStatusText(ack.status), modifier = Modifier.testTag("release_ack"))
+                    if (ack.message.isNotBlank()) Text(ack.message, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+
         when (val o = state.outcome) {
             null -> Unit
             Outcome.Succeeded -> {

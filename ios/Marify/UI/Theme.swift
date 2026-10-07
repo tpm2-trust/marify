@@ -122,6 +122,17 @@ enum Texts {
         }
     }
 
+    /// What the machine made of the released disk factor (PROTOCOL-BLE.md §7.3.9).
+    static func releaseStatus(_ status: Int) -> String {
+        switch status {
+        case 1: String(localized: "The machine took the factor.")
+        case 2: String(localized: "This machine takes no disk factor.")
+        case 3: String(localized: "The machine's TPM refused to open the factor: this boot is not one its owner approved.")
+        case 4: String(localized: "The machine had no accepted receipt for it.")
+        default: String(localized: "The machine answered with result \(status).")
+        }
+    }
+
     static func receiptResult(_ result: Int) -> String {
         switch result {
         case ReceiptResult.accepted: String(localized: "The machine accepted the receipt.")

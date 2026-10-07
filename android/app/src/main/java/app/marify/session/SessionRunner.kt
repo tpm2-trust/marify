@@ -377,6 +377,7 @@ class SessionRunner(
             }
             is Event.Eventlog -> _state.update { it.copy(eventlog = e) }
             is Event.ReceiptAck -> _state.update { it.copy(receiptAck = e) }
+            is Event.ReleaseAck -> _state.update { it.copy(releaseAck = e) }
             is Event.RecordUpdated -> try {
                 records.replace(e.recordJson)
             } catch (ex: Exception) {

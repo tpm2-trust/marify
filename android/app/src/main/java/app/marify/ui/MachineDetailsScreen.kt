@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -107,6 +108,14 @@ fun MachineDetailsScreen(c: AppContainer, deviceId: String, onBack: () -> Unit, 
             Text(
                 if (s.ekVerifiedBy.isNotEmpty()) stringResource(R.string.tpm_verified_short, s.ekVerifiedBy)
                 else stringResource(R.string.tpm_unverified_short),
+            )
+
+            HorizontalDivider()
+            Text(stringResource(R.string.factor_label), style = MaterialTheme.typography.titleMedium)
+            Text(
+                Texts.dateTime(s.factorKeptAt)?.let { stringResource(R.string.factor_kept, it) }
+                    ?: stringResource(R.string.factor_none),
+                modifier = Modifier.testTag("factor"),
             )
 
             HorizontalDivider()

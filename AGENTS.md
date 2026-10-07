@@ -37,6 +37,11 @@ The same rule, with tpm2-kira's other standing decisions, is in
   the demo machine is behind a switch. Release builds do not link kiratest.
 - **Diagnostic logging is debug-only** (`debugLog`); release builds log
   warnings and errors only.
+- **The phone keeps the machine's wrapped disk factor, never the salt.**
+  What a machine hands over at `factor enrol` is a TPM credential the
+  phone cannot open; it is kept with the record, replaced only when a
+  verdict offering a new one is accepted, and released after an accepted
+  receipt. The salt and the derived key exist on the machine only.
 - **Unlock for every signature by biometrics or the device credential**
   (PIN/pattern/password on Android, passcode on iOS), a deliberate deviation
   from PROTOCOL-BLE.md §11.2; "biometrics only" is a per-machine choice at

@@ -38,9 +38,13 @@ sealed interface Event {
         val verdict: Verdict,
         val needsDecision: Boolean,
         val eventlogAvailable: Boolean,
+        /** The machine asks this phone to keep a new disk factor; kept when the verdict is accepted. */
+        val factorOffered: Boolean = false,
     ) : Event
     data class Eventlog(val received: Long, val total: Long, val complete: Boolean) : Event
     data class ReceiptAck(val result: Int, val message: String) : Event
+    /** What the machine made of the disk factor this phone released (PROTOCOL-BLE.md §7.3.9). */
+    data class ReleaseAck(val status: Int, val message: String) : Event
     data class RecordUpdated(val recordJson: String) : Event
     data object Done : Event
     data class Error(val code: Int, val message: String) : Event
@@ -91,9 +95,11 @@ sealed interface Event {
                     ),
                     needsDecision = bool("needs_decision"),
                     eventlogAvailable = bool("eventlog_available"),
+                    factorOffered = bool("factor_offered"),
                 )
                 "eventlog" -> Eventlog(long("received"), long("total"), bool("complete"))
                 "receipt_ack" -> ReceiptAck(int("result"), str("message"))
+                "release_ack" -> ReleaseAck(int("result"), str("message"))
                 "record_updated" -> RecordUpdated(record())
                 "done" -> Done
                 "error" -> Error(int("code"), str("message"))
@@ -166,6 +172,8 @@ data class RecordSummary(
     val profiles: List<Profile> = emptyList(),
     /** TPM vendor whose certificate vouched for the EK at enrolment; empty if not verified. */
     @SerialName("ek_verified_by") val ekVerifiedBy: String = "",
+    /** When this phone kept the machine's disk factor; null when it keeps none. */
+    @SerialName("factor_kept_at") val factorKeptAt: String? = null,
 ) {
     @Serializable
     data class Profile(

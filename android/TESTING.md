@@ -35,7 +35,7 @@ adb shell locksettings set-pin 1234   # AnchorKeysTest needs a screen lock (skip
 
 | Test | Covers |
 |---|---|
-| `EventParseTest` | every event type of PROTOCOL-BLE.md §10.3, omitted (omitempty) fields, record JSON kept verbatim, unknown types |
+| `EventParseTest` | every event type of PROTOCOL-BLE.md §10.3, omitted (omitempty) fields, record JSON kept verbatim, unknown types; `release_ack`, `factor_offered` on a verdict, `factor_kept_at` in the record summary |
 | `WriteQueueTest` | one write in flight, order, busy retry with backoff, persistent busy, GATT failure, missing ack timeout, cancel |
 | `SessionRunnerTest` | connecting retried every 5 s while the machine is not reachable, without giving up (half an hour checked) until cancelled; Bluetooth off waited out the same way; other connection errors not retried; fragments of a failing Step written before disconnect; recoverable error keeps the session; abort writes its fragments; notification order; match → automatic signing → receipt_ack → record_updated → done; unlock-prompt cancel aborts; typed-name decision passed through unchanged; link loss; wrong INFO mode; enrolment stores the record |
 | `InfoValueTest` | INFO parsing and protocol/schema/mode checks |

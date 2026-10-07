@@ -112,3 +112,13 @@ fun errorCodeText(code: Int): String =
 @Composable
 fun receiptResultText(result: Int): String =
     Texts.receiptResults[result]?.let { stringResource(it) } ?: stringResource(R.string.ack_unknown, result)
+
+/** What the machine made of the released disk factor (PROTOCOL-BLE.md §7.3.9). */
+@Composable
+fun releaseStatusText(status: Int): String = when (status) {
+    1 -> stringResource(R.string.release_ok)
+    2 -> stringResource(R.string.release_unsupported)
+    3 -> stringResource(R.string.release_tpm_refused)
+    4 -> stringResource(R.string.release_no_receipt)
+    else -> stringResource(R.string.ack_unknown, status)
+}

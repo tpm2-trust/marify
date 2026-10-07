@@ -131,3 +131,11 @@ it and enrol again. Release builds do not link kiratest.
 
 Losing the phone means re-enrolling each machine (`sudo tpm2-kira attest
 enrol` with the new phone; `attest unenrol` removes the old entry).
+
+## The disk factor
+
+Same as the Android app (`../android/README.md`, "The disk factor"): the
+verdict view shows the "Keep this machine's disk factor" card when the
+evidence offers one, the session view shows what the machine made of the
+released factor, and the machine's details say since when one is kept.
+All of it comes from the core; the app has no key material of its own.

@@ -73,6 +73,7 @@ data class SessionState(
     val eventlogRequested: Boolean = false,
     val eventlog: Event.Eventlog? = null,
     val receiptAck: Event.ReceiptAck? = null,
+    val releaseAck: Event.ReleaseAck? = null,
     /** A recoverable error from the core (the session continues). */
     val notice: String? = null,
     val outcome: Outcome? = null,

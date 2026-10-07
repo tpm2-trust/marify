@@ -64,9 +64,27 @@ final class EventParseTests: XCTestCase {
         XCTAssertEqual(try Event.parse(#"{"type":"hello","device_id":"d","friendly_name":"n"}"#), .hello(deviceId: "d", friendlyName: "n"))
         XCTAssertEqual(try Event.parse(#"{"type":"eventlog","received":10,"total":20,"complete":false}"#), .eventlog(Event.Eventlog(received: 10, total: 20, complete: false)))
         XCTAssertEqual(try Event.parse(#"{"type":"receipt_ack","result":1,"message":"ok"}"#), .receiptAck(result: 1, message: "ok"))
+        XCTAssertEqual(try Event.parse(#"{"type":"release_ack","result":1,"message":"kept for the disk"}"#), .releaseAck(status: 1, message: "kept for the disk"))
         XCTAssertEqual(try Event.parse(#"{"type":"done"}"#), .done)
         XCTAssertEqual(try Event.parse(#"{"type":"error","code":10,"message":"cancelled"}"#), .error(code: 10, message: "cancelled"))
         XCTAssertEqual(try Event.parse(#"{"type":"something_new","x":1}"#), .unknown(type: "something_new"))
+    }
+
+    func testVerdictOffersAFactor() throws {
+        guard case .verdict(let e) = try Event.parse(#"{"type":"verdict","needs_decision":true,"factor_offered":true,"verdict":{"ok":true,"state":"match","reasons":[]}}"#) else {
+            return XCTFail("not a verdict")
+        }
+        XCTAssertTrue(e.factorOffered)
+        guard case .verdict(let plain) = try Event.parse(#"{"type":"verdict","verdict":{"ok":true,"state":"match","reasons":[]}}"#) else {
+            return XCTFail("not a verdict")
+        }
+        XCTAssertFalse(plain.factorOffered)
+    }
+
+    func testRecordSummaryWithAFactor() throws {
+        let s = try RecordSummary.parse(#"{"device_id":"00","friendly_name":"box","enrolled_at":"2026-10-07T08:00:00Z","slot":1,"profiles":[],"factor_kept_at":"2026-10-07T09:00:00Z"}"#)
+        XCTAssertEqual(s.factorKeptAt, "2026-10-07T09:00:00Z")
+        XCTAssertNil(try RecordSummary.parse(#"{"device_id":"00","friendly_name":"box","enrolled_at":"2026-10-07T08:00:00Z","profiles":[]}"#).factorKeptAt)
     }
 
     func testRecordSummary() throws {

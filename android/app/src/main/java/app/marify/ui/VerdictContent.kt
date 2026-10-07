@@ -146,6 +146,8 @@ fun VerdictContent(
             }
         }
 
+        if (event.factorOffered) FactorOfferCard()
+
         if (decisionEnabled && event.needsDecision) {
             when (v.state) {
                 Verdict.MATCH -> MatchDecisions(v, onDecide)
@@ -267,6 +269,21 @@ private fun BootKeyCard(v: Verdict, demoScreenCode: String?) {
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
+        }
+    }
+}
+
+/**
+ * The machine asks this phone to keep its disk factor: a wrapped secret only
+ * that machine's TPM can open, returned after every accepted verdict so the
+ * disk's key can be derived. Kept when this verdict is accepted.
+ */
+@Composable
+private fun FactorOfferCard() {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer), modifier = Modifier.testTag("factor_offer")) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(stringResource(R.string.factor_offer_title), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.factor_offer_body), style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

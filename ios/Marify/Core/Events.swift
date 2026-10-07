@@ -13,6 +13,8 @@ enum Event: Sendable, Equatable {
     case verdict(VerdictEvent)
     case eventlog(Eventlog)
     case receiptAck(result: Int, message: String)
+    /// What the machine made of the disk factor this phone released (PROTOCOL-BLE.md §7.3.9).
+    case releaseAck(status: Int, message: String)
     case recordUpdated(recordJSON: String)
     case done
     case error(code: Int, message: String)
@@ -43,6 +45,8 @@ enum Event: Sendable, Equatable {
         var verdict: Verdict
         var needsDecision: Bool
         var eventlogAvailable: Bool
+        /// The machine asks this phone to keep a new disk factor; kept when the verdict is accepted.
+        var factorOffered: Bool = false
     }
 
     struct Eventlog: Sendable, Equatable {
@@ -90,10 +94,12 @@ enum Event: Sendable, Equatable {
             return .verdict(VerdictEvent(
                 verdict: Verdict(object: v),
                 needsDecision: bool("needs_decision"),
-                eventlogAvailable: bool("eventlog_available")
+                eventlogAvailable: bool("eventlog_available"),
+                factorOffered: bool("factor_offered")
             ))
         case "eventlog": return .eventlog(Eventlog(received: int64("received"), total: int64("total"), complete: bool("complete")))
         case "receipt_ack": return .receiptAck(result: int("result"), message: str("message"))
+        case "release_ack": return .releaseAck(status: int("result"), message: str("message"))
         case "record_updated": return .recordUpdated(recordJSON: try record())
         case "done": return .done
         case "error": return .error(code: int("code"), message: str("message"))
@@ -112,6 +118,7 @@ enum Event: Sendable, Equatable {
         case .verdict: "verdict"
         case .eventlog: "eventlog"
         case .receiptAck: "receipt_ack"
+        case .releaseAck: "release_ack"
         case .recordUpdated: "record_updated"
         case .done: "done"
         case .error: "error"
@@ -222,6 +229,8 @@ struct RecordSummary: Sendable, Equatable {
     var profiles: [Profile] = []
     /// TPM vendor whose certificate vouched for the EK at enrolment; empty if not verified.
     var ekVerifiedBy: String = ""
+    /// When this phone kept the machine's disk factor; nil when it keeps none.
+    var factorKeptAt: String?
 
     struct Profile: Sendable, Equatable {
         var name: String
@@ -251,7 +260,8 @@ struct RecordSummary: Sendable, Equatable {
                     validUntil: $0["valid_until"] as? String
                 )
             },
-            ekVerifiedBy: str("ek_verified_by")
+            ekVerifiedBy: str("ek_verified_by"),
+            factorKeptAt: o["factor_kept_at"] as? String
         )
     }
 }

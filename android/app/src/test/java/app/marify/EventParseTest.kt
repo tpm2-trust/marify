@@ -2,6 +2,7 @@ package app.marify
 
 import app.marify.core.Decision
 import app.marify.core.Event
+import app.marify.core.RecordSummary
 import app.marify.core.Verdict
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -112,6 +113,26 @@ class EventParseTest {
         Event.ReceiptAck(1, "ok"),
         Event.parse("""{"type":"receipt_ack","result":1,"message":"ok"}"""),
     )
+
+    @Test fun releaseAck() = assertEquals(
+        Event.ReleaseAck(1, "kept for the disk"),
+        Event.parse("""{"type":"release_ack","result":1,"message":"kept for the disk"}"""),
+    )
+
+    @Test fun verdictOffersAFactor() {
+        val e = Event.parse(
+            """{"type":"verdict","needs_decision":true,"factor_offered":true,"verdict":{"ok":true,"state":"match","reasons":[]}}""",
+        ) as Event.VerdictEvent
+        assertTrue(e.factorOffered)
+    }
+
+    @Test fun recordSummaryWithAFactor() {
+        val s = RecordSummary.parse(
+            """{"device_id":"00","friendly_name":"box","enrolled_at":"2026-10-07T08:00:00Z","slot":1,"profiles":[],"factor_kept_at":"2026-10-07T09:00:00Z"}""",
+        )
+        assertEquals("2026-10-07T09:00:00Z", s.factorKeptAt)
+        assertEquals(null, RecordSummary.parse("""{"device_id":"00","friendly_name":"box","enrolled_at":"2026-10-07T08:00:00Z","profiles":[]}""").factorKeptAt)
+    }
 
     @Test fun done() = assertEquals(Event.Done, Event.parse("""{"type":"done"}"""))
 
