@@ -123,7 +123,7 @@ class DemoMachineSessionTest {
         assertEquals("", KiraCore.recordSummary(record).ekVerifiedBy)
     }
 
-    private fun attestMode() = KiraCore.recordSummary(record).let { SessionMode.Attest(it.deviceId, it.friendlyName, it.lastAttested) }
+    private fun attestMode() = KiraCore.recordSummary(record).let { SessionMode.Attest(it.deviceId, it.friendlyName, it.lastAttested, returnsSalt = it.factorKeptAt != null) }
 
     @Test fun enrolThenMatch() = enrolThenMatch(517)
 

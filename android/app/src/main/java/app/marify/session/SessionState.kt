@@ -10,6 +10,8 @@ sealed interface SessionMode {
         val machineName: String,
         /** last_attested of the record before this session, for "unchanged since". */
         val lastAttested: String? = null,
+        /** This phone keeps the machine's remote salt: an accepted verdict returns it. */
+        val returnsSalt: Boolean = false,
     ) : SessionMode
 }
 

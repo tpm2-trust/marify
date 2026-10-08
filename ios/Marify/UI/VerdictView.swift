@@ -7,6 +7,8 @@ struct VerdictContent: View {
     var event: Event.VerdictEvent
     var machineName: String
     var lastAttested: String?
+    /// This phone keeps the machine's remote salt: accepting returns it to the machine.
+    var returnsSalt: Bool = false
     var decisionEnabled: Bool
     /// What the machine's screen shows, where that screen is simulated (the demo machine).
     var demoScreenCode: String? = nil
@@ -85,8 +87,8 @@ struct VerdictContent: View {
 
             if decisionEnabled && event.needsDecision {
                 switch v.state {
-                case Verdict.match: MatchDecisions(v: v, onDecide: onDecide)
-                case Verdict.changed: ChangedDecisions(onDecide: onDecide)
+                case Verdict.match: MatchDecisions(v: v, returnsSalt: returnsSalt, onDecide: onDecide)
+                case Verdict.changed: ChangedDecisions(returnsSalt: returnsSalt, onDecide: onDecide)
                 default: FailedDecisions(machineName: machineName, onDecide: onDecide)
                 }
             }
@@ -234,14 +236,28 @@ private struct FactorOfferCard: View {
     }
 }
 
+/// The one line that says what accepting does besides signing: the salt goes back to the machine.
+private struct ReturnsSaltNote: View {
+    var body: some View {
+        Text("This phone keeps the salt of this machine's disk key. Accepting attests the boot and returns the salt to the machine, which needs it together with your password.")
+            .font(.callout)
+            .accessibilityIdentifier("returns_salt_note")
+    }
+}
+
 private struct MatchDecisions: View {
     var v: Verdict
+    var returnsSalt: Bool
     var onDecide: (Decision, String) -> Void
 
     var body: some View {
         let proved = v.bootKey == Verdict.bootKeyProved
+        if returnsSalt { ReturnsSaltNote() }
         Button { onDecide(.continue, "") } label: {
-            Text(proved ? String(localized: "The codes match — continue") : String(localized: "Continue")).frame(maxWidth: .infinity)
+            Text(proved
+                 ? (returnsSalt ? String(localized: "The codes match — attest and return the salt") : String(localized: "The codes match — continue"))
+                 : (returnsSalt ? String(localized: "Attest and return the salt") : String(localized: "Continue")))
+                .frame(maxWidth: .infinity)
         }
         .buttonStyle(.borderedProminent)
         .accessibilityIdentifier("continue")
@@ -254,9 +270,11 @@ private struct MatchDecisions: View {
 }
 
 private struct ChangedDecisions: View {
+    var returnsSalt: Bool
     var onDecide: (Decision, String) -> Void
 
     var body: some View {
+        if returnsSalt { ReturnsSaltNote() }
         Button { onDecide(.approveOnce, "") } label: { Text("Approve once").frame(maxWidth: .infinity) }
             .buttonStyle(.borderedProminent).accessibilityIdentifier("approve_once")
         Button { onDecide(.approveRemember, "") } label: { Text("Approve and remember").frame(maxWidth: .infinity) }

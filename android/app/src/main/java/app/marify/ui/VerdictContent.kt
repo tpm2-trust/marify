@@ -72,6 +72,8 @@ fun VerdictContent(
     modifier: Modifier = Modifier,
     /** What the machine's screen shows, where that screen is simulated (the demo machine). */
     demoScreenCode: String? = null,
+    /** This phone keeps the machine's remote salt: accepting returns it to the machine. */
+    returnsSalt: Boolean = false,
 ) {
     val v = event.verdict
     val colors = LocalVerdictColors.current
@@ -151,8 +153,8 @@ fun VerdictContent(
 
         if (decisionEnabled && event.needsDecision) {
             when (v.state) {
-                Verdict.MATCH -> MatchDecisions(v, onDecide)
-                Verdict.CHANGED -> ChangedDecisions(onDecide)
+                Verdict.MATCH -> MatchDecisions(v, returnsSalt, onDecide)
+                Verdict.CHANGED -> ChangedDecisions(returnsSalt, onDecide)
                 else -> FailedDecisions(machineName, onDecide)
             }
         }
@@ -335,15 +337,35 @@ private fun FactorOfferCard() {
     }
 }
 
+/** The one line that says what accepting does besides signing: the salt goes back to the machine. */
+@Composable
+private fun ReturnsSaltNote() {
+    Text(
+        stringResource(R.string.returns_salt_note),
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier.testTag("returns_salt_note"),
+    )
+}
+
 /**
  * A matching boot still waits for the person: they compare the code with the
  * machine's screen and only then let the receipt be signed.
  */
 @Composable
-private fun MatchDecisions(v: Verdict, onDecide: (Decision, String) -> Unit) {
+private fun MatchDecisions(v: Verdict, returnsSalt: Boolean, onDecide: (Decision, String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (returnsSalt) ReturnsSaltNote()
         Button(onClick = { onDecide(Decision.CONTINUE, "") }, Modifier.fillMaxWidth().testTag("continue")) {
-            Text(stringResource(if (v.bootKey == Verdict.BOOT_KEY_PROVED) R.string.codes_match_continue else R.string.continue_to_sign))
+            Text(
+                stringResource(
+                    when {
+                        v.bootKey == Verdict.BOOT_KEY_PROVED && returnsSalt -> R.string.codes_match_attest_return_salt
+                        v.bootKey == Verdict.BOOT_KEY_PROVED -> R.string.codes_match_continue
+                        returnsSalt -> R.string.attest_return_salt
+                        else -> R.string.continue_to_sign
+                    },
+                ),
+            )
         }
         OutlinedButton(onClick = { onDecide(Decision.REJECT, "") }, Modifier.fillMaxWidth().testTag("reject")) {
             Text(stringResource(if (v.bootKey == Verdict.BOOT_KEY_PROVED) R.string.codes_differ_reject else R.string.reject))
@@ -352,8 +374,9 @@ private fun MatchDecisions(v: Verdict, onDecide: (Decision, String) -> Unit) {
 }
 
 @Composable
-private fun ChangedDecisions(onDecide: (Decision, String) -> Unit) {
+private fun ChangedDecisions(returnsSalt: Boolean, onDecide: (Decision, String) -> Unit) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (returnsSalt) ReturnsSaltNote()
         Button(onClick = { onDecide(Decision.APPROVE_ONCE, "") }, Modifier.fillMaxWidth().testTag("approve_once")) {
             Text(stringResource(R.string.approve_once))
         }

@@ -4,7 +4,8 @@ import Foundation
 enum SessionMode: Sendable, Equatable {
     case enrol
     /// `lastAttested`: last_attested of the record before this session, for "unchanged since".
-    case attest(deviceId: String, machineName: String, lastAttested: String?)
+    /// `returnsSalt`: this phone keeps the machine's remote salt; an accepted verdict returns it.
+    case attest(deviceId: String, machineName: String, lastAttested: String?, returnsSalt: Bool = false)
 
     var isEnrol: Bool { if case .enrol = self { true } else { false } }
     var isAttest: Bool { !isEnrol }
@@ -80,7 +81,7 @@ struct SessionState: Sendable, Equatable {
 
     init(mode: SessionMode) {
         self.mode = mode
-        if case .attest(let id, let name, _) = mode {
+        if case .attest(let id, let name, _, _) = mode {
             deviceId = id
             machineName = name
         }
@@ -89,7 +90,11 @@ struct SessionState: Sendable, Equatable {
     var finished: Bool { outcome != nil }
 
     var lastAttested: String? {
-        if case .attest(_, _, let last) = mode { last } else { nil }
+        if case .attest(_, _, let last, _) = mode { last } else { nil }
+    }
+
+    var returnsSalt: Bool {
+        if case .attest(_, _, _, let r) = mode { r } else { false }
     }
 
     static func == (a: SessionState, b: SessionState) -> Bool {

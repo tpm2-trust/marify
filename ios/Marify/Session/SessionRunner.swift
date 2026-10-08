@@ -87,7 +87,7 @@ actor SessionRunner {
         let initial = SessionState(mode: mode)
         current = initial
         model = SessionStateModel(initial)
-        if case .attest(let id, let name, _) = mode {
+        if case .attest(let id, let name, _, _) = mode {
             deviceId = id
             machineName = name
         }

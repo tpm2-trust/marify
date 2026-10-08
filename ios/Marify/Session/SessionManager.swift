@@ -78,7 +78,7 @@ final class SessionManager {
     /// advertisement is awaited (it uses a new address per boot).
     func startAttest(_ machine: Machine, adv: Advertisement? = nil) {
         retryAction = { [weak self] in self?.startAttest(machine) }
-        let mode = SessionMode.attest(deviceId: machine.deviceId, machineName: machine.name, lastAttested: machine.summary.lastAttested)
+        let mode = SessionMode.attest(deviceId: machine.deviceId, machineName: machine.name, lastAttested: machine.summary.lastAttested, returnsSalt: machine.summary.factorKeptAt != nil)
         if demo.owns(recordJSON: machine.recordJSON) {
             demoSession = true
             start(mode, connect: demo.attestLink(), recordJSON: machine.recordJSON)

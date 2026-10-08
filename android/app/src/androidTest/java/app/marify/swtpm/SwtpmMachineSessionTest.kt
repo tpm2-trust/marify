@@ -116,7 +116,7 @@ class SwtpmMachineSessionTest {
     }
 
     private fun attestMode() =
-        KiraCore.recordSummary(record).let { SessionMode.Attest(it.deviceId, it.friendlyName, it.lastAttested) }
+        KiraCore.recordSummary(record).let { SessionMode.Attest(it.deviceId, it.friendlyName, it.lastAttested, returnsSalt = it.factorKeptAt != null) }
 
     private var bindShown: Event.NeedAnchorKey? = null
 

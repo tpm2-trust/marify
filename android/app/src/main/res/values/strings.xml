@@ -199,6 +199,9 @@
     <string name="codes_match_continue">The codes match — continue</string>
     <string name="codes_differ_reject">The codes differ — reject</string>
     <string name="continue_to_sign">Continue</string>
+    <string name="codes_match_attest_return_salt">The codes match — attest and return the salt</string>
+    <string name="attest_return_salt">Attest and return the salt</string>
+    <string name="returns_salt_note">This phone keeps the salt of this machine\'s disk key. Accepting attests the boot and returns the salt to the machine, which needs it together with your password.</string>
     <string name="reason_clock_unsafe">The TPM\'s clock is not trustworthy.</string>
     <string name="reason_firmware_changed">The TPM firmware changed.</string>
     <string name="reason_selection_mismatch">The machine reported different registers than requested.</string>

@@ -87,7 +87,7 @@ final class DemoMachineSessionTests: XCTestCase {
 
     private func attestMode() throws -> SessionMode {
         let s = try KiraCore.recordSummary(records.record)
-        return .attest(deviceId: s.deviceId, machineName: s.friendlyName, lastAttested: s.lastAttested)
+        return .attest(deviceId: s.deviceId, machineName: s.friendlyName, lastAttested: s.lastAttested, returnsSalt: s.factorKeptAt != nil)
     }
 
     func testEnrolThenMatch() async throws { try await enrolThenMatch(mtu: 517) }

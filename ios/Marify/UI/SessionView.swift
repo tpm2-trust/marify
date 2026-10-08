@@ -68,6 +68,7 @@ struct SessionContent: View {
                         event: verdict,
                         machineName: name,
                         lastAttested: state.lastAttested,
+                        returnsSalt: state.returnsSalt,
                         decisionEnabled: !state.decisionSent && !state.finished && state.phase == .deciding,
                         demoScreenCode: demoScreenCode,
                         eventlogRequested: state.eventlogRequested,

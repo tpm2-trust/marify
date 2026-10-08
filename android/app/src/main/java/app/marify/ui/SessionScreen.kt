@@ -126,6 +126,7 @@ fun SessionContent(
                     event = verdict,
                     machineName = name,
                     lastAttested = (state.mode as? SessionMode.Attest)?.lastAttested,
+                    returnsSalt = (state.mode as? SessionMode.Attest)?.returnsSalt == true,
                     decisionEnabled = !state.decisionSent && !state.finished && state.phase == Phase.DECIDING,
                     demoScreenCode = demoScreenCode,
                     eventlogRequested = state.eventlogRequested,

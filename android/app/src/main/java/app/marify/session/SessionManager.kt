@@ -72,7 +72,7 @@ class SessionManager(
      */
     fun startAttest(machine: Machine, adv: Advertisement? = null) {
         retry = { startAttest(machine) }
-        val mode = SessionMode.Attest(machine.deviceId, machine.name, machine.summary.lastAttested)
+        val mode = SessionMode.Attest(machine.deviceId, machine.name, machine.summary.lastAttested, returnsSalt = machine.summary.factorKeptAt != null)
         if (demo.owns(machine.recordJson)) {
             demoSession = true
             start(mode, demo.attestLink(), machine.recordJson)
