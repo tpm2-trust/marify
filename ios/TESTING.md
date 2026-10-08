@@ -29,7 +29,8 @@ and a tpm2-kira machine (the package from `tpm2-kira`, the same commit as
 | At boot: the machine shows its code and asks for a phone → "… is asking for attestation" on the list → tap → green card with the green **Signed** check, the eight-character code equals the slot's second code on the machine's screen → "The codes match — continue" → unlock prompt → the machine continues to the passphrase prompt | ☐ |
 | After the receipt the "asking for attestation" banner disappears within ten seconds | ☐ |
 | Changed after a resealed update: orange card with the green check and "New to this phone, but signed…"; approve and remember; next boot matches | ☐ |
-| `attest gate` by hand after boot: red **Not signed** cross, no code, the reason line | ☐ |
+| `attest gate` by hand after boot: grey **After boot** badge with the lock, no code, "the machine is up, and its TPM keeps the boot key locked until the next boot" | ☐ |
+| `tpm2-kira remote-salt enrol` → the "Keep this machine's remote salt" card → accept → details say since when it is kept; the next boot's verdict says "This phone keeps the salt…" and the button reads "The codes match — attest and return the salt" → after the receipt the session shows "Remote salt handed back" with what the machine made of it | ☐ |
 | Reject: no unlock prompt; the machine shows the rejection | ☐ |
 | Stop while connecting, while deciding, at the unlock prompt: the machine is told each time | ☐ |
 | Background: switch apps during a session; the receipt still arrives | ☐ |

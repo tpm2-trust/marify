@@ -19,14 +19,17 @@ The verdict screen then shows, before anything is signed:
   orange *changed* (with what changed and why that may be), or red *failed*.
 - **A badge on that card**: a green check **Signed** when the machine's TPM
   signed this boot state as one its owner approved, a red cross **Not
-  signed** when it did not. The colour answers "is this signature valid"
-  before you read anything. An orange card with a green check is a state new
-  to this phone that the machine's owner approved (a resealed update).
+  signed** when it did not, a grey lock **After boot** when the machine is
+  up and its TPM keeps the boot key locked until the next boot, by design
+  (a check of the running system, say at a remote salt's enrolment). The
+  colour answers "is this signature valid" before you read anything. An
+  orange card with a green check is a state new to this phone that the
+  machine's owner approved (a resealed update).
 - **The code card** with an eight-character code. The machine's screen must
   show the same code, as the slot's second code under the one-time code:
   only that machine's TPM, in an approved boot state, could recover it. A
   red card says why there is none (the TPM refused the key, or the machine
-  could not answer).
+  could not answer); a grey one that there is none after boot.
 - **The buttons**: "The codes match - continue" or "The codes differ -
   reject" on a match; approve once, approve and remember, or reject on a
   change. Nothing is signed by itself: the PIN or biometric prompt comes
@@ -213,7 +216,10 @@ phone never sees the secret itself.
   that it takes none, or that its TPM refused it because this boot is not
   one its owner approved). The machine still needs your password: the
   salt alone opens nothing.
-- **Seeing it**: the machine's details say since when a factor is kept.
+- **Seeing it**: the machine's details say since when a remote salt is
+  kept, and a verdict for such a machine says so above its buttons ("This
+  phone keeps the salt of this machine's disk key…"): the match button
+  reads "The codes match — attest and return the salt".
 - **Without the phone**: the machine's recovery passphrase, in a second
   LUKS keyslot, opens the disk at systemd's own prompt.
 

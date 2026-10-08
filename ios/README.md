@@ -136,8 +136,10 @@ enrol` with the new phone; `attest unenrol` removes the old entry).
 
 Same as the Android app (`../android/README.md`, "The remote salt"): the
 verdict view shows the "Keep this machine's remote salt" card when the
-evidence offers one, the session view shows what the machine made of the
-released salt, and the machine's details say since when one is kept.
+evidence offers one, says above its buttons when this phone keeps one
+(the match button reads "The codes match — attest and return the salt"),
+the session view shows what the machine made of the released salt, and
+the machine's details say since when one is kept.
 All of it comes from the core; the app has no key material of its own.
 
 ## Open: build and test on a Mac

@@ -117,6 +117,7 @@ struct SessionContent: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Remote salt handed back").font(.headline)
                             Text(Texts.releaseStatus(ack.status))
+                                .accessibilityIdentifier("release_ack")
                             if !ack.message.isEmpty { Text(ack.message).font(.footnote) }
                         }
                     }

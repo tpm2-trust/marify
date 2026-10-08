@@ -38,8 +38,10 @@ struct MachineDetailsView: View {
                 Section("Remote salt") {
                     if let kept = Texts.dateTime(s.factorKeptAt) {
                         Text("Kept on this phone since \(kept). Only the machine's TPM can open it.")
+                            .accessibilityIdentifier("factor")
                     } else {
                         Text("None kept. Run \"tpm2-kira remote-salt enrol\" on the machine to add one.")
+                            .accessibilityIdentifier("factor")
                     }
                 }
                 Section("Key storage") {

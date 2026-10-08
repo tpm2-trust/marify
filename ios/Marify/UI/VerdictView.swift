@@ -177,7 +177,7 @@ private struct BootKeyCard: View {
         let valid = v.bootKey == Verdict.bootKeyProved
         let locked = v.bootKey == Verdict.bootKeyLocked
         CardView(container: valid ? colors.matchContainer : (locked ? Color(.secondarySystemFill) : colors.failedContainer),
-                 content: valid ? colors.onMatch : (locked ? Color.primary : colors.onFailed)) {
+                 content: valid ? colors.onMatch : (locked ? Color.secondary : colors.onFailed)) {
             if valid {
                 Text("Code on the machine's screen").font(.headline)
                 Text(v.code)
@@ -217,8 +217,6 @@ private struct BootKeyCard: View {
     }
 }
 
-/// A matching boot still waits for the person: they compare the code with the
-/// machine's screen and only then let the receipt be signed.
 /// The machine asks this phone to keep its remote salt: a wrapped secret only
 /// that machine's TPM can open, returned after every accepted verdict so the
 /// disk's key can be derived. Kept when this verdict is accepted.
@@ -245,6 +243,8 @@ private struct ReturnsSaltNote: View {
     }
 }
 
+/// A matching boot still waits for the person: they compare the code with the
+/// machine's screen and only then let the receipt be signed.
 private struct MatchDecisions: View {
     var v: Verdict
     var returnsSalt: Bool

@@ -79,9 +79,9 @@ Fill in per device:
 | `sudo tpm2-kira attest gate` → "asking" banner → match → receipt accepted | | | |
 | At boot: machine shows its code and the phone is asked at the same time → the phone shows the eight-character code and the machine's screen shows the same → "The codes match — continue" → PIN → the machine continues to the passphrase prompt | | | |
 | After the receipt the "asking for attestation" banner disappears within ten seconds (the machine stopped advertising) | | | |
-| Match: green card with the green "Signed" check; changed after a resealed update: orange card with the green check; `attest gate` by hand after boot: red "Not signed" cross and no code | | | |
+| Match: green card with the green "Signed" check; changed after a resealed update: orange card with the green check; `attest gate` by hand after boot: grey "After boot" badge with the lock, no code, "the machine is up, and its TPM keeps the boot key locked until the next boot" | | | |
 | Kernel update, resealed by the hook → the phone shows "changed" **with** the code (the signing key approved the new state) → approve and remember | | | |
-| `attest gate` by hand on the unlocked system → "The machine's TPM did not release its boot key", no code, match can still be continued | | | |
+| `tpm2-kira remote-salt enrol` → the "Keep this machine's remote salt" card → accept → details say since when it is kept; the next boot's verdict says "This phone keeps the salt…" and the button reads "The codes match — attest and return the salt" → after the receipt the session shows "Remote salt handed back" with what the machine made of it | | | |
 | At boot, phone ignored: Enter (or 90 s) continues to the passphrase prompt; from then on the phone shows "not reachable" (the machine has stopped asking for this boot) | | | |
 | At boot, phone connects in the last seconds of the 90: the machine waits for the answer (up to a minute more), then continues | | | |
 | At boot, reject on the phone: the machine shows the rejection and does not continue early | | | |
