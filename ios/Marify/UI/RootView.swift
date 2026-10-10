@@ -56,7 +56,11 @@ struct RootView: View {
                     case .session:
                         SessionView(onClose: { path.removeAll() })
                     case .machine(let id):
-                        MachineDetailsView(deviceId: id, onBack: { path.removeLast() }, onSession: openSession)
+                        // Pops this screen and nothing else: after a delete both
+                        // the button and the vanished record ask to go back, and
+                        // removing twice would empty the path (and crash on an
+                        // empty one).
+                        MachineDetailsView(deviceId: id, onBack: { if path.last == .machine(id) { path.removeLast() } }, onSession: openSession)
                     }
                 }
             }

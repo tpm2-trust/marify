@@ -31,7 +31,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -62,7 +61,6 @@ fun MachineDetailsScreen(c: AppContainer, deviceId: String, onBack: () -> Unit, 
     }
     val isDemo = remember(machine.recordJson) { c.sessions.demo.owns(machine.recordJson) }
     var confirmDelete by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -168,10 +166,13 @@ fun MachineDetailsScreen(c: AppContainer, deviceId: String, onBack: () -> Unit, 
             confirmButton = {
                 TextButton(onClick = {
                     confirmDelete = false
-                    scope.launch {
+                    // In the application's scope: this screen leaves the
+                    // composition as soon as the record is gone, which would
+                    // cancel a coroutine of its own before the anchor key is
+                    // deleted. The record's disappearance takes it back.
+                    c.scope.launch {
                         c.machines.delete(deviceId)
                         withContext(Dispatchers.IO) { c.anchorKeys.delete(deviceId) }
-                        onBack()
                     }
                 }) { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) }
             },

@@ -55,7 +55,11 @@ fun MarifyNavHost(c: AppContainer, nav: NavHostController = rememberNavControlle
             MachineDetailsScreen(
                 c = c,
                 deviceId = entry.arguments?.getString("id").orEmpty(),
-                onBack = { nav.popBackStack() },
+                // Pops this screen and nothing else: after a delete both the
+                // dialog and the vanished record ask to go back, and a plain
+                // popBackStack() twice would take the machine list too and
+                // leave an empty screen.
+                onBack = { nav.popBackStack(Routes.MACHINE, inclusive = true) },
                 onSession = ::openSession,
             )
         }
