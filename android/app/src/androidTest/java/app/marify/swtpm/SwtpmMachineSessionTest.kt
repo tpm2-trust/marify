@@ -22,8 +22,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -31,6 +33,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.security.SecureRandom
 import kotlin.concurrent.thread
 
 /**
@@ -47,13 +50,6 @@ class SwtpmMachineSessionTest {
 
     private lateinit var machine: SwtpmMachine
     private lateinit var keys: SoftwareAnchorKeys
-    private var noise = KiraCore.generateNoiseKey()
-    private val config = buildJsonObject {
-        put("verifier_id", "swtpm-app-test")
-        put("verifier_name", "Instrumented test")
-        put("policy_id", "default")
-        put("receipt_ttl_seconds", 300)
-    }.toString()
     private var record = ""
 
     private val sink = object : RecordSink {
@@ -99,8 +95,8 @@ class SwtpmMachineSessionTest {
                 }
             },
             newSession = {
-                if (mode is SessionMode.Enrol) KiraCore.newEnrolSession(config, noise)
-                else KiraCore.newAttestSession(config, noise, record)
+                if (mode is SessionMode.Enrol) KiraCore.newEnrolSession()
+                else KiraCore.newAttestSession(record)
             },
             keys = keys,
             records = sink,
@@ -251,8 +247,11 @@ class SwtpmMachineSessionTest {
     @Test fun strangerPhoneGetsNoAnswer() {
         enrol()
         machine.reboot()
-        // Another phone that copied the record but not the enrolled Noise key.
-        noise = KiraCore.generateNoiseKey()
+        // Another phone that copied the record but not the enrolled Noise
+        // key: the record with a key of its own.
+        val stranger = Json.parseToJsonElement(record).jsonObject.toMutableMap()
+        stranger["verifier_noise_priv"] = JsonPrimitive(ByteArray(32).also { SecureRandom().nextBytes(it) }.joinToString("") { "%02x".format(it) })
+        record = JsonObject(stranger).toString()
         val s = session(attestMode())
         // The machine refuses the IK handshake; after one silent retry the
         // app says so instead of "connection lost" (TODO-SEC.md S1).

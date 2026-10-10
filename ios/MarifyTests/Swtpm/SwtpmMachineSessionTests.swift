@@ -12,7 +12,6 @@ final class SwtpmMachineSessionTests: XCTestCase {
     private var machine: SwtpmMachine!
     private var keys: SoftwareAnchorKeys!
     private var records: MemoryRecords!
-    private var noise = Data()
     private var bindShown: Event.NeedAnchorKey?
 
     override func setUpWithError() throws {
@@ -22,7 +21,6 @@ final class SwtpmMachineSessionTests: XCTestCase {
         machine = try SwtpmMachine(host: "127.0.0.1", port: port)
         keys = SoftwareAnchorKeys()
         records = MemoryRecords()
-        noise = try KiraCore.generateNoiseKey()
         // Every test starts from a fresh boot: reset counter advanced, PCRs clear.
         try machine.reboot()
     }
@@ -35,7 +33,6 @@ final class SwtpmMachineSessionTests: XCTestCase {
                          react: @escaping @Sendable (SessionRunner, SessionState) async -> Void = { _, _ in }) async throws -> SessionState {
         let machine = self.machine!
         let records = self.records!
-        let noise = self.noise
         let runner = SessionRunner(
             mode: mode,
             connect: {
@@ -46,8 +43,8 @@ final class SwtpmMachineSessionTests: XCTestCase {
             },
             newSession: {
                 mode.isEnrol
-                    ? try KiraCore.newEnrolSession(configJSON: testConfig, noisePriv: noise)
-                    : try KiraCore.newAttestSession(configJSON: testConfig, noisePriv: noise, recordJSON: records.record)
+                    ? try KiraCore.newEnrolSession()
+                    : try KiraCore.newAttestSession(recordJSON: records.record)
             },
             keys: keys,
             records: records,
@@ -204,8 +201,13 @@ final class SwtpmMachineSessionTests: XCTestCase {
     func testStrangerPhoneGetsNoAnswer() async throws {
         try await enrol()
         try machine.reboot()
-        // Another phone that copied the record but not the enrolled Noise key.
-        noise = try KiraCore.generateNoiseKey()
+        // Another phone that copied the record but not the enrolled Noise
+        // key: the record with a key of its own.
+        var stranger = try JSONSerialization.jsonObject(with: Data(records.record.utf8)) as! [String: Any]
+        var random = [UInt8](repeating: 0, count: 32)
+        _ = SecRandomCopyBytes(kSecRandomDefault, random.count, &random)
+        stranger["verifier_noise_priv"] = Data(random).hexString
+        records.record = String(decoding: try JSONSerialization.data(withJSONObject: stranger), as: UTF8.self)
         let s = try await session(try attestMode())
         // The machine refuses the IK handshake; after one silent retry the
         // app says so instead of "connection lost" (TODO-SEC.md S1).

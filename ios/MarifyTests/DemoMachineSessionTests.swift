@@ -8,7 +8,6 @@ final class DemoMachineSessionTests: XCTestCase {
     private var demo: DemoMachineSupport!
     private var keys: SoftwareAnchorKeys!
     private var records: MemoryRecords!
-    private var noise = Data()
     /// (code on the phone, code on the machine's screen) of every matching boot.
     private var codesSeen: [(String, String)] = []
     private var bindShown: Event.NeedAnchorKey?
@@ -17,21 +16,19 @@ final class DemoMachineSessionTests: XCTestCase {
         demo = DemoMachineSupport()
         keys = SoftwareAnchorKeys()
         records = MemoryRecords()
-        noise = try KiraCore.generateNoiseKey()
         codesSeen = []
     }
 
     private func makeRunner(_ mode: SessionMode, mtu: Int) -> SessionRunner {
         let demo = self.demo!
         let records = self.records!
-        let noise = self.noise
         return SessionRunner(
             mode: mode,
             connect: { mode.isEnrol ? try demo.enrolLink(mtu: mtu) : try demo.attestLink(mtu: mtu) },
             newSession: {
                 mode.isEnrol
-                    ? try KiraCore.newEnrolSession(configJSON: testConfig, noisePriv: noise)
-                    : try KiraCore.newAttestSession(configJSON: testConfig, noisePriv: noise, recordJSON: records.record)
+                    ? try KiraCore.newEnrolSession()
+                    : try KiraCore.newAttestSession(recordJSON: records.record)
             },
             keys: keys,
             records: records,

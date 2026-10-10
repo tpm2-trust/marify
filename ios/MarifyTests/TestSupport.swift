@@ -47,8 +47,8 @@ final class MemoryRecords: RecordSink, @unchecked Sendable {
     private(set) var replaced: [String] = []
 
     var record: String {
-        lock.lock(); defer { lock.unlock() }
-        return _record
+        get { lock.lock(); defer { lock.unlock() }; return _record }
+        set { lock.lock(); _record = newValue; lock.unlock() }
     }
 
     func saveEnrolled(recordJSON: String, keyStorage: KeyStorage) async throws {
@@ -60,9 +60,6 @@ final class MemoryRecords: RecordSink, @unchecked Sendable {
     }
 }
 
-let testConfig = """
-{"verifier_id":"instrumented-test","verifier_name":"Test phone","policy_id":"default","receipt_ttl_seconds":300}
-"""
 
 /// Runs one session to its end while `react` plays the person on every
 /// state change; returns the final state.

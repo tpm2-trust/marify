@@ -5,7 +5,6 @@ import app.marify.ble.BleScanner
 import app.marify.data.MachineRepository
 import app.marify.keys.AndroidAnchorKeys
 import app.marify.keys.BiometricHost
-import app.marify.keys.NoiseKeyStore
 import app.marify.session.SessionManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,9 +16,8 @@ class AppContainer(app: Application) {
     val biometricHost = BiometricHost()
     val scanner = BleScanner(app)
     val machines = MachineRepository(app)
-    val noise = NoiseKeyStore(app)
     val anchorKeys = AndroidAnchorKeys(app, biometricHost)
-    val sessions = SessionManager(app, scope, scanner, machines, noise, anchorKeys, DemoFactory.create())
+    val sessions = SessionManager(app, scope, scanner, machines, anchorKeys, DemoFactory.create())
 }
 
 class MarifyApp : Application() {

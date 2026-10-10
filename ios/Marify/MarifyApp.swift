@@ -8,12 +8,11 @@ import SwiftUI
 final class AppContainer {
     let central = BleCentral()
     let store = MachineStore()
-    let noise = NoiseKeyStore()
     let anchorKeys = SecureEnclaveAnchorKeys()
     let sessions: SessionManager
 
     init() {
-        sessions = SessionManager(central: central, store: store, noise: noise, keys: anchorKeys, demo: DemoFactory.create())
+        sessions = SessionManager(central: central, store: store, keys: anchorKeys, demo: DemoFactory.create())
     }
 }
 

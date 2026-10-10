@@ -10,8 +10,8 @@ import javax.crypto.spec.GCMParameterSpec
 
 /**
  * AES-256-GCM with a non-exportable AndroidKeyStore key that needs no user
- * authentication, but an unlocked phone: encryption at rest for the Noise key
- * and machine records. Even code running as this app cannot decrypt them
+ * authentication, but an unlocked phone: encryption at rest for the machine
+ * records, each with the phone's own key and id for that machine. Even code running as this app cannot decrypt them
  * while the phone is locked (TODO-SEC.md S4.3).
  *
  * Output is `"K2" ‖ iv(12) ‖ ciphertext ‖ tag`. Anything else is not data of

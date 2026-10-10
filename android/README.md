@@ -126,9 +126,9 @@ app/src/main/java/app/kira/
 ├── session/   SessionRunner.kt  drives one CoreSession over one Link (the loop)
 │              SessionManager.kt the app's one active session; scan-then-connect
 ├── keys/      AnchorKeys.kt   StrongBox/TEE P-256 keys, BiometricPrompt per signature
-│              NoiseKeyStore.kt static Noise key + verifier_id, Keystore-wrapped
 │              KeystoreAead.kt AES-256-GCM under a Keystore key (data at rest)
-├── data/      MachineRepository.kt  encrypted record per machine, verbatim JSON
+├── data/      MachineRepository.kt  encrypted record per machine, verbatim JSON;
+│                                    it holds the phone's own key and id for that machine
 ├── service/   AttestationService.kt foreground service (connectedDevice)
 └── ui/        Compose screens: onboarding, machines, enrol, session/verdict, details
 app/src/debug/   demo machine (kiratest) wiring: DemoLink, DemoMachineSupport

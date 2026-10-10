@@ -20,8 +20,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -38,13 +36,6 @@ class DemoMachineSessionTest {
 
     private lateinit var demo: kiratest.DemoMachine
     private lateinit var keys: SoftwareAnchorKeys
-    private val noise = KiraCore.generateNoiseKey()
-    private val config = buildJsonObject {
-        put("verifier_id", "instrumented-test")
-        put("verifier_name", "Test phone")
-        put("policy_id", "default")
-        put("receipt_ttl_seconds", 300)
-    }.toString()
     private var record: String = ""
 
     private val sink = object : RecordSink {
@@ -69,8 +60,8 @@ class DemoMachineSessionTest {
                 if (mode is SessionMode.Enrol) DemoLink.enrol(demo, mtu) else DemoLink.attest(demo, mtu)
             },
             newSession = {
-                if (mode is SessionMode.Enrol) KiraCore.newEnrolSession(config, noise)
-                else KiraCore.newAttestSession(config, noise, record)
+                if (mode is SessionMode.Enrol) KiraCore.newEnrolSession()
+                else KiraCore.newAttestSession(record)
             },
             keys = keys,
             records = sink,

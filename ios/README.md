@@ -70,8 +70,8 @@ ios/
 │   ├── Core/                 KiraCore.swift facade, CoreSession.swift, Events.swift (event JSON → enum)
 │   ├── BLE/                  Link protocol + INFO value, BleCentral (scan + connect), GattLink, Async helpers
 │   ├── Session/              SessionState, SessionRunner (actor), SessionManager (@MainActor)
-│   ├── Keys/                 SecureEnclaveAnchorKeys, NoiseKeyStore, Keychain
-│   ├── Data/                 MachineStore (records, complete protection, no backup)
+│   ├── Keys/                 SecureEnclaveAnchorKeys, Keychain
+│   ├── Data/                 MachineStore (records, complete protection, no backup; each holds the phone's key and id for its machine)
 │   ├── Demo/                 DemoLink + DemoMachineSupport (#if DEBUG, kiratest)
 │   └── UI/                   SwiftUI: Root/Onboarding, Machines, Enrol, Session, Verdict, MachineDetails, Theme/Texts
 └── MarifyTests/              ParseTests, SessionRunnerTests, DemoMachineSessionTests, Swtpm/

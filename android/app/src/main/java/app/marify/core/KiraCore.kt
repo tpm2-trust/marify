@@ -26,13 +26,18 @@ object KiraCore {
     fun ekVendors(): List<String> =
         kotlinx.serialization.json.Json.decodeFromString<List<String>>(kiracore.Kiracore.ekVendors())
 
-    fun generateNoiseKey(): ByteArray = kiracore.Kiracore.generateNoiseKey()
+    /**
+     * The phone's settings for a session. Its identity towards a machine is
+     * no setting: the core makes a new one at every enrolment and keeps it
+     * in that machine's record (PROTOCOL-BLE.md §11.1).
+     */
+    const val CONFIG_JSON = """{"policy_id":"default","receipt_ttl_seconds":300}"""
 
-    fun newEnrolSession(configJson: String, noisePriv: ByteArray): CoreSession =
-        GoCoreSession(kiracore.Kiracore.newEnrolSession(configJson, noisePriv))
+    fun newEnrolSession(configJson: String = CONFIG_JSON): CoreSession =
+        GoCoreSession(kiracore.Kiracore.newEnrolSession(configJson))
 
-    fun newAttestSession(configJson: String, noisePriv: ByteArray, recordJson: String): CoreSession =
-        GoCoreSession(kiracore.Kiracore.newAttestSession(configJson, noisePriv, recordJson))
+    fun newAttestSession(recordJson: String, configJson: String = CONFIG_JSON): CoreSession =
+        GoCoreSession(kiracore.Kiracore.newAttestSession(configJson, recordJson))
 
     /** Flags byte of the 13-byte service data, or -1. */
     fun advertisementFlags(serviceData: ByteArray): Long = kiracore.Kiracore.advertisementFlags(serviceData)

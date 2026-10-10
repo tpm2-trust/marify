@@ -34,25 +34,22 @@ enum KiraCore {
         return list
     }
 
-    static func generateNoiseKey() throws -> Data {
-        var err: NSError?
-        guard let key = KiracoreGenerateNoiseKey(&err), err == nil else {
-            throw CoreError(description: err?.localizedDescription ?? "noise key generation failed")
-        }
-        return key
-    }
+    /// The phone's settings for a session. Its identity towards a machine is
+    /// no setting: the core makes a new one at every enrolment and keeps it
+    /// in that machine's record (PROTOCOL-BLE.md §11.1).
+    static let configJSON = #"{"policy_id":"default","receipt_ttl_seconds":300}"#
 
-    static func newEnrolSession(configJSON: String, noisePriv: Data) throws -> CoreSession {
+    static func newEnrolSession(configJSON: String = KiraCore.configJSON) throws -> CoreSession {
         var err: NSError?
-        guard let s = KiracoreNewEnrolSession(configJSON, noisePriv, &err), err == nil else {
+        guard let s = KiracoreNewEnrolSession(configJSON, &err), err == nil else {
             throw CoreError(description: err?.localizedDescription ?? "cannot create the enrol session")
         }
         return GoCoreSession(s)
     }
 
-    static func newAttestSession(configJSON: String, noisePriv: Data, recordJSON: String) throws -> CoreSession {
+    static func newAttestSession(recordJSON: String, configJSON: String = KiraCore.configJSON) throws -> CoreSession {
         var err: NSError?
-        guard let s = KiracoreNewAttestSession(configJSON, noisePriv, recordJSON, &err), err == nil else {
+        guard let s = KiracoreNewAttestSession(configJSON, recordJSON, &err), err == nil else {
             throw CoreError(description: err?.localizedDescription ?? "cannot create the attest session")
         }
         return GoCoreSession(s)

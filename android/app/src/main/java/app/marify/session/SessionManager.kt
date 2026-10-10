@@ -15,7 +15,6 @@ import app.marify.data.Machine
 import app.marify.data.MachineRepository
 import app.marify.keys.AnchorKeyProvider
 import app.marify.keys.KeyStorage
-import app.marify.keys.NoiseKeyStore
 import app.marify.service.AttestationService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -38,7 +37,6 @@ class SessionManager(
     private val scope: CoroutineScope,
     private val scanner: BleScanner,
     private val repo: MachineRepository,
-    private val noise: NoiseKeyStore,
     private val keys: AnchorKeyProvider,
     val demo: DemoSupport,
 ) {
@@ -190,10 +188,10 @@ class SessionManager(
             mode = mode,
             connect = connect,
             newSession = {
-                // The identity is loaded before connecting; see below.
-                val id = identity ?: error("verifier identity not loaded")
-                if (recordJson == null) KiraCore.newEnrolSession(id.configJson(), id.noisePriv)
-                else KiraCore.newAttestSession(id.configJson(), id.noisePriv, recordJson)
+                // The phone's identity towards the machine is in its record;
+                // an enrolment makes a new one (one per machine).
+                if (recordJson == null) KiraCore.newEnrolSession()
+                else KiraCore.newAttestSession(recordJson)
             },
             keys = keys,
             records = sink,
@@ -204,15 +202,12 @@ class SessionManager(
         ContextCompat.startForegroundService(context, Intent(context, AttestationService::class.java))
         job = scope.launch {
             try {
-                identity = noise.identity()
                 runner.run()
             } finally {
                 onEnd()
             }
         }
     }
-
-    @Volatile private var identity: app.marify.keys.VerifierIdentity? = null
 
     private companion object {
         /** How long an abort may take before the session is cancelled outright. */

@@ -36,7 +36,6 @@ struct NoDemo: DemoSupport {
 final class SessionManager {
     private let central: BleCentral
     private let store: MachineStore
-    private let noise: NoiseKeyStore
     private let keys: AnchorKeyProvider
     let demo: DemoSupport
 
@@ -45,10 +44,9 @@ final class SessionManager {
     private var retryAction: (() -> Void)?
     private var demoSession = false
 
-    init(central: BleCentral, store: MachineStore, noise: NoiseKeyStore, keys: AnchorKeyProvider, demo: DemoSupport) {
+    init(central: BleCentral, store: MachineStore, keys: AnchorKeyProvider, demo: DemoSupport) {
         self.central = central
         self.store = store
-        self.noise = noise
         self.keys = keys
         self.demo = demo
     }
@@ -153,16 +151,16 @@ final class SessionManager {
         onEnd: @escaping @Sendable () -> Void = {}
     ) {
         if let previous = active, !previous.model.value.finished { return }
-        let noise = self.noise
         let runner = SessionRunner(
             mode: mode,
             connect: connect,
             newSession: {
-                let id = try noise.identity()
+                // The phone's identity towards the machine is in its record;
+                // an enrolment makes a new one (one per machine).
                 if let recordJSON {
-                    return try KiraCore.newAttestSession(configJSON: id.configJSON(), noisePriv: id.noisePriv, recordJSON: recordJSON)
+                    return try KiraCore.newAttestSession(recordJSON: recordJSON)
                 }
-                return try KiraCore.newEnrolSession(configJSON: id.configJSON(), noisePriv: id.noisePriv)
+                return try KiraCore.newEnrolSession()
             },
             keys: keys,
             records: Sink(store: store),
