@@ -331,6 +331,14 @@ class SessionRunner(
             try {
                 link.write(f)
             } catch (e: LinkException) {
+                // A session the core finished successfully has its outcome
+                // already: what is left to write is the closing Bye, a
+                // courtesy the machine may cut off by leaving. Its events -
+                // the enrolment record among them - must still be handled.
+                if (core.finished() && core.succeeded()) {
+                    debugLog(TAG) { "closing write lost after a completed session: ${e.message}" }
+                    return true
+                }
                 if (!core.finished()) core.abort("connection lost")
                 end(Outcome.Failed(FailureKind.LINK_LOST, 0, e.message ?: "write failed"))
                 return false
