@@ -115,8 +115,9 @@ final class SessionStateModel {
     private(set) var value: SessionState
 
     // Nonisolated: the runner's init, off the main actor, creates it with a
-    // Sendable value.
-    nonisolated init(_ initial: SessionState) { value = initial }
+    // Sendable value. Assigns the macro's backing storage directly since the
+    // synthesized `value` setter is main-actor-isolated.
+    nonisolated init(_ initial: SessionState) { _value = initial }
 
     func set(_ s: SessionState) { value = s }
 }

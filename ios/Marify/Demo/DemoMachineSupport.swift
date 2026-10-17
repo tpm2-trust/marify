@@ -1,6 +1,6 @@
 #if DEBUG
 import Foundation
-import Kiratest
+import Kiracore
 
 /// A `Link` to a kiratest DemoMachine: RX writes go to `DemoMachine.write`,
 /// notifications come from `DemoMachine.nextNotification`. Debug builds only.

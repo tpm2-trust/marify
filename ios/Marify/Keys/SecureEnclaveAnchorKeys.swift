@@ -29,8 +29,24 @@ final class SecureEnclaveAnchorKeys: AnchorKeyProvider, @unchecked Sendable {
         delete(deviceId: deviceId)
         _ = attestationChallenge // iOS has no key attestation for these keys.
         if SecureEnclave.isAvailable {
-            var flags: SecAccessControlCreateFlags = [.privateKeyUsage, .biometryCurrentSet]
-            if !biometricOnly { flags.formUnion([.or, .devicePasscode]) }
+            // `.biometryCurrentSet` makes the Secure Enclave snapshot the
+            // currently enrolled biometrics into the access control at
+            // CREATION time, even when it's only one side of an `.or` with
+            // `.devicePasscode`. With no biometrics enrolled (passcode-only
+            // phones) there is nothing to snapshot, and key creation itself
+            // fails: "Failed to get bio database hash." So only ask for it
+            // when biometrics are actually enrolled.
+            let biometryEnrolled = LAContext().canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil)
+            if biometricOnly && !biometryEnrolled {
+                throw AnchorKeyError.failure("no Face ID or Touch ID is enrolled on this phone")
+            }
+            var flags: SecAccessControlCreateFlags = [.privateKeyUsage]
+            if biometryEnrolled {
+                flags.insert(.biometryCurrentSet)
+                if !biometricOnly { flags.formUnion([.or, .devicePasscode]) }
+            } else {
+                flags.insert(.devicePasscode)
+            }
             var error: Unmanaged<CFError>?
             guard let access = SecAccessControlCreateWithFlags(nil, kSecAttrAccessibleWhenUnlockedThisDeviceOnly, flags, &error) else {
                 throw AnchorKeyError.failure("access control: \(error?.takeRetainedValue().localizedDescription ?? "?")")

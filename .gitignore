@@ -6,3 +6,5 @@ Thumbs.db
 .vscode/
 
 # Per-platform build outputs are ignored in android/.gitignore and ios/.gitignore.
+
+tpm2-kira/
