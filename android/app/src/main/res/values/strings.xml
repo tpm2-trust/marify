@@ -74,6 +74,8 @@
     <string name="bind_tpm_verified">TPM verified as genuine: %1$s</string>
     <string name="bind_tpm_verified_body">The machine\'s TPM proved it holds an endorsement key certified by its manufacturer.</string>
     <string name="bind_tpm_unverified">TPM not verified as genuine hardware</string>
+    <string name="bind_tpm_vendor_unknown">TPM vendor not known yet</string>
+    <string name="bind_tpm_vendor_unknown_body">Marify does not know this TPM\'s vendor yet (%1$s). That does not mean the TPM is untrusted: its certificate could not be checked, which is a risk to weigh. Only continue if you trust the machine\'s current state.</string>
     <string name="bind_tpm_known_vendors">This version of Marify can verify TPMs from: %1$s.</string>
     <string name="bind_tpm_unverified_body">Marify could not confirm that this machine\'s TPM is real hardware (%1$s). This is common for firmware TPMs without a usable certificate. Only continue if you trust the machine\'s current state: a machine that is already compromised could pretend to have a TPM.</string>
     <string name="bind_initrd_not_covered">The checked boot measurements do not include the initrd</string>

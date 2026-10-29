@@ -80,12 +80,22 @@ class SessionScreenTest {
     )
 
     @Test fun bindShowsVerifiedTPM() {
-        show(enrolState(app.marify.core.Event.NeedAnchorKey("a0", "box", ekVerifiedBy = "Intel PTT", initrdCoverage = "covered", initrdPcrs = listOf(9))))
+        show(enrolState(app.marify.core.Event.NeedAnchorKey("a0", "box", ekVerifiedBy = "Intel Corporation", initrdCoverage = "covered", initrdPcrs = listOf(9))))
         rule.onNodeWithText("Bind box to this phone?").assertIsDisplayed()
         rule.onNodeWithTag("tpm_verified").assertIsDisplayed()
-        rule.onNodeWithText("TPM verified as genuine: Intel PTT").assertIsDisplayed()
+        rule.onNodeWithText("TPM verified as genuine: Intel Corporation").assertIsDisplayed()
         rule.onNodeWithText("include the initrd (PCR 9)", substring = true).assertIsDisplayed()
         rule.onNodeWithTag("initrd_not_covered").assertDoesNotExist()
+    }
+
+    @Test fun bindSaysAnUnknownVendorIsARiskNotUntrusted() {
+        show(enrolState(app.marify.core.Event.NeedAnchorKey("a0", "box", ekNote = "the TPM's vendor (XYZ) is not in the EK root store yet", ekVendorUnknown = true, initrdCoverage = "covered", initrdPcrs = listOf(9))))
+        rule.onNodeWithTag("tpm_vendor_unknown").assertIsDisplayed()
+        rule.onNodeWithTag("tpm_unverified").assertDoesNotExist()
+        rule.onNodeWithText("TPM vendor not known yet").assertIsDisplayed()
+        rule.onNodeWithText("does not mean the TPM is untrusted", substring = true).assertIsDisplayed()
+        rule.onNodeWithText("can verify TPMs from: Intel Corporation", substring = true).assertIsDisplayed()
+        rule.onNodeWithTag("bind").assertIsDisplayed()
     }
 
     @Test fun bindWarnsAboutUnverifiedTPMAndUncoveredInitrd() {
@@ -95,7 +105,7 @@ class SessionScreenTest {
         rule.onNodeWithTag("initrd_not_covered").assertIsDisplayed()
         rule.onNodeWithText("measured into PCR 9", substring = true).assertIsDisplayed()
         // The vendor list comes from the core compiled into this app.
-        rule.onNodeWithText("can verify TPMs from: Intel PTT", substring = true).assertIsDisplayed()
+        rule.onNodeWithText("can verify TPMs from: Intel Corporation", substring = true).assertIsDisplayed()
         rule.onNodeWithTag("bind").assertIsDisplayed()
         rule.onNodeWithTag("bind_cancel").assertIsDisplayed()
     }

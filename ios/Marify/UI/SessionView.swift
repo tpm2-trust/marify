@@ -171,14 +171,18 @@ private struct BindContent: View {
     var body: some View {
         let colors = VerdictColors.current(scheme)
         let verified = !bind.ekVerifiedBy.isEmpty
+        let vendorUnknown = !verified && bind.ekVendorUnknown
         Text("Bind \(bind.friendlyName) to this phone?").font(.title2.weight(.semibold))
         CardView(container: verified ? colors.matchContainer : colors.changedContainer,
                  content: verified ? colors.onMatch : colors.onChanged) {
             Text(verified ? String(localized: "TPM verified as genuine: \(bind.ekVerifiedBy)")
+                          : vendorUnknown ? String(localized: "TPM vendor not known yet")
                           : String(localized: "TPM not verified as genuine hardware"))
                 .font(.headline)
             Text(verified
                  ? String(localized: "The machine's TPM proved it holds an endorsement key certified by its manufacturer.")
+                 : vendorUnknown
+                 ? String(localized: "Marify does not know this TPM's vendor yet (\(bind.ekNote)). That does not mean the TPM is untrusted: its certificate could not be checked, which is a risk to weigh. Only continue if you trust the machine's current state.")
                  : String(localized: "Marify could not confirm that this machine's TPM is real hardware (\(bind.ekNote)). This is common for firmware TPMs without a usable certificate. Only continue if you trust the machine's current state: a machine that is already compromised could pretend to have a TPM."))
             if !verified {
                 let vendors = KiraCore.ekVendors()

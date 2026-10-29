@@ -231,8 +231,9 @@ private fun BindContent(b: Event.NeedAnchorKey, onConfirm: (Boolean, Boolean) ->
     var biometricOnly by rememberSaveable { mutableStateOf(false) }
     Text(stringResource(R.string.bind_title, b.friendlyName), style = MaterialTheme.typography.headlineSmall)
     val verified = b.ekVerifiedBy.isNotEmpty()
+    val vendorUnknown = !verified && b.ekVendorUnknown
     Card(
-        Modifier.fillMaxWidth().testTag(if (verified) "tpm_verified" else "tpm_unverified"),
+        Modifier.fillMaxWidth().testTag(if (verified) "tpm_verified" else if (vendorUnknown) "tpm_vendor_unknown" else "tpm_unverified"),
         colors = CardDefaults.cardColors(
             containerColor = if (verified) colors.matchContainer else colors.changedContainer,
             contentColor = if (verified) colors.onMatch else colors.onChanged,
@@ -241,11 +242,13 @@ private fun BindContent(b: Event.NeedAnchorKey, onConfirm: (Boolean, Boolean) ->
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 if (verified) stringResource(R.string.bind_tpm_verified, b.ekVerifiedBy)
+                else if (vendorUnknown) stringResource(R.string.bind_tpm_vendor_unknown)
                 else stringResource(R.string.bind_tpm_unverified),
                 style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
             )
             Text(
                 if (verified) stringResource(R.string.bind_tpm_verified_body)
+                else if (vendorUnknown) stringResource(R.string.bind_tpm_vendor_unknown_body, b.ekNote)
                 else stringResource(R.string.bind_tpm_unverified_body, b.ekNote),
             )
             if (!verified) {

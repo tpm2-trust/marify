@@ -43,7 +43,21 @@ git -C "$work/src" checkout --quiet "$commit"
 echo "tpm2-kira $commit"
 
 # The core is a module of its own in tpm2-kira's repository (core/): it
-# requires go-tpm and x/crypto alone, nothing of tpm2-kira or aSSH.
+# requires go-tpm, x/crypto and tpm2-verifier (the EK root store), nothing
+# of tpm2-kira or aSSH. Each submodule the core's go.mod replaces with
+# ../<path> - and only those - at the commit tpm2-kira records, from the
+# checkout's submodule when it has that commit, else from its URL.
+for sub in $(sed -n 's#^replace [^ ]* => \.\./\([^ ]*\)$#\1#p' "$work/src/core/go.mod"); do
+    sha="$(git -C "$work/src" ls-tree "$commit" "$sub" | awk '$1 == "160000" {print $3}')"
+    [[ -n "$sha" ]] || { echo "the core replaces with ../$sub, which tpm2-kira $commit has no submodule for" >&2; exit 1; }
+    if [[ -d "$src/.git" ]] && git -C "$src/$sub" cat-file -e "$sha^{commit}" 2>/dev/null; then
+        git clone --quiet --shared --no-checkout "$src/$sub" "$work/src/$sub"
+        git -C "$work/src/$sub" checkout --quiet "$sha"
+    else
+        git -C "$work/src" submodule update --quiet --init "$sub"
+    fi
+    echo "  $sub $sha"
+done
 cd "$work/src/core"
 # The bind runtime must match the tools: pin x/mobile in the module graph.
 go get "golang.org/x/mobile@$mobile_ver" >/dev/null

@@ -11,6 +11,6 @@ import org.junit.runner.RunWith
 class CoreOnDeviceTest {
     @Test fun ekVendorRootsAreEmbedded() {
         val vendors = KiraCore.ekVendors()
-        assertTrue(vendors.toString(), "Intel PTT" in vendors)
+        assertTrue(vendors.toString(), "Intel Corporation" in vendors)
     }
 }

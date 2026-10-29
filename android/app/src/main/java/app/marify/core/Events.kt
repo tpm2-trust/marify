@@ -26,6 +26,8 @@ sealed interface Event {
         val friendlyName: String,
         val ekVerifiedBy: String = "",
         val ekNote: String = "",
+        /** The EK root store has no root of the TPM's vendor yet: a risk, not untrusted. */
+        val ekVendorUnknown: Boolean = false,
         val initrdCoverage: String = INITRD_UNKNOWN,
         val initrdPcrs: List<Int> = emptyList(),
         /** Goes into the anchor key's attestation; binds it to this enrolment. */
@@ -80,6 +82,7 @@ sealed interface Event {
                     friendlyName = str("friendly_name"),
                     ekVerifiedBy = str("ek_verified_by"),
                     ekNote = str("ek_note"),
+                    ekVendorUnknown = bool("ek_vendor_unknown"),
                     initrdCoverage = str("initrd_coverage").ifEmpty { INITRD_UNKNOWN },
                     initrdPcrs = (o["initrd_pcrs"] as? kotlinx.serialization.json.JsonArray)
                         ?.mapNotNull { it.jsonPrimitive.intOrNull } ?: emptyList(),

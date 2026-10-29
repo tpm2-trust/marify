@@ -23,16 +23,23 @@ class EventParseTest {
 
     @Test fun needAnchorKeyWithMachineChecks() {
         val e = Event.parse(
-            """{"type":"need_anchor_key","device_id":"a0","friendly_name":"box","ek_verified_by":"Intel PTT",
+            """{"type":"need_anchor_key","device_id":"a0","friendly_name":"box","ek_verified_by":"Intel Corporation",
                "initrd_coverage":"not_covered","initrd_pcrs":[9]}""",
         ) as Event.NeedAnchorKey
-        assertEquals("Intel PTT", e.ekVerifiedBy)
+        assertEquals("Intel Corporation", e.ekVerifiedBy)
         assertEquals(Event.INITRD_NOT_COVERED, e.initrdCoverage)
         assertEquals(listOf(9), e.initrdPcrs)
         // An older core sends none of these: unknown, never "covered".
         val old = Event.parse("""{"type":"need_anchor_key","device_id":"a0","friendly_name":"box"}""") as Event.NeedAnchorKey
         assertEquals(Event.INITRD_UNKNOWN, old.initrdCoverage)
         assertEquals("", old.ekVerifiedBy)
+        assertEquals(false, old.ekVendorUnknown)
+        // A vendor the EK root store does not have: a risk, flagged as such.
+        val unknown = Event.parse(
+            """{"type":"need_anchor_key","device_id":"a0","friendly_name":"box","ek_note":"vendor XYZ","ek_vendor_unknown":true}""",
+        ) as Event.NeedAnchorKey
+        assertEquals(true, unknown.ekVendorUnknown)
+        assertEquals("vendor XYZ", unknown.ekNote)
     }
 
     @Test fun needSignatureEnrol() = assertEquals(

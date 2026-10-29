@@ -30,6 +30,8 @@ enum Event: Sendable, Equatable {
         /// TPM vendor whose certificate vouched for the EK; empty if not verified.
         var ekVerifiedBy: String = ""
         var ekNote: String = ""
+        /// The EK root store has no root of the TPM's vendor yet: a risk, not untrusted.
+        var ekVendorUnknown: Bool = false
         var initrdCoverage: String = Event.initrdUnknown
         var initrdPcrs: [Int] = []
         /// Goes into the anchor key's attestation where the platform has one.
@@ -82,6 +84,7 @@ enum Event: Sendable, Equatable {
                 friendlyName: str("friendly_name"),
                 ekVerifiedBy: str("ek_verified_by"),
                 ekNote: str("ek_note"),
+                ekVendorUnknown: bool("ek_vendor_unknown"),
                 initrdCoverage: coverage.isEmpty ? initrdUnknown : coverage,
                 initrdPcrs: (o["initrd_pcrs"] as? [Any])?.compactMap { ($0 as? NSNumber)?.intValue } ?? [],
                 attestationChallenge: Data(hex: str("attestation_challenge"))

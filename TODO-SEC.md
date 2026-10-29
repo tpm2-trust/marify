@@ -271,12 +271,13 @@ Steps 1–5 as described, with these decisions:
   between the code comparison and the key/unlock prompt, and in machine
   details.
 
-**Vendors are data** (tpm2-kira `203a65c`, `a4db157`): roots and
-intermediates live in `core/attest/ekroots/<vendor>/`, listed in
-`core/attest/ekroots/vendors.json` with sources and pinned SHA-256 values. The
-core, which runs in the phone app, ignores a vendor whose files do not match
-their pins. `core/attest/ekroots/README.md` describes adding a vendor (two
-independent sources, a manifest entry, an app core rebuild). Roots are only
+**Vendors are data**: roots and intermediates live in tpm2-verifier's EK
+root store (`ekroots/vendors/<vendor>/`, a signed `MANIFEST` with every
+file's SHA-256), embedded into the core through tpm2-verifier's `ekroots`
+package; data that does not match its manifest is never used. Vendors are
+added there (tpm2-verifier's README, "Vendor data"), then the app core is
+rebuilt. A TPM of a vendor not in the store shows as "vendor not known": a
+risk, not untrusted. Roots are only
 ever compiled into the app, never added at runtime. The bind screen lists the
 vendors the installed app can verify; `CoreOnDeviceTest` checks on a device
 that the roots are embedded.
