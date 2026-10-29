@@ -1,35 +1,39 @@
 # Testing
 
-## Status (2026-10-06)
+## Status (2026-10-29)
 
-The figures below are from the first full run on 2026-10-05; the commit of the
-core in use is in `../core.properties`. Re-run on 2026-10-06 against tpm2-kira's
-current tree: lint clean, all JVM tests, all emulator tests (now including the
-enrol list and the permission request) and all 7 swtpm tests pass.
+`scripts/test-emulator.sh`, unattended, on a fresh emulator (API 36
+google_apis x86_64, data wiped), core from tpm2-kira `8c3ff3f`: ALL PASS.
 
 | Check | Result |
 |---|---|
-| `scripts/build-core.sh` (the commit in `../core.properties`, NDK 30, gomobile 2026-09-08) | ✅ both .aar built; generated Java API matches the brief |
-| `assembleDebug`, `assembleRelease`, `assembleDebugAndroidTest` (AGP 9.4.1 / Gradle 9.8.0, JDK 25) | ✅ |
-| `testDebugUnitTest` — 46 JVM tests | ✅ all pass |
-| `lintDebug`, `lintRelease` | ✅ no issues |
-| No kiratest in release (`apkanalyzer dex packages … \| grep -c kiratest`) | ✅ 0 in release, 37 classes in debug |
-| R8 keeps the JNI classes (`go.**`, `kiracore.**`; rules ship in the .aar) | ✅ |
-| `connectedDebugAndroidTest` — 9 demo-machine + 3 Compose UI + 3 keystore tests, emulator API 36 x86_64 with PIN 1234 | ✅ all 15 pass |
-| Manual, emulator, PIN-only (no biometrics): onboarding passes; demo enrolment and a *match* attestation each signed via the system PIN prompt with the real keystore key; "The machine accepted the receipt" | ✅ (emulator keystore is software-only, accepted in debug builds) |
-| App launches on the emulator (onboarding) | ✅ |
-| `scripts/test-swtpm.sh` — app session code + Go core against a tpm2-kira machine on swtpm (§5), emulator API 36 | ✅ all 7 pass |
+| `scripts/build-core.sh` (the commit in `../core.properties`, NDK 30, gomobile 2026-09-08) | ✅ both .aar built |
+| `testDebugUnitTest` — JVM tests | ✅ 57 pass |
+| `lintDebug`, `lintRelease`; `assembleDebug`, `assembleRelease` (AGP 9.4.1 / Gradle 9.8.0, JDK 25) | ✅ |
+| No kiratest in release (`apkanalyzer dex packages`) | ✅ 0 in release |
+| `connectedDebugAndroidTest` — demo machine, Compose UI, keystore, enrol list, permission request | ✅ 40 pass |
+| `scripts/test-swtpm.sh` — app session code + Go core against a tpm2-kira machine on swtpm (§5) | ✅ 7 pass |
+| Manual, emulator, PIN-only: onboarding, a demo enrolment and a *match* attestation signed with the keystore key (2026-10-06) | ✅ |
 | Real hardware checklist (§4) | ⏳ needs a phone and a Linux machine with Bluetooth |
 
-Re-run everything:
+Re-run everything, from a defined state and with nobody at the keyboard:
 
 ```sh
-./gradlew testDebugUnitTest assembleRelease lintDebug lintRelease
-$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer dex packages \
-    app/build/outputs/apk/release/app-release-unsigned.apk | grep -c kiratest   # expect 0
-adb shell locksettings set-pin 1234   # AnchorKeysTest needs a screen lock (skipped otherwise)
-./gradlew connectedDebugAndroidTest   # emulator (API 34+, x86_64) or phone attached
+scripts/test-emulator.sh                 # --no-swtpm, --no-core, --keep-emulator
 ```
+
+It builds the core from `../core.properties`, runs the JVM tests, lint and
+the kiratest check of the release APK, then starts the AVD `marify-test`
+(API 36, google_apis, x86_64; made if missing) with its data wiped, on its
+own port, so an emulator already running is left alone. On the fresh data it
+sets the PIN 1234 that the keystore tests need, dismisses the lock screen
+with it, keeps the display on and turns animations off - with the lock
+screen up, the app's screens do not come to the front and the keystore
+refuses keys that need an unlocked device. Then the instrumented tests, the
+swtpm tests (§5), and a summary; the emulator is stopped. Exit status 0 only
+when everything passed; results and logs in `app/build/test-emulator/`.
+Needs JDK 25 (`JAVA_HOME`, default `/usr/lib/jvm/java-25-openjdk`), the SDK
+with the API 36 image and an NDK, KVM, and go and swtpm for §5.
 
 ## 1. Unit tests (JVM, `app/src/test`)
 
@@ -73,23 +77,23 @@ Fill in per device:
 
 | Scenario | Pixel (StrongBox) | non-Pixel | Notes |
 |---|---|---|---|
-| `sudo tpm2-kira attest enrol` → SAS matches → bound | | | |
+| `sudo tpm2-kira phone enrol` → SAS matches → bound | | | |
 | Enrol screen lists the real machine without any switch (debug build: with its warning card) | | | |
 | Machine details show StrongBox / TEE, hardware-enforced auth | | | |
-| `sudo tpm2-kira attest gate` → "asking" banner → match → receipt accepted | | | |
+| `sudo tpm2-kira phone gate` → "asking" banner → match → receipt accepted | | | |
 | At boot: machine shows its code and the phone is asked at the same time → the phone shows the eight-character code and the machine's screen shows the same → "The codes match — continue" → PIN → the machine continues to the passphrase prompt | | | |
 | After the receipt the "asking for attestation" banner disappears within ten seconds (the machine stopped advertising) | | | |
-| Match: green card with the green "Signed" check; changed after a resealed update: orange card with the green check; `attest gate` by hand after boot: grey "After boot" badge with the lock, no code, "the machine is up, and its TPM keeps the boot key locked until the next boot" | | | |
-| Kernel update, resealed by the hook → the phone shows "changed" **with** the code (the signing key approved the new state) → approve and remember | | | |
-| `tpm2-kira remote-salt enrol` → the "Keep this machine's remote salt" card → accept → details say since when it is kept; the next boot's verdict says "This phone keeps the salt…" and the button reads "The codes match — attest and return the salt" → after the receipt the session shows "Remote salt handed back" with what the machine made of it | | | |
+| Match: green card with the green "Signed" check; changed after a approved update: orange card with the green check; `phone gate` by hand after boot: grey "After boot" badge with the lock, no code, "the machine is up, and its TPM keeps the boot key locked until the next boot" | | | |
+| Kernel update, approved by the hook → the phone shows "changed" **with** the code (the signing key approved the new state) → approve and remember | | | |
+| `tpm2-kira phone salt enrol` → the "Keep this machine's phone salt" card → accept → details say since when it is kept; the next boot's verdict says "This phone keeps the salt…" and the button reads "The codes match — attest and return the salt" → after the receipt the session shows "Phone salt handed back" with what the machine made of it | | | |
 | At boot, phone ignored: Enter (or 90 s) continues to the passphrase prompt; from then on the phone shows "not reachable" (the machine has stopped asking for this boot) | | | |
 | At boot, phone connects in the last seconds of the 90: the machine waits for the answer (up to a minute more), then continues | | | |
 | At boot, reject on the phone: the machine shows the rejection and does not continue early | | | |
 | Second phone enrolled, initramfs **not** rebuilt → both phones attest at the next boot | | | |
-| Phone removed with `attest unenrol` (asks for the signing key; the TOTP code is unchanged), re-enrolled → old entry deleted in the app, new one attests | | | |
-| `attest enrol` on a slot without a sealed TOTP key → refused with the `seal` command to run | | | |
+| Phone removed with `phone unenrol` (asks for the signing key; the TOTP code is unchanged), re-enrolled → old entry deleted in the app, new one attests | | | |
+| `phone enrol` on a slot without a sealed TOTP key → refused with the `slot add` command to run | | | |
 | Kernel update → reseal hook runs → the phone is still enrolled and attests (changed, approve once) | | | |
-| `nvram delete --nvram N` → slot gone whole; the phone shows the machine as not reachable | | | |
+| `slot delete --nvram N` → slot gone whole; the phone shows the machine as not reachable | | | |
 | Machine's gate unit runs confined (`journalctl -b -u tpm2-kira-attest.service` shows no refused operation) | | | |
 | Kernel/bootloader update → changed → approve and remember → next boot matches | | | |
 | Bluetooth off mid-session → "Connection lost", Try again | | | |
@@ -124,10 +128,10 @@ sudo pacman -S go swtpm          # once
 
 Isolation:
 
-- **Machine side:** `TestAppMachine` in tpm2-kira `cmd/attest_app_test.go`,
+- **Machine side:** `TestAppMachine` in tpm2-kira `internal/admin/attest_app_test.go`,
   build tag `apptest`; it runs only with `KIRA_APPTEST_ADDR` set. The swtpm
   helpers it shares with the `integration` suite live in
-  `cmd/swtpm_helpers_test.go` (swtpm can now be power-cycled on the same
+  `internal/admin/swtpm_helpers_test.go` (swtpm can now be power-cycled on the same
   state: orderly `TPM2_Shutdown`, restart). The `integration` suite's attest
   tests still pass unchanged.
 - **App side:** test sources only (`androidTest/…/swtpm/`: `TcpLink`,

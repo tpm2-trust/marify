@@ -113,7 +113,7 @@ fun errorCodeText(code: Int): String =
 fun receiptResultText(result: Int): String =
     Texts.receiptResults[result]?.let { stringResource(it) } ?: stringResource(R.string.ack_unknown, result)
 
-/** What the machine made of the released remote salt (PROTOCOL-BLE.md §7.3.9). */
+/** What the machine made of the released phone salt (PROTOCOL-BLE.md §7.3.9). */
 @Composable
 fun releaseStatusText(status: Int): String = when (status) {
     1 -> stringResource(R.string.release_ok)

@@ -2,7 +2,7 @@
 # Runs the app's session code and Go core against a tpm2-kira machine on a
 # software TPM (swtpm), isolated from the regular test suite:
 #
-#   1. starts TestAppMachine (tpm2-kira cmd/attest_app_test.go, build tag
+#   1. starts TestAppMachine (tpm2-kira internal/admin/attest_app_test.go, build tag
 #      apptest) on the host: swtpm + the real tpmBackend, served over TCP
 #   2. forwards its two ports into the emulator/phone with `adb reverse`
 #   3. runs only app.marify.swtpm.SwtpmMachineSessionTest
@@ -28,7 +28,7 @@ done
 
 echo "Starting the swtpm machine from $src (log: $log)"
 (cd "$src" && KIRA_APPTEST_ADDR="127.0.0.1:$port" \
-    go test -tags apptest -count=1 -v -timeout 60m -run '^TestAppMachine$' ./cmd) >"$log" 2>&1 &
+    go test -tags apptest -count=1 -v -timeout 60m -run '^TestAppMachine$' ./internal/admin) >"$log" 2>&1 &
 machine=$!
 
 cleanup() {

@@ -72,7 +72,7 @@ fun VerdictContent(
     modifier: Modifier = Modifier,
     /** What the machine's screen shows, where that screen is simulated (the demo machine). */
     demoScreenCode: String? = null,
-    /** This phone keeps the machine's remote salt: accepting returns it to the machine. */
+    /** This phone keeps the machine's phone salt: accepting returns it to the machine. */
     returnsSalt: Boolean = false,
 ) {
     val v = event.verdict
@@ -195,7 +195,7 @@ private fun Headline(
  * The one thing to see at a glance, on every card: a green check when the
  * machine's TPM signed this boot state as approved, a red cross when it did
  * not - and a grey "after boot" when the key is locked until the next boot
- * by design (a check of the running system, as at a remote salt's
+ * by design (a check of the running system, as at a phone salt's
  * enrolment). The words below say why.
  */
 @Composable
@@ -323,7 +323,7 @@ private fun BootKeyCard(v: Verdict, demoScreenCode: String?) {
 }
 
 /**
- * The machine asks this phone to keep its remote salt: a wrapped secret only
+ * The machine asks this phone to keep its phone salt: a wrapped secret only
  * that machine's TPM can open, returned after every accepted verdict so the
  * disk's key can be derived. Kept when this verdict is accepted.
  */

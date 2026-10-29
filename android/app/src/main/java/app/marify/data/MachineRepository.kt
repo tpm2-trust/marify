@@ -23,7 +23,7 @@ data class Machine(
     val recordJson: String,
     val summary: RecordSummary,
     val keyStorage: KeyStorage,
-    /** Reserved for salt release (PLAN-FACTORRELEASE.md): an opaque per-machine blob. */
+    /** Reserved for salt release (PLAN-PHONESALT.md): an opaque per-machine blob. */
     val factorBlob: String? = null,
 ) {
     val deviceId: String get() = summary.deviceId

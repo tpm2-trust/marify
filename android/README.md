@@ -21,10 +21,10 @@ The verdict screen then shows, before anything is signed:
   signed this boot state as one its owner approved, a red cross **Not
   signed** when it did not, a grey lock **After boot** when the machine is
   up and its TPM keeps the boot key locked until the next boot, by design
-  (a check of the running system, say at a remote salt's enrolment). The
+  (a check of the running system, say at a phone salt's enrolment). The
   colour answers "is this signature valid" before you read anything. An
   orange card with a green check is a state new to this phone that the
-  machine's owner approved (a resealed update).
+  machine's owner approved (a approved update).
 - **The code card** with an eight-character code. The machine's screen must
   show the same code, as the slot's second code under the one-time code:
   only that machine's TPM, in an approved boot state, could recover it. A
@@ -99,8 +99,8 @@ it; the pinned sources are not changed), and runs `gomobile bind`:
 
 | Output | Packages | Linked into |
 |---|---|---|
-| `app/libs/kiracore.aar` | `mobile/kiracore` | release |
-| `app/libs/kiracore-debug.aar` | `mobile/kiracore` + `mobile/kiratest` | debug, instrumented tests |
+| `app/libs/kiracore.aar` | `core/mobile/kiracore` | release |
+| `app/libs/kiracore-debug.aar` | `core/mobile/kiracore` + `core/mobile/kiratest` | debug, instrumented tests |
 
 **Deviation from the brief:** the brief asks for `kiracore.aar` plus a separate
 `kiratest.aar` in `androidTestImplementation`. Two separately bound gomobile
@@ -195,28 +195,28 @@ it and enrol again.
 10. The app disconnects on `done`, `error` and whenever the core reports
     `finished()`.
 
-Losing the phone means re-enrolling each machine (`sudo tpm2-kira attest
-enrol` with the new phone; `attest unenrol` removes the old entry).
+Losing the phone means re-enrolling each machine (`sudo tpm2-kira phone
+enrol` with the new phone; `phone unenrol` removes the old entry).
 
-## The remote salt
+## The phone salt
 
-A machine can ask this phone to keep the salt of its disk key - the remote salt
-(tpm2-kira's `docs/PLAN-FACTORRELEASE.md`): a wrapped secret that only
+A machine can ask this phone to keep the salt of its disk key - the phone salt
+(tpm2-kira's `docs/PLAN-PHONESALT.md`): a wrapped secret that only
 that machine's TPM can open, and only in a boot its owner approved. The
 phone never sees the secret itself.
 
-- **Keeping it**: `tpm2-kira remote-salt enrol` on the machine runs an
+- **Keeping it**: `tpm2-kira phone salt enrol` on the machine runs an
   ordinary check in which the verdict screen shows the card "Keep this
-  machine's remote salt". Accepting the verdict keeps it (replacing any
+  machine's phone salt". Accepting the verdict keeps it (replacing any
   kept before); rejecting keeps nothing. It is part of the machine's
   record, in the app's protected storage, like the rest of the record.
 - **Handing it back**: after every verdict you accept, once the machine
-  has accepted the receipt, the phone sends the remote salt and the session
-  shows what the machine made of it ("The machine took the remote salt", or
+  has accepted the receipt, the phone sends the phone salt and the session
+  shows what the machine made of it ("The machine took the phone salt", or
   that it takes none, or that its TPM refused it because this boot is not
   one its owner approved). The machine still needs your password: the
   salt alone opens nothing.
-- **Seeing it**: the machine's details say since when a remote salt is
+- **Seeing it**: the machine's details say since when a phone salt is
   kept, and a verdict for such a machine says so above its buttons ("This
   phone keeps the salt of this machine's disk key…"): the match button
   reads "The codes match — attest and return the salt".

@@ -4,7 +4,7 @@ import Foundation
 enum SessionMode: Sendable, Equatable {
     case enrol
     /// `lastAttested`: last_attested of the record before this session, for "unchanged since".
-    /// `returnsSalt`: this phone keeps the machine's remote salt; an accepted verdict returns it.
+    /// `returnsSalt`: this phone keeps the machine's phone salt; an accepted verdict returns it.
     case attest(deviceId: String, machineName: String, lastAttested: String?, returnsSalt: Bool = false)
 
     var isEnrol: Bool { if case .enrol = self { true } else { false } }

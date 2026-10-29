@@ -7,7 +7,7 @@ struct VerdictContent: View {
     var event: Event.VerdictEvent
     var machineName: String
     var lastAttested: String?
-    /// This phone keeps the machine's remote salt: accepting returns it to the machine.
+    /// This phone keeps the machine's phone salt: accepting returns it to the machine.
     var returnsSalt: Bool = false
     var decisionEnabled: Bool
     /// What the machine's screen shows, where that screen is simulated (the demo machine).
@@ -143,7 +143,7 @@ extension Headline where Extra == EmptyView {
 /// The one thing to see at a glance, on every card: a green check when the
 /// machine's TPM signed this boot state as approved, a red cross when it did
 /// not - and a grey "after boot" when the key is locked until the next boot
-/// by design (a check of the running system, as at a remote salt's
+/// by design (a check of the running system, as at a phone salt's
 /// enrolment). The words below say why.
 private struct SignatureBadge: View {
     var v: Verdict
@@ -193,7 +193,7 @@ private struct BootKeyCard: View {
             } else {
                 let why: String = switch v.bootKey {
                 case Verdict.bootKeyRefused:
-                    String(localized: "No code: the TPM did not release the boot key. This boot state is not approved by the machine's owner (an update not yet resealed, or asked after the code screen).")
+                    String(localized: "No code: the TPM did not release the boot key. This boot state is not approved by the machine's owner (an update not yet approved, or asked after the code screen).")
                 case Verdict.bootKeyInvalid:
                     Texts.reason("boot_proof_invalid")
                 case Verdict.bootKeyLocked:
@@ -217,14 +217,14 @@ private struct BootKeyCard: View {
     }
 }
 
-/// The machine asks this phone to keep its remote salt: a wrapped secret only
+/// The machine asks this phone to keep its phone salt: a wrapped secret only
 /// that machine's TPM can open, returned after every accepted verdict so the
 /// disk's key can be derived. Kept when this verdict is accepted.
 private struct FactorOfferCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Keep this machine's remote salt").font(.headline)
-            Text("The machine asks this phone to keep the salt of its disk key - the remote salt: a sealed value only its own TPM can open, in a boot it has approved. Accepting this verdict keeps it, replacing any kept before. From then on it is handed back after every verdict you accept, and the machine needs it together with your password to unlock the disk.")
+            Text("Keep this machine's phone salt").font(.headline)
+            Text("The machine asks this phone to keep the salt of its disk key - the phone salt: a sealed value only its own TPM can open, in a boot it has approved. Accepting this verdict keeps it, replacing any kept before. From then on it is handed back after every verdict you accept, and the machine needs it together with your password to unlock the disk.")
                 .font(.body)
         }
         .padding(16)

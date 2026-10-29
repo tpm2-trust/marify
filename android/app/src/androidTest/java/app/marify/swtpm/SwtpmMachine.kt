@@ -5,7 +5,7 @@ import java.net.Socket
 
 /**
  * Remote control of the swtpm-backed tpm2-kira machine served by
- * `TestAppMachine` (tpm2-kira cmd/attest_app_test.go), the counterpart of
+ * `TestAppMachine` (tpm2-kira internal/admin/attest_app_test.go), the counterpart of
  * kiratest's DemoMachine for a real TPM 2.0 implementation.
  */
 class SwtpmMachine(private val host: String, private val port: Int) : Closeable {
@@ -28,6 +28,9 @@ class SwtpmMachine(private val host: String, private val port: Int) : Closeable 
 
     /** Serve one attestation on the next [link]. */
     fun startAttestation(mtu: Int) { command("attest $mtu") }
+
+    /** No phone enrolled on the machine: the slot as after `phone unenrol`. */
+    fun reset() { command("reset") }
 
     /** Orderly TPM shutdown and restart: reset counter +1, PCRs cleared. */
     fun reboot() { command("reboot") }

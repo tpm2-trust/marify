@@ -62,7 +62,10 @@ class SwtpmMachineSessionTest {
         assumeTrue("swtpm machine not running (scripts/test-swtpm.sh)", port != null)
         machine = SwtpmMachine("127.0.0.1", port!!.toInt())
         keys = SoftwareAnchorKeys()
-        // Every test starts from a fresh boot: reset counter advanced, PCRs clear.
+        // Every test starts from the same machine: no phone enrolled (the
+        // earlier tests' enrolments would fill the slot), and a fresh boot -
+        // reset counter advanced, PCRs clear.
+        machine.reset()
         machine.reboot()
     }
 

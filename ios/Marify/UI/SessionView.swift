@@ -115,7 +115,7 @@ struct SessionContent: View {
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor)
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Remote salt handed back").font(.headline)
+                            Text("Phone salt handed back").font(.headline)
                             Text(Texts.releaseStatus(ack.status))
                                 .accessibilityIdentifier("release_ack")
                             if !ack.message.isEmpty { Text(ack.message).font(.footnote) }
@@ -171,14 +171,18 @@ private struct BindContent: View {
     var body: some View {
         let colors = VerdictColors.current(scheme)
         let verified = !bind.ekVerifiedBy.isEmpty
+        let vendorUnknown = !verified && bind.ekVendorUnknown
         Text("Bind \(bind.friendlyName) to this phone?").font(.title2.weight(.semibold))
         CardView(container: verified ? colors.matchContainer : colors.changedContainer,
                  content: verified ? colors.onMatch : colors.onChanged) {
             Text(verified ? String(localized: "TPM verified as genuine: \(bind.ekVerifiedBy)")
+                          : vendorUnknown ? String(localized: "TPM vendor not known yet")
                           : String(localized: "TPM not verified as genuine hardware"))
                 .font(.headline)
             Text(verified
                  ? String(localized: "The machine's TPM proved it holds an endorsement key certified by its manufacturer.")
+                 : vendorUnknown
+                 ? String(localized: "Marify does not know this TPM's vendor yet (\(bind.ekNote)). That does not mean the TPM is untrusted: its certificate could not be checked, which is a risk to weigh. Only continue if you trust the machine's current state.")
                  : String(localized: "Marify could not confirm that this machine's TPM is real hardware (\(bind.ekNote)). This is common for firmware TPMs without a usable certificate. Only continue if you trust the machine's current state: a machine that is already compromised could pretend to have a TPM."))
             if !verified {
                 let vendors = KiraCore.ekVendors()
@@ -250,7 +254,7 @@ private struct RefusedView: View {
             Image(systemName: "xmark.octagon.fill").font(.system(size: 40))
             Text("\(name) did not accept this phone").font(.title2.weight(.semibold))
             Text("The machine is advertising as yours but refused the secure connection, twice. Its enrolment data was changed or removed, or this is a different machine imitating it.")
-            Text("Do not type your passphrase. If you did not change the enrolment yourself (for example by running “attest enrol” with another phone), treat the machine as tampered with.").fontWeight(.semibold)
+            Text("Do not type your passphrase. If you did not change the enrolment yourself (for example by running “phone enrol” with another phone), treat the machine as tampered with.").fontWeight(.semibold)
             if !detail.isEmpty { Text(detail).font(.footnote) }
         }
     }
@@ -269,7 +273,7 @@ private struct UnreachableView: View {
         }
         Text(u.bluetoothOff
              ? String(localized: "Turn on Bluetooth on this phone. Marify continues looking for \(name) as soon as it is on.")
-             : String(localized: "Marify keeps looking for it until you cancel. The machine asks for a phone only while it shows its one-time code at boot (about 90 seconds); once it is at the passphrase prompt, it has stopped asking for this boot. If it is showing the code, it is out of range, its Bluetooth did not start, or (if you test by hand) it is not running “sudo tpm2-kira attest gate”. If its screen shows a red tpm2-kira line saying the enrolment record was not accepted, do not type your passphrase. Marify cannot say anything about this machine until it reaches it — a missing result is not a good result."))
+             : String(localized: "Marify keeps looking for it until you cancel. The machine asks for a phone only while it shows its one-time code at boot (about 90 seconds); once it is at the passphrase prompt, it has stopped asking for this boot. If it is showing the code, it is out of range, its Bluetooth did not start, or (if you test by hand) it is not running “sudo tpm2-kira phone gate”. If its screen shows a red tpm2-kira line saying the enrolment record was not accepted, do not type your passphrase. Marify cannot say anything about this machine until it reaches it — a missing result is not a good result."))
         Text("Attempt \(u.attempt) · \(u.reason)").font(.footnote)
     }
 }

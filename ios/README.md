@@ -8,7 +8,7 @@ verdict you can act on, and returns a receipt signed with a Secure Enclave
 key that needs a fresh unlock (Face ID, Touch ID or passcode) for every
 signature.
 
-Both apps link the same Go core (`mobile/kiracore` of tpm2-kira) at the
+Both apps link the same Go core (`core/mobile/kiracore` of tpm2-kira) at the
 commit pinned in [`../core.properties`](../core.properties), and show the
 same screens: see "What a check looks like" in the Android README; it holds
 for this app word for word, with Face ID / Touch ID / passcode in place of
@@ -129,13 +129,13 @@ it and enrol again. Release builds do not link kiratest.
     background (`bluetooth-central` background mode); the lists scan only
     while shown.
 
-Losing the phone means re-enrolling each machine (`sudo tpm2-kira attest
-enrol` with the new phone; `attest unenrol` removes the old entry).
+Losing the phone means re-enrolling each machine (`sudo tpm2-kira phone
+enrol` with the new phone; `phone unenrol` removes the old entry).
 
-## The remote salt
+## The phone salt
 
-Same as the Android app (`../android/README.md`, "The remote salt"): the
-verdict view shows the "Keep this machine's remote salt" card when the
+Same as the Android app (`../android/README.md`, "The phone salt"): the
+verdict view shows the "Keep this machine's phone salt" card when the
 evidence offers one, says above its buttons when this phone keeps one
 (the match button reads "The codes match — attest and return the salt"),
 the session view shows what the machine made of the released salt, and
@@ -145,8 +145,8 @@ All of it comes from the core; the app has no key material of its own.
 ## Open: build and test on a Mac
 
 The app has not been compiled. Everything since the first write - the
-Marify name, the boot-key badge, the kept remote salt (card, release line,
+Marify name, the boot-key badge, the kept phone salt (card, release line,
 details row) - was added blind, mirroring the Android app. First build in
 Xcode, fix what the compiler finds, then the simulator tests, then a real
 phone against a machine (`TESTING.md`). Tracked as an open item in
-tpm2-kira's `docs/PLAN-FACTORRELEASE.md` §13.
+tpm2-kira's `docs/PLAN-PHONESALT.md` §13.

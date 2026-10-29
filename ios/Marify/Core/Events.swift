@@ -13,7 +13,7 @@ enum Event: Sendable, Equatable {
     case verdict(VerdictEvent)
     case eventlog(Eventlog)
     case receiptAck(result: Int, message: String)
-    /// What the machine made of the remote salt this phone released (PROTOCOL-BLE.md §7.3.9).
+    /// What the machine made of the phone salt this phone released (PROTOCOL-BLE.md §7.3.9).
     case releaseAck(status: Int, message: String)
     case recordUpdated(recordJSON: String)
     case done
@@ -30,6 +30,8 @@ enum Event: Sendable, Equatable {
         /// TPM vendor whose certificate vouched for the EK; empty if not verified.
         var ekVerifiedBy: String = ""
         var ekNote: String = ""
+        /// The EK root store has no root of the TPM's vendor yet: a risk, not untrusted.
+        var ekVendorUnknown: Bool = false
         var initrdCoverage: String = Event.initrdUnknown
         var initrdPcrs: [Int] = []
         /// Goes into the anchor key's attestation where the platform has one.
@@ -45,7 +47,7 @@ enum Event: Sendable, Equatable {
         var verdict: Verdict
         var needsDecision: Bool
         var eventlogAvailable: Bool
-        /// The machine asks this phone to keep a new remote salt; kept when the verdict is accepted.
+        /// The machine asks this phone to keep a new phone salt; kept when the verdict is accepted.
         var factorOffered: Bool = false
     }
 
@@ -82,6 +84,7 @@ enum Event: Sendable, Equatable {
                 friendlyName: str("friendly_name"),
                 ekVerifiedBy: str("ek_verified_by"),
                 ekNote: str("ek_note"),
+                ekVendorUnknown: bool("ek_vendor_unknown"),
                 initrdCoverage: coverage.isEmpty ? initrdUnknown : coverage,
                 initrdPcrs: (o["initrd_pcrs"] as? [Any])?.compactMap { ($0 as? NSNumber)?.intValue } ?? [],
                 attestationChallenge: Data(hex: str("attestation_challenge"))
@@ -231,7 +234,7 @@ struct RecordSummary: Sendable, Equatable {
     var profiles: [Profile] = []
     /// TPM vendor whose certificate vouched for the EK at enrolment; empty if not verified.
     var ekVerifiedBy: String = ""
-    /// When this phone kept the machine's remote salt; nil when it keeps none.
+    /// When this phone kept the machine's phone salt; nil when it keeps none.
     var factorKeptAt: String?
 
     struct Profile: Sendable, Equatable {
