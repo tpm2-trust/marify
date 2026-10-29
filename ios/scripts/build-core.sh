@@ -2,8 +2,8 @@
 # Builds the Go core for the iOS app from the tpm2-kira commit pinned in
 # ../core.properties (shared with the Android app):
 #
-#   Frameworks/Kiracore.xcframework   mobile/kiracore   -> every build
-#   Frameworks/Kiratest.xcframework   mobile/kiratest   -> Debug builds only (demo machine)
+#   Frameworks/Kiracore.xcframework   core/mobile/kiracore   -> every build
+#   Frameworks/Kiratest.xcframework   core/mobile/kiratest   -> Debug builds only (demo machine)
 #
 # Needs macOS with Xcode (gomobile compiles with Xcode's clang and SDKs),
 # Go >= 1.24 and a network connection for the first run.
@@ -42,11 +42,9 @@ fi
 git -C "$work/src" checkout --quiet "$commit"
 echo "tpm2-kira $commit"
 
-cd "$work/src"
-# The phone's core uses nothing of aSSH, which tpm2-kira's go.mod requires
-# and replaces with its submodule (not in this copy): out of this copy's
-# module graph, so no submodule is needed.
-go mod edit -droprequire=github.com/tpm2-trust/assh -dropreplace=github.com/tpm2-trust/assh
+# The core is a module of its own in tpm2-kira's repository (core/): it
+# requires go-tpm and x/crypto alone, nothing of tpm2-kira or aSSH.
+cd "$work/src/core"
 # The bind runtime must match the tools: pin x/mobile in the module graph.
 go get "golang.org/x/mobile@$mobile_ver" >/dev/null
 gomobile init

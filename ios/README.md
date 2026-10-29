@@ -8,7 +8,7 @@ verdict you can act on, and returns a receipt signed with a Secure Enclave
 key that needs a fresh unlock (Face ID, Touch ID or passcode) for every
 signature.
 
-Both apps link the same Go core (`mobile/kiracore` of tpm2-kira) at the
+Both apps link the same Go core (`core/mobile/kiracore` of tpm2-kira) at the
 commit pinned in [`../core.properties`](../core.properties), and show the
 same screens: see "What a check looks like" in the Android README; it holds
 for this app word for word, with Face ID / Touch ID / passcode in place of

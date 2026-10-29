@@ -3,8 +3,8 @@
 Findings from the review of the machine ↔ phone binding (2026-10-05), with
 how to fix each one. Reviewed by reading the code at tpm2-kira `6dceb2a` and
 marify `a4f4205`; no attacks were run. Not reviewed in depth: the BLE HCI
-layer (`transport/ble`) and the TLV parsers (`attest/wire.go`,
-`attest/messages.go`).
+layer (`core/transport/ble`) and the TLV parsers (`core/attest/wire.go`,
+`core/attest/messages.go`).
 
 Paths starting with `android/` are in this repository; all others are in
 tpm2-kira.
@@ -174,7 +174,7 @@ accepted record.
 
 ## S3: Enrolment does not verify that the TPM is genuine
 
-**Problem.** `checkOffer` (`attest/verifier.go`) only parses `ek_cert`
+**Problem.** `checkOffer` (`core/attest/verifier.go`) only parses `ek_cert`
 (`x509.ParseCertificate`). It does not validate a chain and does not check
 that the certificate's key is `ek_pub`. The EK's attributes are whatever the
 public area claims. A machine that is already compromised when you enrol it
@@ -204,15 +204,15 @@ Steps:
 1. **Machine** (`cmd/attest_tpm.go`): next to `readEKCert`, add
    `readEKCertChain` that reads NV `0x01C00100` if present and returns it
    unchanged. `EKPublic()` returns it as a third value.
-2. **Protocol** (`attest/messages.go`, `docs/PROTOCOL-BLE.md` §7.3.11): new
+2. **Protocol** (`core/attest/messages.go`, `docs/PROTOCOL-BLE.md` §7.3.11): new
    optional EnrolOffer field 17 `ek_cert_chain`, bytes ≤ 16384, concatenated
    DER. Optional field, so the schema version stays 1.
-3. **Core** (new `attest/ekcert.go`; the pure core must not import
-   go-attestation, see `attest/importgraph_test.go`):
+3. **Core** (new `core/attest/ekcert.go`; the pure core must not import
+   go-attestation, see `core/attest/importgraph_test.go`):
    - Split the chain the way `dechainer.py` does, but strictly: read
      ASN.1 SEQUENCE headers (`30 82 LL LL` and the short forms) at exact
      offsets; reject trailing garbage instead of scanning for the next `30`.
-   - Embed trusted roots with `go:embed` under `attest/ekroots/`: Intel
+   - Embed trusted roots with `go:embed` under `core/attest/ekroots/`: Intel
      OnDie root plus the two static intermediates (take them from
      intel-ek-dechainer, then confirm each SHA-256 fingerprint against the
      copy at `https://tsci.intel.com/content/OnDieCA/certs/…` and record the
@@ -258,7 +258,7 @@ Steps 1–5 as described, with these decisions:
 - Only the Intel root is a trust anchor; the two static Intel intermediates
   are embedded as helpers. All three are byte-identical in
   intel-ek-dechainer and on tsci.intel.com, and their SHA-256 fingerprints
-  are pinned in `attest/ekcert_test.go`; the real Intel signatures between
+  are pinned in `core/attest/ekcert_test.go`; the real Intel signatures between
   them verify in that test.
 - Intel products with another P_MCC issuing CA, and other vendors
   (Infineon, ST, Nuvoton, AMD), show as "not verified" until their roots
@@ -272,10 +272,10 @@ Steps 1–5 as described, with these decisions:
   details.
 
 **Vendors are data** (tpm2-kira `203a65c`, `a4db157`): roots and
-intermediates live in `attest/ekroots/<vendor>/`, listed in
-`attest/ekroots/vendors.json` with sources and pinned SHA-256 values. The
+intermediates live in `core/attest/ekroots/<vendor>/`, listed in
+`core/attest/ekroots/vendors.json` with sources and pinned SHA-256 values. The
 core, which runs in the phone app, ignores a vendor whose files do not match
-their pins. `attest/ekroots/README.md` describes adding a vendor (two
+their pins. `core/attest/ekroots/README.md` describes adding a vendor (two
 independent sources, a manifest entry, an app core rebuild). Roots are only
 ever compiled into the app, never added at runtime. The bind screen lists the
 vendors the installed app can verify; `CoreOnDeviceTest` checks on a device
@@ -435,13 +435,13 @@ no longer opens the disk).
 
 ## S8: Smaller hardening
 
-1. **Noise implementation** (`attest/noise.go`) is hand-written. The docs
+1. **Noise implementation** (`core/attest/noise.go`) is hand-written. The docs
    say it interoperates with the reference library, but no handshake test
    vectors are in the repository. Add the official XX and IK vectors for
    `25519_ChaChaPoly_SHA256` (cacophony / noise-c format) to
-   `attest/vectors_test.go`.
-   **Done:** `attest/noise_vectors_test.go` replays the XX and IK vectors from
-   cacophony and snow (`attest/testdata/noise_vectors.json`); all four match
+   `core/attest/vectors_test.go`.
+   **Done:** `core/attest/noise_vectors_test.go` replays the XX and IK vectors from
+   cacophony and snow (`core/attest/testdata/noise_vectors.json`); all four match
    byte for byte, including the handshake hash.
 2. **Overlay taps** (app): in `MainActivity.onCreate` set
    `window.decorView.filterTouchesWhenObscured = true` and, on API 31+,
@@ -481,7 +481,7 @@ not show the machine's own TPM verdict before enrolling.
   (EnrolAccept field 7). Where the ROM cannot attest (no attestation keys,
   e.g. LineageOS), the key is created without and the machine is told so.
 - The machine checks the chain against pinned Google attestation roots
-  (`attest/phoneroots/`, the two roots Google's attestation API serves,
+  (`core/attest/phoneroots/`, the two roots Google's attestation API serves,
   identical to the documented ones): the certificate is for the anchor key,
   the challenge is this session's, the key was generated in StrongBox/TEE,
   an unlock is enforced for every use, the bootloader is locked and the boot

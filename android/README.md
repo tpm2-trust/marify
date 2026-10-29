@@ -99,8 +99,8 @@ it; the pinned sources are not changed), and runs `gomobile bind`:
 
 | Output | Packages | Linked into |
 |---|---|---|
-| `app/libs/kiracore.aar` | `mobile/kiracore` | release |
-| `app/libs/kiracore-debug.aar` | `mobile/kiracore` + `mobile/kiratest` | debug, instrumented tests |
+| `app/libs/kiracore.aar` | `core/mobile/kiracore` | release |
+| `app/libs/kiracore-debug.aar` | `core/mobile/kiracore` + `core/mobile/kiratest` | debug, instrumented tests |
 
 **Deviation from the brief:** the brief asks for `kiracore.aar` plus a separate
 `kiratest.aar` in `androidTestImplementation`. Two separately bound gomobile

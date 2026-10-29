@@ -2,8 +2,8 @@
 # Builds the Go core for the app from the tpm2-kira commit pinned in
 # ../core.properties (shared with the iOS app):
 #
-#   app/libs/kiracore.aar        mobile/kiracore            -> release builds
-#   app/libs/kiracore-debug.aar  mobile/kiracore + kiratest -> debug and test builds
+#   app/libs/kiracore.aar        core/mobile/kiracore            -> release builds
+#   app/libs/kiracore-debug.aar  core/mobile/kiracore + kiratest -> debug and test builds
 #
 # Two separately bound .aar files cannot be linked together: each carries its
 # own libgojni.so and the go.* runtime classes. The debug/test library is
@@ -50,11 +50,9 @@ else
     rm -rf "$work/clone"
 fi
 
-cd "$work"
-# The phone's core uses nothing of aSSH, which tpm2-kira's go.mod requires
-# and replaces with its submodule (not in this copy): out of this copy's
-# module graph, so no submodule is needed.
-go mod edit -droprequire=github.com/tpm2-trust/assh -dropreplace=github.com/tpm2-trust/assh
+# The core is a module of its own in tpm2-kira's repository (core/): it
+# requires go-tpm and x/crypto alone, nothing of tpm2-kira or aSSH.
+cd "$work/core"
 # The bind needs golang.org/x/mobile/bind in the module graph. This touches
 # only the temporary copy, never the pinned sources.
 go get "golang.org/x/mobile@$mobile_ver"
