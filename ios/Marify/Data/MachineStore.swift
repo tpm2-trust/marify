@@ -5,7 +5,7 @@ struct Machine: Sendable, Identifiable, Equatable {
     var recordJSON: String
     var summary: RecordSummary
     var keyStorage: KeyStorage
-    /// Reserved for salt release (PLAN-FACTORRELEASE.md): an opaque per-machine blob.
+    /// Reserved for salt release (PLAN-PHONESALT.md): an opaque per-machine blob.
     var factorBlob: String? = nil
 
     var id: String { summary.deviceId }

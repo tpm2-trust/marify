@@ -54,7 +54,7 @@ struct EnrolView: View {
         List {
             Section {
                 Text("On the computer, run:")
-                Text("sudo tpm2-kira attest enrol").font(.system(.body, design: .monospaced)).textSelection(.enabled)
+                Text("sudo tpm2-kira phone enrol").font(.system(.body, design: .monospaced)).textSelection(.enabled)
                 Text("Machines waiting for a phone appear below. Keep the computer's screen in view: you will compare a six-digit number.")
             }
             if debugBuild {

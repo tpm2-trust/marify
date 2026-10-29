@@ -122,12 +122,12 @@ enum Texts {
         }
     }
 
-    /// What the machine made of the released remote salt (PROTOCOL-BLE.md §7.3.9).
+    /// What the machine made of the released phone salt (PROTOCOL-BLE.md §7.3.9).
     static func releaseStatus(_ status: Int) -> String {
         switch status {
-        case 1: String(localized: "The machine took the remote salt.")
-        case 2: String(localized: "This machine takes no remote salt.")
-        case 3: String(localized: "The machine's TPM refused to open the remote salt: this boot is not one its owner approved.")
+        case 1: String(localized: "The machine took the phone salt.")
+        case 2: String(localized: "This machine takes no phone salt.")
+        case 3: String(localized: "The machine's TPM refused to open the phone salt: this boot is not one its owner approved.")
         case 4: String(localized: "The machine had no accepted receipt for it.")
         default: String(localized: "The machine answered with result \(status).")
         }
@@ -149,7 +149,7 @@ enum Texts {
         case .machineRefused: String(localized: "The machine is advertising as yours but refused the secure connection, twice. Its enrolment data was changed or removed, or this is a different machine imitating it.")
         case .connect: String(localized: "Marify reached the machine, but setting up the connection failed.")
         case .updateNeeded: String(localized: "This machine speaks a different protocol version. Please update the app or tpm2-kira.")
-        case .wrongMode: String(localized: "The machine is not in the expected mode. For enrolment run 'attest enrol'; for verification, 'attest gate'.")
+        case .wrongMode: String(localized: "The machine is not in the expected mode. For enrolment run 'phone enrol'; for verification, 'phone gate'.")
         case .linkLost: String(localized: "Connection lost.")
         case .cancelled: String(localized: "Cancelled.")
         case .sasMismatch: String(localized: "The numbers did not match, so nothing was stored. Someone may be interfering; try again in a different place.")

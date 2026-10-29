@@ -73,23 +73,23 @@ Fill in per device:
 
 | Scenario | Pixel (StrongBox) | non-Pixel | Notes |
 |---|---|---|---|
-| `sudo tpm2-kira attest enrol` → SAS matches → bound | | | |
+| `sudo tpm2-kira phone enrol` → SAS matches → bound | | | |
 | Enrol screen lists the real machine without any switch (debug build: with its warning card) | | | |
 | Machine details show StrongBox / TEE, hardware-enforced auth | | | |
-| `sudo tpm2-kira attest gate` → "asking" banner → match → receipt accepted | | | |
+| `sudo tpm2-kira phone gate` → "asking" banner → match → receipt accepted | | | |
 | At boot: machine shows its code and the phone is asked at the same time → the phone shows the eight-character code and the machine's screen shows the same → "The codes match — continue" → PIN → the machine continues to the passphrase prompt | | | |
 | After the receipt the "asking for attestation" banner disappears within ten seconds (the machine stopped advertising) | | | |
-| Match: green card with the green "Signed" check; changed after a resealed update: orange card with the green check; `attest gate` by hand after boot: grey "After boot" badge with the lock, no code, "the machine is up, and its TPM keeps the boot key locked until the next boot" | | | |
-| Kernel update, resealed by the hook → the phone shows "changed" **with** the code (the signing key approved the new state) → approve and remember | | | |
-| `tpm2-kira remote-salt enrol` → the "Keep this machine's remote salt" card → accept → details say since when it is kept; the next boot's verdict says "This phone keeps the salt…" and the button reads "The codes match — attest and return the salt" → after the receipt the session shows "Remote salt handed back" with what the machine made of it | | | |
+| Match: green card with the green "Signed" check; changed after a approved update: orange card with the green check; `phone gate` by hand after boot: grey "After boot" badge with the lock, no code, "the machine is up, and its TPM keeps the boot key locked until the next boot" | | | |
+| Kernel update, approved by the hook → the phone shows "changed" **with** the code (the signing key approved the new state) → approve and remember | | | |
+| `tpm2-kira phone salt enrol` → the "Keep this machine's phone salt" card → accept → details say since when it is kept; the next boot's verdict says "This phone keeps the salt…" and the button reads "The codes match — attest and return the salt" → after the receipt the session shows "Phone salt handed back" with what the machine made of it | | | |
 | At boot, phone ignored: Enter (or 90 s) continues to the passphrase prompt; from then on the phone shows "not reachable" (the machine has stopped asking for this boot) | | | |
 | At boot, phone connects in the last seconds of the 90: the machine waits for the answer (up to a minute more), then continues | | | |
 | At boot, reject on the phone: the machine shows the rejection and does not continue early | | | |
 | Second phone enrolled, initramfs **not** rebuilt → both phones attest at the next boot | | | |
-| Phone removed with `attest unenrol` (asks for the signing key; the TOTP code is unchanged), re-enrolled → old entry deleted in the app, new one attests | | | |
-| `attest enrol` on a slot without a sealed TOTP key → refused with the `seal` command to run | | | |
+| Phone removed with `phone unenrol` (asks for the signing key; the TOTP code is unchanged), re-enrolled → old entry deleted in the app, new one attests | | | |
+| `phone enrol` on a slot without a sealed TOTP key → refused with the `slot add` command to run | | | |
 | Kernel update → reseal hook runs → the phone is still enrolled and attests (changed, approve once) | | | |
-| `nvram delete --nvram N` → slot gone whole; the phone shows the machine as not reachable | | | |
+| `slot delete --nvram N` → slot gone whole; the phone shows the machine as not reachable | | | |
 | Machine's gate unit runs confined (`journalctl -b -u tpm2-kira-attest.service` shows no refused operation) | | | |
 | Kernel/bootloader update → changed → approve and remember → next boot matches | | | |
 | Bluetooth off mid-session → "Connection lost", Try again | | | |

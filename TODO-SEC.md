@@ -96,7 +96,7 @@ index defined through the owner hierarchy with empty auth
 writes: anyone with root, or any other OS booted on the machine, can
 `NV_UndefineSpace` the index and define and write their own. The signature
 inside the blob is parsed (`UnmarshalAttestBlob`) and verified nowhere, not
-even by `attest status`.
+even by `phone status`.
 
 Consequences: the console line "ATTESTED by …" can be made to trust an
 attacker's phone; restoring an old copy of the blob re-enrols a phone that
@@ -120,7 +120,7 @@ fact.
      non-zero on invalid.
    - `AttestEnrol`: verify the existing blob before `UpsertVerifier`;
      refuse to extend an unauthenticated blob (offer to start fresh).
-   - New `attest check` command plus a systemd unit that runs after unlock
+   - New `phone check` command plus a systemd unit that runs after unlock
      on the booted system and logs/notifies on an invalid signature or a
      changed verifier list. Store the last seen verifier-list digest under
      `/var/lib/tpm2-kira/` (on the encrypted disk) and compare.
@@ -128,19 +128,19 @@ fact.
    "(not verified on this machine — the phone's screen is authoritative)".
 4. Document in `docs/PROTOCOL-BLE.md` §15 / `PLAN-BLE.md` §7 that enforced
    mode must not be built on the NV blob: it needs the anchor pinned in the
-   measured image (PLAN-REMOTEATTESTATION.md §10.2), so that changing it
+   measured image (PLAN-PHONE.md §10.2), so that changing it
    changes the PCRs.
 
 **Tests.** Unit: tampered payload, wrong key, missing signature. swtpm
 integration: write a blob with a second key by undefine/redefine and check
-that `attest status` and `attest check` flag it.
+that `phone status` and `phone check` flag it.
 
 The phone side of this finding is S1.
 
 **Done, then redone differently** (tpm2-kira, see its log). The first version
-was `attest check` plus a unit that ran after unlock. That was withdrawn on
+was `phone check` plus a unit that ran after unlock. That was withdrawn on
 2026-10-06: after unlock the passphrase has already been typed, so a check
-there helps nobody. `attest status` and the refusal in `attest enrol` remain;
+there helps nobody. `phone status` and the refusal in `phone enrol` remain;
 the detection itself now happens in the initrd, before the gate advertises:
 
 - the record's **signature** is checked against the machine's signing public
@@ -283,7 +283,7 @@ that the roots are embedded.
 
 **Still open:** no real Intel EK certificate was available here, so the full
 chain (EK ← per-machine CAs ← embedded CAs) is tested only with a synthetic
-hierarchy. On a laptop with Intel PTT, run `sudo tpm2-kira attest ekcert`:
+hierarchy. On a laptop with Intel PTT, run `sudo tpm2-kira phone ekcert`:
 it prints what the phone will conclude.
 
 ---
@@ -363,7 +363,7 @@ every "approve and remember". Revisit if Marify ever shares its files.
 
 ## S5: The PCR selection may not cover the initrd
 
-**Problem.** `attest enrol` quotes the sealed slot's PCRs, or `0,2,4,7`
+**Problem.** `phone enrol` quotes the sealed slot's PCRs, or `0,2,4,7`
 when there is none (`cmd/attest.go`). Whether that covers the kernel and
 initrd depends on the boot path. With GRUB and a separate initrd they are
 measured into PCR 8/9, with a UKI into PCR 4 and 11. If the initrd is not
@@ -382,7 +382,7 @@ covered, a modified initrd (the classic passphrase logger) verifies as
    descriptions on the app's bind screen under "Details".
 3. Add a `docs/` table: boot setup → PCRs that must be quoted.
 
-**Done: 1 and 3** (tpm2-kira `e90fab9`). `attest enrol` recognises GRUB
+**Done: 1 and 3** (tpm2-kira `e90fab9`). `phone enrol` recognises GRUB
 (PCR 9 file), the EFI stub's LoadFile2 tag (PCR 9) and a UKI (PCR 11
 `.initrd`, PCR 4 image), prints whether the selection covers the initrd and
 asks (default no) when it does not; the table is in tpm2-kira's README.
@@ -458,11 +458,11 @@ no longer opens the disk).
    the prompt offers no PIN, and machine details shows the key's policy.
 4. **Half-finished enrolment**: if the machine commits but its confirmation
    does not reach the phone, the machine lists a phone that has no record.
-   `attest status` should make stale entries visible; enrolling again with
+   `phone status` should make stale entries visible; enrolling again with
    the same phone replaces the entry.
    **No change needed:** enrolling again with the same phone already
    replaces its entry (`UpsertVerifier` keys on the verifier id), and
-   `attest status` lists every entry with its anchor digest.
+   `phone status` lists every entry with its anchor digest.
 
 ---
 
@@ -470,7 +470,7 @@ no longer opens the disk).
 
 **Problem.** The phone verifies the machine's TPM (S3), but the machine took
 the phone's anchor key on trust: it could not tell a StrongBox key on a
-locked phone from a key in software on a rooted one. And `attest enrol` did
+locked phone from a key in software on a rooted one. And `phone enrol` did
 not show the machine's own TPM verdict before enrolling.
 
 **Done** (tpm2-kira `aac0ef6`, `a360fbd`; the app's pinned core is in
@@ -486,7 +486,7 @@ not show the machine's own TPM verdict before enrolling.
   the challenge is this session's, the key was generated in StrongBox/TEE,
   an unlock is enforced for every use, the bootloader is locked and the boot
   verified; on the booted machine also Google's revocation list.
-- `attest enrol --verify-phone` and `--verify-tpm` (`warn` | `require` | `off`,
+- `phone enrol --verify-phone` and `--verify-tpm` (`warn` | `require` | `off`,
   default `warn`: show and ask, default answer no). The TPM check runs the
   phone's EK verification on the machine before advertising.
 - Tests: Google's real (development-device) attestation chains, synthetic
@@ -505,7 +505,7 @@ enrols it.
 
 ## Remaining
 
-- S3: run `sudo tpm2-kira attest ekcert` on a laptop with Intel PTT to check
+- S3: run `sudo tpm2-kira phone ekcert` on a laptop with Intel PTT to check
   the full Intel chain on real hardware; add roots for other vendors.
 - S4.1: create the release signing key (see `android/README.md`).
 - Real-hardware checks in `android/TESTING.md` §4, including what only a

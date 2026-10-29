@@ -25,12 +25,12 @@ and a tpm2-kira machine (the package from `tpm2-kira`, the same commit as
 | Check | Result |
 |---|---|
 | Onboarding: Bluetooth permission asked once; the three steps turn green; Continue enabled only then | ☐ |
-| Enrol: the machine appears within seconds of `sudo tpm2-kira attest enrol`; six-digit number equals the machine's; "TPM verified as genuine" or the unverified card; bind → Face ID / Touch ID / passcode prompt → "bound to this phone" | ☐ |
+| Enrol: the machine appears within seconds of `sudo tpm2-kira phone enrol`; six-digit number equals the machine's; "TPM verified as genuine" or the unverified card; bind → Face ID / Touch ID / passcode prompt → "bound to this phone" | ☐ |
 | At boot: the machine shows its code and asks for a phone → "… is asking for attestation" on the list → tap → green card with the green **Signed** check, the eight-character code equals the slot's second code on the machine's screen → "The codes match — continue" → unlock prompt → the machine continues to the passphrase prompt | ☐ |
 | After the receipt the "asking for attestation" banner disappears within ten seconds | ☐ |
-| Changed after a resealed update: orange card with the green check and "New to this phone, but signed…"; approve and remember; next boot matches | ☐ |
-| `attest gate` by hand after boot: grey **After boot** badge with the lock, no code, "the machine is up, and its TPM keeps the boot key locked until the next boot" | ☐ |
-| `tpm2-kira remote-salt enrol` → the "Keep this machine's remote salt" card → accept → details say since when it is kept; the next boot's verdict says "This phone keeps the salt…" and the button reads "The codes match — attest and return the salt" → after the receipt the session shows "Remote salt handed back" with what the machine made of it | ☐ |
+| Changed after a approved update: orange card with the green check and "New to this phone, but signed…"; approve and remember; next boot matches | ☐ |
+| `phone gate` by hand after boot: grey **After boot** badge with the lock, no code, "the machine is up, and its TPM keeps the boot key locked until the next boot" | ☐ |
+| `tpm2-kira phone salt enrol` → the "Keep this machine's phone salt" card → accept → details say since when it is kept; the next boot's verdict says "This phone keeps the salt…" and the button reads "The codes match — attest and return the salt" → after the receipt the session shows "Phone salt handed back" with what the machine made of it | ☐ |
 | Reject: no unlock prompt; the machine shows the rejection | ☐ |
 | Stop while connecting, while deciding, at the unlock prompt: the machine is told each time | ☐ |
 | Background: switch apps during a session; the receipt still arrives | ☐ |

@@ -6,7 +6,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** The Go core in this APK carries the EK vendor roots (tpm2-kira attest/ekroots). */
+/** The Go core in this APK carries the EK vendor roots (tpm2-kira's attest/ekroots). */
 @RunWith(AndroidJUnit4::class)
 class CoreOnDeviceTest {
     @Test fun ekVendorRootsAreEmbedded() {

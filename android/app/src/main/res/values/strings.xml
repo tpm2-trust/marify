@@ -36,7 +36,7 @@
     <!-- Enrol -->
     <string name="enrol_title">Enrol a machine</string>
     <string name="enrol_instructions">On the computer, run:</string>
-    <string name="enrol_command">sudo tpm2-kira attest enrol</string>
+    <string name="enrol_command">sudo tpm2-kira phone enrol</string>
     <string name="enrol_instructions_2">Machines waiting for a phone appear below. Keep the computer\'s screen in view: you will compare a six-digit number.</string>
     <string name="enrol_searching">Searching…</string>
     <string name="enrol_waiting_machine">tpm2-kira machine waiting for enrolment</string>
@@ -50,7 +50,7 @@
     <!-- Session -->
     <string name="phase_connecting">Connecting…</string>
     <string name="unreachable_title">%1$s is not reachable</string>
-    <string name="unreachable_body">Marify keeps looking for it until you cancel. The machine asks for a phone only while it shows its one-time code at boot (about 90 seconds); once it is at the passphrase prompt, it has stopped asking for this boot. If it is showing the code, it is out of range, its Bluetooth did not start, or (if you test by hand) it is not running “sudo tpm2-kira attest gate”. If its screen shows a red tpm2-kira line saying the enrolment record was not accepted, do not type your passphrase. Marify cannot say anything about this machine until it reaches it — a missing result is not a good result.</string>
+    <string name="unreachable_body">Marify keeps looking for it until you cancel. The machine asks for a phone only while it shows its one-time code at boot (about 90 seconds); once it is at the passphrase prompt, it has stopped asking for this boot. If it is showing the code, it is out of range, its Bluetooth did not start, or (if you test by hand) it is not running “sudo tpm2-kira phone gate”. If its screen shows a red tpm2-kira line saying the enrolment record was not accepted, do not type your passphrase. Marify cannot say anything about this machine until it reaches it — a missing result is not a good result.</string>
     <string name="bluetooth_off_title">Bluetooth is off</string>
     <string name="bluetooth_off_body">Turn on Bluetooth on this phone. Marify continues looking for %1$s as soon as it is on.</string>
     <string name="unreachable_attempt">Attempt %1$d · %2$s</string>
@@ -132,25 +132,25 @@
     <string name="ack_malformed">The machine could not read the receipt.</string>
     <string name="ack_unknown">The machine answered with result %1$d.</string>
 
-    <!-- The remote salt (PLAN-FACTORRELEASE.md): kept by this phone, released after an accepted verdict -->
-    <string name="factor_offer_title">Keep this machine\'s remote salt</string>
-    <string name="factor_offer_body">The machine asks this phone to keep the salt of its disk key - the remote salt: a sealed value only its own TPM can open, in a boot it has approved. Accepting this verdict keeps it, replacing any kept before. From then on it is handed back after every verdict you accept, and the machine needs it together with your password to unlock the disk.</string>
-    <string name="factor_released">Remote salt handed back</string>
-    <string name="release_ok">The machine took the remote salt.</string>
-    <string name="release_unsupported">This machine takes no remote salt.</string>
-    <string name="release_tpm_refused">The machine\'s TPM refused to open the remote salt: this boot is not one its owner approved.</string>
+    <!-- The phone salt (PLAN-PHONESALT.md): kept by this phone, released after an accepted verdict -->
+    <string name="factor_offer_title">Keep this machine\'s phone salt</string>
+    <string name="factor_offer_body">The machine asks this phone to keep the salt of its disk key - the phone salt: a sealed value only its own TPM can open, in a boot it has approved. Accepting this verdict keeps it, replacing any kept before. From then on it is handed back after every verdict you accept, and the machine needs it together with your password to unlock the disk.</string>
+    <string name="factor_released">Phone salt handed back</string>
+    <string name="release_ok">The machine took the phone salt.</string>
+    <string name="release_unsupported">This machine takes no phone salt.</string>
+    <string name="release_tpm_refused">The machine\'s TPM refused to open the phone salt: this boot is not one its owner approved.</string>
     <string name="release_no_receipt">The machine had no accepted receipt for it.</string>
-    <string name="factor_label">Remote salt</string>
+    <string name="factor_label">Phone salt</string>
     <string name="factor_kept">Kept on this phone since %1$s. Only the machine\'s TPM can open it.</string>
-    <string name="factor_none">None kept. Run \"tpm2-kira remote-salt enrol\" on the machine to add one.</string>
+    <string name="factor_none">None kept. Run \"tpm2-kira phone salt enrol\" on the machine to add one.</string>
 
     <!-- Failures -->
     <string name="refused_title">%1$s did not accept this phone</string>
     <string name="refused_body">The machine is advertising as yours but refused the secure connection, twice. Its enrolment data was changed or removed, or this is a different machine imitating it.</string>
-    <string name="refused_action">Do not type your passphrase. If you did not change the enrolment yourself (for example by running “attest enrol” with another phone), treat the machine as tampered with.</string>
+    <string name="refused_action">Do not type your passphrase. If you did not change the enrolment yourself (for example by running “phone enrol” with another phone), treat the machine as tampered with.</string>
     <string name="fail_connect">Marify reached the machine, but setting up the connection failed.</string>
     <string name="fail_update_needed">This machine speaks a different protocol version. Please update the app or tpm2-kira.</string>
-    <string name="fail_wrong_mode">The machine is not in the expected mode. For enrolment run \'attest enrol\'; for verification, \'attest gate\'.</string>
+    <string name="fail_wrong_mode">The machine is not in the expected mode. For enrolment run \'phone enrol\'; for verification, \'phone gate\'.</string>
     <string name="fail_link_lost">Connection lost.</string>
     <string name="fail_cancelled">Cancelled.</string>
     <string name="fail_sas_mismatch">The numbers did not match, so nothing was stored. Someone may be interfering; try again in a different place.</string>
@@ -193,7 +193,7 @@
     <string name="boot_code_title">Code on the machine\'s screen</string>
     <string name="boot_code_body">The machine must show the same code.</string>
     <string name="boot_code_demo_screen">The demo machine\'s screen shows: %1$s</string>
-    <string name="boot_key_refused">No code: the TPM did not release the boot key. This boot state is not approved by the machine\'s owner (an update not yet resealed, or asked after the code screen).</string>
+    <string name="boot_key_refused">No code: the TPM did not release the boot key. This boot state is not approved by the machine\'s owner (an update not yet approved, or asked after the code screen).</string>
     <string name="boot_key_unavailable">No code: the machine could not answer with its boot key.</string>
     <string name="boot_key_locked">No code: the machine is up, and its TPM keeps the boot key locked until the next boot, by design. The quote above says this is the running system of a boot you know; it does not say the boot was approved. The next boot shows a code again.</string>
     <string name="codes_match_continue">The codes match — continue</string>
@@ -247,7 +247,7 @@
     <string name="delete_machine">Delete machine</string>
     <string name="delete_machine_title">Delete %1$s?</string>
     <string name="delete_machine_body">This phone forgets the machine and destroys its key. On the machine, also run:</string>
-    <string name="unenrol_command">sudo tpm2-kira attest unenrol</string>
+    <string name="unenrol_command">sudo tpm2-kira phone unenrol</string>
     <string name="delete">Delete</string>
     <string name="demo_controls">Demo machine controls</string>
     <string name="demo_next_boot">Reboot (match)</string>
