@@ -28,6 +28,10 @@ Re-run everything:
 $ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer dex packages \
     app/build/outputs/apk/release/app-release-unsigned.apk | grep -c kiratest   # expect 0
 adb shell locksettings set-pin 1234   # AnchorKeysTest needs a screen lock (skipped otherwise)
+# An emulator booted with the PIN already set is locked: unlock it first, or the
+# run hangs ("Package ... is not encryption aware" in logcat):
+adb shell input keyevent KEYCODE_WAKEUP; adb shell input swipe 540 1800 540 600
+adb shell input text 1234; adb shell input keyevent KEYCODE_ENTER
 ./gradlew connectedDebugAndroidTest   # emulator (API 34+, x86_64) or phone attached
 ```
 
