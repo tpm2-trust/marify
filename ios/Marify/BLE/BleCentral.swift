@@ -22,7 +22,7 @@ struct Advertisement: @unchecked Sendable {
 /// (§2.3). No pairing, no bonding, nothing is retained across launches.
 final class BleCentral: NSObject, @unchecked Sendable {
     private let queue = DispatchQueue(label: "io.wiora.marify.ble")
-    private var manager: CBCentralManager!
+    private var _manager: CBCentralManager?
     private let lock = NSLock()
 
     private var scanners: [UUID: AsyncThrowingStream<Advertisement, Error>.Continuation] = [:]
@@ -31,11 +31,20 @@ final class BleCentral: NSObject, @unchecked Sendable {
     /// Called on state changes; the onboarding screen observes it.
     var onStateChange: (@Sendable (CBManagerState) -> Void)?
 
-    override init() {
-        super.init()
-        // Instantiating the manager asks for the Bluetooth permission; the
-        // onboarding screen creates the container at the right moment.
-        manager = CBCentralManager(delegate: self, queue: queue, options: [CBCentralManagerOptionShowPowerAlertKey: false])
+    // Created lazily, on first use (see `manager` below): instantiating
+    // CBCentralManager does a synchronous handshake with bluetoothd and, on
+    // a fresh install, triggers the Bluetooth permission prompt. BleCentral
+    // itself is created eagerly in AppContainer.init(), before the first
+    // SwiftUI frame; doing this work there made every cold launch pay that
+    // cost before anything was on screen. Deferring it here means it only
+    // runs once something (RootView's `.task`, onboarding, a scan or
+    // connect) actually needs Bluetooth, which happens after first paint.
+    private var manager: CBCentralManager {
+        lock.lock(); defer { lock.unlock() }
+        if let m = _manager { return m }
+        let m = CBCentralManager(delegate: self, queue: queue, options: [CBCentralManagerOptionShowPowerAlertKey: false])
+        _manager = m
+        return m
     }
 
     var state: CBManagerState { manager.state }

@@ -27,10 +27,6 @@ targets:
     platform: iOS
     sources:
       - path: Marify
-    dependencies:
-      # The Go core, for every configuration (static xcframework: not embedded).
-      - framework: Frameworks/Kiracore.xcframework
-        embed: false
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.wiora.marify
@@ -38,16 +34,34 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
+        # The Go core (static xcframework: not embedded). Linked manually
+        # (not via `dependencies:`) because Debug and Release link different
+        # files below -- a plain `dependencies:` entry pins one file for
+        # every config.
+        OTHER_LDFLAGS: "$(inherited) -framework Kiracore"
       configs:
         Debug:
-          # kiratest (the demo machine) is linked into debug builds only
-          # (AGENT-PROMPT-IOS.md rule 7): its slices are on the search path
-          # here and nowhere else. gomobile names the slices as below; check
-          # `ls Frameworks/Kiratest.xcframework` after scripts/build-core.sh.
-          "FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]": "$(inherited) $(SRCROOT)/Frameworks/Kiratest.xcframework/ios-arm64"
-          "FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]": "$(inherited) $(SRCROOT)/Frameworks/Kiratest.xcframework/ios-arm64_x86_64-simulator"
-          OTHER_LDFLAGS: "$(inherited) -framework Kiratest"
+          # Debug links KiracoreDebug.xcframework INSTEAD OF
+          # Kiracore.xcframework: it is kiracore and kiratest (the demo
+          # machine, AGENT-PROMPT-IOS.md rule 7) bound together in one
+          # `gomobile bind` invocation, so they share a single embedded Go
+          # runtime. Binding them separately and linking both into this one
+          # process (the previous setup here) crashed: each `gomobile bind`
+          # embeds its own full Go runtime, and two independent runtimes in
+          # one process corrupt each other's per-thread cgo bookkeeping
+          # (SIGSEGV inside __cgo_topofstack, a few seconds after launch).
+          # See tpm2-kira's mobile/kiratest package doc. The module is still
+          # named Kiracore either way, so `import Kiracore` (KiraCore.swift)
+          # resolves the same way in both configs; KiracoreDebug additionally
+          # exports the Kiratest* demo-machine API used by DemoMachineSupport.
+          # gomobile names the slices as below; check
+          # `ls Frameworks/KiracoreDebug.xcframework` after scripts/build-core.sh.
+          "FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]": "$(inherited) $(SRCROOT)/Frameworks/KiracoreDebug.xcframework/ios-arm64"
+          "FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]": "$(inherited) $(SRCROOT)/Frameworks/KiracoreDebug.xcframework/ios-arm64_x86_64-simulator"
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) DEBUG"
+        Release:
+          "FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]": "$(inherited) $(SRCROOT)/Frameworks/Kiracore.xcframework/ios-arm64"
+          "FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]": "$(inherited) $(SRCROOT)/Frameworks/Kiracore.xcframework/ios-arm64_x86_64-simulator"
     info:
       path: Marify/Info.plist
       properties:
@@ -69,12 +83,15 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.wiora.marify.tests
+        GENERATE_INFOPLIST_FILE: YES
         SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) DEBUG"
         # The tests reach the demo machine through the app's DemoSupport and
         # link nothing from kiratest themselves, but the compiler must find
-        # its module to read the app's debug-only declarations.
-        "FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]": "$(inherited) $(SRCROOT)/Frameworks/Kiratest.xcframework/ios-arm64"
-        "FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]": "$(inherited) $(SRCROOT)/Frameworks/Kiratest.xcframework/ios-arm64_x86_64-simulator"
+        # the Kiracore module (loaded here from the Debug build, which is
+        # the one that actually exports the Kiratest* API) to read the
+        # app's debug-only declarations.
+        "FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]": "$(inherited) $(SRCROOT)/Frameworks/KiracoreDebug.xcframework/ios-arm64"
+        "FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]": "$(inherited) $(SRCROOT)/Frameworks/KiracoreDebug.xcframework/ios-arm64_x86_64-simulator"
 
 schemes:
   Marify:
