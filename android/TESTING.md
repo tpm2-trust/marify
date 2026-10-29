@@ -1,39 +1,39 @@
 # Testing
 
-## Status (2026-10-06)
+## Status (2026-10-29)
 
-The figures below are from the first full run on 2026-10-05; the commit of the
-core in use is in `../core.properties`. Re-run on 2026-10-06 against tpm2-kira's
-current tree: lint clean, all JVM tests, all emulator tests (now including the
-enrol list and the permission request) and all 7 swtpm tests pass.
+`scripts/test-emulator.sh`, unattended, on a fresh emulator (API 36
+google_apis x86_64, data wiped), core from tpm2-kira `8c3ff3f`: ALL PASS.
 
 | Check | Result |
 |---|---|
-| `scripts/build-core.sh` (the commit in `../core.properties`, NDK 30, gomobile 2026-09-08) | ✅ both .aar built; generated Java API matches the brief |
-| `assembleDebug`, `assembleRelease`, `assembleDebugAndroidTest` (AGP 9.4.1 / Gradle 9.8.0, JDK 25) | ✅ |
-| `testDebugUnitTest` — 46 JVM tests | ✅ all pass |
-| `lintDebug`, `lintRelease` | ✅ no issues |
-| No kiratest in release (`apkanalyzer dex packages … \| grep -c kiratest`) | ✅ 0 in release, 37 classes in debug |
-| R8 keeps the JNI classes (`go.**`, `kiracore.**`; rules ship in the .aar) | ✅ |
-| `connectedDebugAndroidTest` — 9 demo-machine + 3 Compose UI + 3 keystore tests, emulator API 36 x86_64 with PIN 1234 | ✅ all 15 pass |
-| Manual, emulator, PIN-only (no biometrics): onboarding passes; demo enrolment and a *match* attestation each signed via the system PIN prompt with the real keystore key; "The machine accepted the receipt" | ✅ (emulator keystore is software-only, accepted in debug builds) |
-| App launches on the emulator (onboarding) | ✅ |
-| `scripts/test-swtpm.sh` — app session code + Go core against a tpm2-kira machine on swtpm (§5), emulator API 36 | ✅ all 7 pass |
+| `scripts/build-core.sh` (the commit in `../core.properties`, NDK 30, gomobile 2026-09-08) | ✅ both .aar built |
+| `testDebugUnitTest` — JVM tests | ✅ 57 pass |
+| `lintDebug`, `lintRelease`; `assembleDebug`, `assembleRelease` (AGP 9.4.1 / Gradle 9.8.0, JDK 25) | ✅ |
+| No kiratest in release (`apkanalyzer dex packages`) | ✅ 0 in release |
+| `connectedDebugAndroidTest` — demo machine, Compose UI, keystore, enrol list, permission request | ✅ 40 pass |
+| `scripts/test-swtpm.sh` — app session code + Go core against a tpm2-kira machine on swtpm (§5) | ✅ 7 pass |
+| Manual, emulator, PIN-only: onboarding, a demo enrolment and a *match* attestation signed with the keystore key (2026-10-06) | ✅ |
 | Real hardware checklist (§4) | ⏳ needs a phone and a Linux machine with Bluetooth |
 
-Re-run everything:
+Re-run everything, from a defined state and with nobody at the keyboard:
 
 ```sh
-./gradlew testDebugUnitTest assembleRelease lintDebug lintRelease
-$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer dex packages \
-    app/build/outputs/apk/release/app-release-unsigned.apk | grep -c kiratest   # expect 0
-adb shell locksettings set-pin 1234   # AnchorKeysTest needs a screen lock (skipped otherwise)
-# An emulator booted with the PIN already set is locked: unlock it first, or the
-# run hangs ("Package ... is not encryption aware" in logcat):
-adb shell input keyevent KEYCODE_WAKEUP; adb shell input swipe 540 1800 540 600
-adb shell input text 1234; adb shell input keyevent KEYCODE_ENTER
-./gradlew connectedDebugAndroidTest   # emulator (API 34+, x86_64) or phone attached
+scripts/test-emulator.sh                 # --no-swtpm, --no-core, --keep-emulator
 ```
+
+It builds the core from `../core.properties`, runs the JVM tests, lint and
+the kiratest check of the release APK, then starts the AVD `marify-test`
+(API 36, google_apis, x86_64; made if missing) with its data wiped, on its
+own port, so an emulator already running is left alone. On the fresh data it
+sets the PIN 1234 that the keystore tests need, dismisses the lock screen
+with it, keeps the display on and turns animations off - with the lock
+screen up, the app's screens do not come to the front and the keystore
+refuses keys that need an unlocked device. Then the instrumented tests, the
+swtpm tests (§5), and a summary; the emulator is stopped. Exit status 0 only
+when everything passed; results and logs in `app/build/test-emulator/`.
+Needs JDK 25 (`JAVA_HOME`, default `/usr/lib/jvm/java-25-openjdk`), the SDK
+with the API 36 image and an NDK, KVM, and go and swtpm for §5.
 
 ## 1. Unit tests (JVM, `app/src/test`)
 
@@ -128,10 +128,10 @@ sudo pacman -S go swtpm          # once
 
 Isolation:
 
-- **Machine side:** `TestAppMachine` in tpm2-kira `cmd/attest_app_test.go`,
+- **Machine side:** `TestAppMachine` in tpm2-kira `internal/admin/attest_app_test.go`,
   build tag `apptest`; it runs only with `KIRA_APPTEST_ADDR` set. The swtpm
   helpers it shares with the `integration` suite live in
-  `cmd/swtpm_helpers_test.go` (swtpm can now be power-cycled on the same
+  `internal/admin/swtpm_helpers_test.go` (swtpm can now be power-cycled on the same
   state: orderly `TPM2_Shutdown`, restart). The `integration` suite's attest
   tests still pass unchanged.
 - **App side:** test sources only (`androidTest/…/swtpm/`: `TcpLink`,

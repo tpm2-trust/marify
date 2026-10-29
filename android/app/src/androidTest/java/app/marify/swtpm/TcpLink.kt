@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
 /**
- * A [Link] to the swtpm test machine over TCP (tpm2-kira cmd/attest_app_test.go),
+ * A [Link] to the swtpm test machine over TCP (tpm2-kira internal/admin/attest_app_test.go),
  * standing in for GATT: the machine sends the 8-byte INFO value first, then
  * fragments travel both ways, each prefixed by a big-endian u16 length.
  * Test sources only.
