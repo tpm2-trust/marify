@@ -187,7 +187,7 @@ firmware TPMs ship without a usable certificate, so this must not block
 enrolment.
 
 Intel PTT (fTPM) is the common laptop case. Its chain is documented and
-tested in <https://github.com/mrwiora/intel-ek-dechainer>:
+tested in <https://github.com/tpm2-trust/ek-dechainer>:
 
 ```
 OnDie CA Root (static)                       intel-root.der in that repo
