@@ -43,6 +43,10 @@ git -C "$work/src" checkout --quiet "$commit"
 echo "tpm2-kira $commit"
 
 cd "$work/src"
+# The phone's core uses nothing of aSSH, which tpm2-kira's go.mod requires
+# and replaces with its submodule (not in this copy): out of this copy's
+# module graph, so no submodule is needed.
+go mod edit -droprequire=github.com/tpm2-trust/assh -dropreplace=github.com/tpm2-trust/assh
 # The bind runtime must match the tools: pin x/mobile in the module graph.
 go get "golang.org/x/mobile@$mobile_ver" >/dev/null
 gomobile init

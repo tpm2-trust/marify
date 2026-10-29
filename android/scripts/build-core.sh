@@ -51,6 +51,10 @@ else
 fi
 
 cd "$work"
+# The phone's core uses nothing of aSSH, which tpm2-kira's go.mod requires
+# and replaces with its submodule (not in this copy): out of this copy's
+# module graph, so no submodule is needed.
+go mod edit -droprequire=github.com/tpm2-trust/assh -dropreplace=github.com/tpm2-trust/assh
 # The bind needs golang.org/x/mobile/bind in the module graph. This touches
 # only the temporary copy, never the pinned sources.
 go get "golang.org/x/mobile@$mobile_ver"
