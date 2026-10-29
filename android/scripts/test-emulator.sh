@@ -139,7 +139,14 @@ echo "booted: API $("$adb" shell getprop ro.build.version.sdk | tr -d '\r')"
 
 step "4. screen lock and animations"
 "$adb" shell locksettings set-pin "$pin" >/dev/null
-"$adb" shell 'dumpsys user' | grep -q RUNNING_UNLOCKED || die "the user's storage is locked after setting the PIN"
+# The user's storage unlocks some moments after the boot completes: wait
+# for that state, not a time.
+unlocked_storage=false
+for _ in $(seq 1 60); do
+    if "$adb" shell 'dumpsys user' | grep -q RUNNING_UNLOCKED; then unlocked_storage=true; break; fi
+    sleep 1
+done
+$unlocked_storage || die "the user's storage is still locked 60 s after setting the PIN"
 for s in window_animation_scale transition_animation_scale animator_duration_scale; do
     "$adb" shell settings put global "$s" 0
 done
