@@ -191,6 +191,7 @@ private struct BindContent: View {
                 }
             }
         }
+        SecureBootCard(state: bind.secureBoot, colors: colors)
         let pcrs = bind.initrdPcrs.map(String.init).joined(separator: " or ")
         switch bind.initrdCoverage {
         case Event.initrdNotCovered:

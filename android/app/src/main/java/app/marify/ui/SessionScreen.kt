@@ -263,6 +263,7 @@ private fun BindContent(b: Event.NeedAnchorKey, onConfirm: (Boolean, Boolean) ->
             }
         }
     }
+    SecureBootCard(b.secureBoot)
     val pcrs = b.initrdPcrs.joinToString(" or ")
     when (b.initrdCoverage) {
         Event.INITRD_NOT_COVERED -> Card(

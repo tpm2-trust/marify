@@ -33,7 +33,6 @@ object Texts {
         "selection_mismatch" to R.string.reason_selection_mismatch,
         "pcr_values_invalid" to R.string.reason_pcr_values_invalid,
         "pcr_digest_mismatch" to R.string.reason_pcr_digest_mismatch,
-        "secureboot_off" to R.string.reason_secureboot_off,
         "no_profile_match" to R.string.reason_no_profile_match,
     )
 
@@ -41,7 +40,6 @@ object Texts {
         "reset_count_jump" to R.string.warning_reset_count_jump,
         "clock_unsafe" to R.string.warning_clock_unsafe,
         "firmware_changed" to R.string.warning_firmware_changed,
-        "secureboot_off" to R.string.warning_secureboot_off,
     )
 
     val errorCodes: Map<Int, Int> = mapOf(

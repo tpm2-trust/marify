@@ -1,5 +1,7 @@
 package app.marify
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -183,5 +185,48 @@ class VerdictScreenTest {
         rule.onNodeWithTag("confirm_approve").performClick()
         rule.onNodeWithTag("reject").performClick()
         assertEquals(listOf(Decision.APPROVE_ONCE to "Thinkpad-X1", Decision.REJECT to ""), decisions)
+    }
+
+    /** Red in every state but on, at a matching boot too, and the person can still go on. */
+    @Test fun secureBootStates() {
+        var state by androidx.compose.runtime.mutableStateOf("on")
+        var detail by androidx.compose.runtime.mutableStateOf("")
+        val verdict = { Event.parse(
+            """{"type":"verdict","needs_decision":true,"verdict":{"ok":true,"state":"match","boot_key":"proved","code":"K7QM-2XHD",
+               "secure_boot":{"state":"$state","detail":"$detail"}}}""",
+        ) as Event.VerdictEvent }
+        rule.setContent {
+            MarifyTheme {
+                VerdictContent(
+                    event = verdict(), machineName = "Thinkpad-X1", lastAttested = null, decisionEnabled = true,
+                    eventlogRequested = false, eventlog = null, onDecide = { _, _ -> }, onRequestEventlog = {},
+                )
+            }
+        }
+        rule.onNodeWithTag("secure_boot_on").assertIsDisplayed()
+        for (red in listOf("off", "setup_mode", "not_established")) {
+            rule.onNodeWithTag("secure_boot_red_$red").assertDoesNotExist()
+        }
+        for ((red, text) in listOf(
+            "off" to "Secure Boot is OFF",
+            "setup_mode" to "Secure Boot is in SETUP MODE",
+            "not_established" to "Secure Boot could not be established",
+        )) {
+            state = red
+            detail = "no event log"
+            rule.waitForIdle()
+            rule.onNodeWithTag("secure_boot_red_$red").assertIsDisplayed()
+            rule.onNodeWithText(text).assertIsDisplayed()
+            rule.onNodeWithTag("secure_boot_on").assertDoesNotExist()
+            // Not a stop: the matching boot can be continued.
+            rule.onNodeWithTag("continue").assertIsDisplayed()
+        }
+        rule.onNodeWithText("no event log", substring = true).assertIsDisplayed()
+    }
+
+    /** What the core does not say is red. */
+    @Test fun secureBootNotSaidIsRed() {
+        show("""{"type":"verdict","needs_decision":true,"verdict":{"ok":true,"state":"match","boot_key":"proved","code":"K7QM-2XHD"}}""")
+        rule.onNodeWithTag("secure_boot_red_not_established").assertIsDisplayed()
     }
 }

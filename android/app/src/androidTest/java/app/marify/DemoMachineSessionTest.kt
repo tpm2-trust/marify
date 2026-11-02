@@ -136,6 +136,31 @@ class DemoMachineSessionTest {
         assertTrue(KiraCore.recordSummary(record).lastAttested != null)
     }
 
+    /**
+     * Every state of Secure Boot, from the real core on both sides: at enrolment and
+     * at the next boot, what the phone is told comes from the quote and the events, a
+     * machine showing another boot's events included.
+     */
+    @Test fun secureBootStates() {
+        for ((state, want) in listOf(
+            "on" to "on", "off" to "off", "setup_mode" to "setup_mode",
+            "no_log" to "not_established", "lying" to "not_established",
+        )) {
+            setUp()
+            demo.setSecureBoot(state)
+            enrol()
+            assertEquals(state, want, bindShown?.secureBoot?.state)
+            demo.nextBoot()
+            val s = session(attestMode(), 517)
+            val v = s.verdict!!.verdict
+            assertEquals(state, Verdict.MATCH, v.state)
+            assertEquals(state, want, v.secureBoot.state)
+            assertEquals(state, want != "on", v.secureBoot.red)
+            assertEquals(state, Outcome.Succeeded, s.outcome)
+            assertEquals("receipt: verdict=ok authentic=true", demo.outcome(5000))
+        }
+    }
+
     /** A TPM that refuses the key: no code, and the verdict says so; the boot still matches. */
     @Test fun matchWithoutBootKey() {
         enrol()

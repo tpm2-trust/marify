@@ -88,6 +88,17 @@ class SessionScreenTest {
         rule.onNodeWithTag("initrd_not_covered").assertDoesNotExist()
     }
 
+    @Test fun bindShowsSecureBoot() {
+        show(enrolState(app.marify.core.Event.NeedAnchorKey("a0", "box", ekVerifiedBy = "Intel Corporation", secureBoot = app.marify.core.SecureBoot("setup_mode"))))
+        rule.onNodeWithTag("secure_boot_red_setup_mode").assertIsDisplayed()
+        rule.onNodeWithTag("bind").assertIsDisplayed()
+    }
+
+    @Test fun bindSaysSecureBootIsOn() {
+        show(enrolState(app.marify.core.Event.NeedAnchorKey("a0", "box", ekVerifiedBy = "Intel Corporation", secureBoot = app.marify.core.SecureBoot("on"))))
+        rule.onNodeWithTag("secure_boot_on").assertIsDisplayed()
+    }
+
     @Test fun bindSaysAnUnknownVendorIsARiskNotUntrusted() {
         show(enrolState(app.marify.core.Event.NeedAnchorKey("a0", "box", ekNote = "the TPM's vendor (XYZ) is not in the EK root store yet", ekVendorUnknown = true, initrdCoverage = "covered", initrdPcrs = listOf(9))))
         rule.onNodeWithTag("tpm_vendor_unknown").assertIsDisplayed()

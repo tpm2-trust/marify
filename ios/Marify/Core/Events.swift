@@ -34,6 +34,8 @@ enum Event: Sendable, Equatable {
         var ekVendorUnknown: Bool = false
         var initrdCoverage: String = Event.initrdUnknown
         var initrdPcrs: [Int] = []
+        /// Secure Boot's state as the baseline quote and the event log establish it.
+        var secureBoot = SecureBoot()
         /// Goes into the anchor key's attestation where the platform has one.
         var attestationChallenge: Data? = nil
     }
@@ -87,6 +89,7 @@ enum Event: Sendable, Equatable {
                 ekVendorUnknown: bool("ek_vendor_unknown"),
                 initrdCoverage: coverage.isEmpty ? initrdUnknown : coverage,
                 initrdPcrs: (o["initrd_pcrs"] as? [Any])?.compactMap { ($0 as? NSNumber)?.intValue } ?? [],
+                secureBoot: SecureBoot(object: o["secure_boot"] as? [String: Any]),
                 attestationChallenge: Data(hex: str("attestation_challenge"))
             ))
         case "need_signature": return .needSignature(purpose: str("purpose"), verdictCode: int("verdict_code"))
@@ -130,6 +133,28 @@ enum Event: Sendable, Equatable {
     }
 }
 
+/// What the core established of Secure Boot, from the quoted PCR 7 and the event log
+/// replayed against it, never from what the machine says. A state not given is not
+/// established, which is red like off.
+struct SecureBoot: Sendable, Equatable {
+    var state = SecureBoot.notEstablished
+    var detail = ""
+
+    var red: Bool { state != SecureBoot.on }
+
+    static let on = "on"
+    static let off = "off"
+    static let setupMode = "setup_mode"
+    static let notEstablished = "not_established"
+
+    init() {}
+
+    init(object o: [String: Any]?) {
+        if let s = o?["state"] as? String { state = s }
+        detail = o?["detail"] as? String ?? ""
+    }
+}
+
 /// The verdict object (PROTOCOL-BLE.md §10.4), displayed as the core produced it.
 struct Verdict: Sendable, Equatable {
     var ok = false
@@ -150,6 +175,8 @@ struct Verdict: Sendable, Equatable {
     var code = ""
     /// TPM Name (hex) of the machine's signing key whose approval the TPM enforced.
     var signingKey = ""
+    /// Secure Boot's state as the quote and the event log establish it; red unless on.
+    var secureBoot = SecureBoot()
 
     static let match = "match"
     static let changed = "changed"
@@ -213,6 +240,7 @@ struct Verdict: Sendable, Equatable {
         let bk = str("boot_key")
         bootKey = bk.isEmpty ? Verdict.bootKeyUnused : bk
         code = str("code")
+        secureBoot = SecureBoot(object: o["secure_boot"] as? [String: Any])
         signingKey = str("signing_key")
     }
 
