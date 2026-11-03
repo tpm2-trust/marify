@@ -217,6 +217,21 @@ class SwtpmMachineSessionTest {
         }
     }
 
+    @Test fun initrdFromTheQuote() {
+        for ((boot, want, pcrs) in listOf(
+            Triple("uki", Event.INITRD_COVERED, listOf(11, 4)),
+            Triple("grub", Event.INITRD_COVERED, listOf(9)),
+            Triple("no_log", Event.INITRD_NOT_ESTABLISHED, emptyList()),
+        )) {
+            machine.reset()
+            machine.initrd(boot)
+            enrol()
+            assertEquals(boot, want, bindShown?.initrdCoverage)
+            assertEquals(boot, pcrs, bindShown?.initrdPcrs)
+            assertEquals(boot, want != Event.INITRD_COVERED, bindShown?.initrdDetail.orEmpty().isNotEmpty())
+        }
+    }
+
     @Test fun replayedTpmStateFailsAndIsRejected() {
         enrol()
         machine.snapshot()          // TPM state saved here

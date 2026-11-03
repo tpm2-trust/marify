@@ -40,6 +40,9 @@ class SwtpmMachine(private val host: String, private val port: Int) : Closeable 
     /** A reboot into firmware in this state: PCR 7 extended on the real TPM, the events kept; on, off, setup_mode, no_log, lying. */
     fun secureBoot(state: String) { command("secureboot $state") }
 
+    /** A reboot into a boot whose event log shows the initrd: uki, grub, no_log. */
+    fun initrd(boot: String) { command("initrd $boot") }
+
     /** Saves the TPM state (with a reboot). */
     fun snapshot() { command("snapshot") }
 

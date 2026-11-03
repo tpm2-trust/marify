@@ -85,7 +85,7 @@ class SessionScreenTest {
         rule.onNodeWithTag("tpm_verified").assertIsDisplayed()
         rule.onNodeWithText("TPM verified as genuine: Intel Corporation").assertIsDisplayed()
         rule.onNodeWithText("include the initrd (PCR 9)", substring = true).assertIsDisplayed()
-        rule.onNodeWithTag("initrd_not_covered").assertDoesNotExist()
+        rule.onNodeWithTag("initrd_not_established").assertDoesNotExist()
     }
 
     @Test fun bindShowsSecureBoot() {
@@ -110,11 +110,11 @@ class SessionScreenTest {
     }
 
     @Test fun bindWarnsAboutUnverifiedTPMAndUncoveredInitrd() {
-        show(enrolState(app.marify.core.Event.NeedAnchorKey("a0", "box", ekNote = "no certificate", initrdCoverage = "not_covered", initrdPcrs = listOf(9))))
+        show(enrolState(app.marify.core.Event.NeedAnchorKey("a0", "box", ekNote = "no certificate", initrdCoverage = "not_established", initrdDetail = "the machine gave no events of those registers: no event log")))
         rule.onNodeWithTag("tpm_unverified").assertIsDisplayed()
         rule.onNodeWithText("no certificate", substring = true).assertIsDisplayed()
-        rule.onNodeWithTag("initrd_not_covered").assertIsDisplayed()
-        rule.onNodeWithText("measured into PCR 9", substring = true).assertIsDisplayed()
+        rule.onNodeWithTag("initrd_not_established").assertIsDisplayed()
+        rule.onNodeWithText("no event log", substring = true).assertIsDisplayed()
         // The vendor list comes from the core compiled into this app.
         rule.onNodeWithText("can verify TPMs from: Intel Corporation", substring = true).assertIsDisplayed()
         rule.onNodeWithTag("bind").assertIsDisplayed()

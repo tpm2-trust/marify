@@ -141,6 +141,15 @@ class DemoMachineSessionTest {
      * at the next boot, what the phone is told comes from the quote and the events, a
      * machine showing another boot's events included.
      */
+    @Test fun initrdStates() {
+        for ((boot, want) in listOf("uki" to Event.INITRD_COVERED, "grub" to Event.INITRD_COVERED, "no_log" to Event.INITRD_NOT_ESTABLISHED)) {
+            demo.setInitrd(boot)
+            enrol()
+            assertEquals(boot, want, bindShown?.initrdCoverage)
+            if (want != Event.INITRD_COVERED) assertTrue(boot, bindShown?.initrdDetail.orEmpty().isNotEmpty())
+        }
+    }
+
     @Test fun secureBootStates() {
         for ((state, want) in listOf(
             "on" to "on", "off" to "off", "setup_mode" to "setup_mode",

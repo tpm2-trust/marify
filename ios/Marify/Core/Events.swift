@@ -32,8 +32,9 @@ enum Event: Sendable, Equatable {
         var ekNote: String = ""
         /// The EK root store has no root of the TPM's vendor yet: a risk, not untrusted.
         var ekVendorUnknown: Bool = false
-        var initrdCoverage: String = Event.initrdUnknown
+        var initrdCoverage: String = Event.initrdNotEstablished
         var initrdPcrs: [Int] = []
+        var initrdDetail: String = ""
         /// Secure Boot's state as the baseline quote and the event log establish it.
         var secureBoot = SecureBoot()
         /// Goes into the anchor key's attestation where the platform has one.
@@ -41,9 +42,7 @@ enum Event: Sendable, Equatable {
     }
 
     static let initrdCovered = "covered"
-    static let initrdNotCovered = "not_covered"
-    static let initrdNone = "no_initrd"
-    static let initrdUnknown = "unknown"
+    static let initrdNotEstablished = "not_established"
 
     struct VerdictEvent: Sendable, Equatable {
         var verdict: Verdict
@@ -87,8 +86,9 @@ enum Event: Sendable, Equatable {
                 ekVerifiedBy: str("ek_verified_by"),
                 ekNote: str("ek_note"),
                 ekVendorUnknown: bool("ek_vendor_unknown"),
-                initrdCoverage: coverage.isEmpty ? initrdUnknown : coverage,
+                initrdCoverage: coverage.isEmpty ? initrdNotEstablished : coverage,
                 initrdPcrs: (o["initrd_pcrs"] as? [Any])?.compactMap { ($0 as? NSNumber)?.intValue } ?? [],
+                initrdDetail: str("initrd_detail"),
                 secureBoot: SecureBoot(object: o["secure_boot"] as? [String: Any]),
                 attestationChallenge: Data(hex: str("attestation_challenge"))
             ))

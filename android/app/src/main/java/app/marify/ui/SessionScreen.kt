@@ -264,20 +264,18 @@ private fun BindContent(b: Event.NeedAnchorKey, onConfirm: (Boolean, Boolean) ->
         }
     }
     SecureBootCard(b.secureBoot)
-    val pcrs = b.initrdPcrs.joinToString(" or ")
-    when (b.initrdCoverage) {
-        Event.INITRD_NOT_COVERED -> Card(
-            Modifier.fillMaxWidth().testTag("initrd_not_covered"),
+    if (b.initrdCoverage == Event.INITRD_COVERED) {
+        Text(stringResource(R.string.bind_initrd_covered, b.initrdPcrs.joinToString(" and ")), style = MaterialTheme.typography.bodyMedium)
+    } else {
+        Card(
+            Modifier.fillMaxWidth().testTag("initrd_not_established"),
             colors = CardDefaults.cardColors(containerColor = colors.changedContainer, contentColor = colors.onChanged),
         ) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.bind_initrd_not_covered), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Text(stringResource(R.string.bind_initrd_not_covered_body, pcrs))
+                Text(stringResource(R.string.bind_initrd_not_established), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.bind_initrd_not_established_body, b.initrdDetail))
             }
         }
-        Event.INITRD_COVERED -> Text(stringResource(R.string.bind_initrd_covered, pcrs), style = MaterialTheme.typography.bodyMedium)
-        Event.INITRD_NONE -> Text(stringResource(R.string.bind_initrd_none), style = MaterialTheme.typography.bodyMedium)
-        else -> Text(stringResource(R.string.bind_initrd_unknown), style = MaterialTheme.typography.bodyMedium)
     }
     if (canBiometric) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {

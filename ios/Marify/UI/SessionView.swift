@@ -192,19 +192,14 @@ private struct BindContent: View {
             }
         }
         SecureBootCard(state: bind.secureBoot, colors: colors)
-        let pcrs = bind.initrdPcrs.map(String.init).joined(separator: " or ")
-        switch bind.initrdCoverage {
-        case Event.initrdNotCovered:
+        if bind.initrdCoverage == Event.initrdCovered {
+            let pcrs = bind.initrdPcrs.map(String.init).joined(separator: " and ")
+            Text("The checked boot measurements include the initrd (PCR \(pcrs)), as this boot's events show.")
+        } else {
             CardView(container: colors.changedContainer, content: colors.onChanged) {
-                Text("The checked boot measurements do not include the initrd").font(.headline)
-                Text("On this boot the initrd was measured into PCR \(pcrs), which this enrolment does not check. A modified initrd, for example one that records your passphrase, would then show as unchanged. Cancel, and enrol again with “--pcrs” including PCR \(pcrs).")
+                Text("Not established: do the checked boot measurements cover the initrd?").font(.headline)
+                Text("\(bind.initrdDetail). A modified initrd, for example one that records your passphrase, could then show as unchanged. On a UKI the checked PCRs must hold 11, with GRUB 8 and 9: cancel, and enrol again with “--pcrs” where they do not.")
             }
-        case Event.initrdCovered:
-            Text("The checked boot measurements include the initrd (PCR \(pcrs)).")
-        case Event.initrdNone:
-            Text("This machine boots without an initrd.")
-        default:
-            Text("The machine could not tell where its initrd was measured. Make sure the checked PCRs cover it.")
         }
         if Requirements.hasBiometrics {
             Toggle(isOn: $biometricOnly) {

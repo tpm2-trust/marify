@@ -28,8 +28,9 @@ sealed interface Event {
         val ekNote: String = "",
         /** The EK root store has no root of the TPM's vendor yet: a risk, not untrusted. */
         val ekVendorUnknown: Boolean = false,
-        val initrdCoverage: String = INITRD_UNKNOWN,
+        val initrdCoverage: String = INITRD_NOT_ESTABLISHED,
         val initrdPcrs: List<Int> = emptyList(),
+        val initrdDetail: String = "",
         /** Secure Boot's state as the baseline quote and the event log establish it. */
         val secureBoot: SecureBoot = SecureBoot(),
         /** Goes into the anchor key's attestation; binds it to this enrolment. */
@@ -61,9 +62,7 @@ sealed interface Event {
         const val PURPOSE_RECEIPT = "receipt"
 
         const val INITRD_COVERED = "covered"
-        const val INITRD_NOT_COVERED = "not_covered"
-        const val INITRD_NONE = "no_initrd"
-        const val INITRD_UNKNOWN = "unknown"
+        const val INITRD_NOT_ESTABLISHED = "not_established"
 
         private val json = Json { ignoreUnknownKeys = true }
 
@@ -85,7 +84,8 @@ sealed interface Event {
                     ekVerifiedBy = str("ek_verified_by"),
                     ekNote = str("ek_note"),
                     ekVendorUnknown = bool("ek_vendor_unknown"),
-                    initrdCoverage = str("initrd_coverage").ifEmpty { INITRD_UNKNOWN },
+                    initrdCoverage = str("initrd_coverage").ifEmpty { INITRD_NOT_ESTABLISHED },
+                    initrdDetail = str("initrd_detail"),
                     initrdPcrs = (o["initrd_pcrs"] as? kotlinx.serialization.json.JsonArray)
                         ?.mapNotNull { it.jsonPrimitive.intOrNull } ?: emptyList(),
                     secureBoot = o["secure_boot"]?.let { json.decodeFromJsonElement(SecureBoot.serializer(), it) } ?: SecureBoot(),
