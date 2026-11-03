@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import app.marify.R
 import app.marify.core.Decision
 import app.marify.core.Event
+import app.marify.core.SecureBoot
 import app.marify.core.Verdict
 
 /**
@@ -110,6 +111,8 @@ fun VerdictContent(
                 }
             }
         }
+
+        SecureBootCard(v.secureBoot)
 
         BootKeyCard(v, demoScreenCode)
 
@@ -256,6 +259,37 @@ private fun SignatureBadge(v: Verdict) {
  * none. The signature itself is the badge on the headline; this card is
  * for the comparison.
  */
+/**
+ * Secure Boot's state, as the core established it: red in every state but on, at a
+ * matching boot too. It decides nothing; what the person is told cannot be missed.
+ */
+@Composable
+internal fun SecureBootCard(s: SecureBoot) {
+    if (!s.red) {
+        Text(
+            stringResource(R.string.secure_boot_on),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.testTag("secure_boot_on"),
+        )
+        return
+    }
+    val colors = LocalVerdictColors.current
+    val (title, body) = when (s.state) {
+        SecureBoot.OFF -> stringResource(R.string.secure_boot_off) to stringResource(R.string.secure_boot_off_body)
+        SecureBoot.SETUP_MODE -> stringResource(R.string.secure_boot_setup_mode) to stringResource(R.string.secure_boot_setup_mode_body)
+        else -> stringResource(R.string.secure_boot_not_established) to stringResource(R.string.secure_boot_not_established_body, s.detail)
+    }
+    Card(
+        Modifier.fillMaxWidth().testTag("secure_boot_red_" + s.state),
+        colors = CardDefaults.cardColors(containerColor = colors.failedContainer, contentColor = colors.onFailed),
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(body)
+        }
+    }
+}
+
 @Composable
 private fun BootKeyCard(v: Verdict, demoScreenCode: String?) {
     val colors = LocalVerdictColors.current

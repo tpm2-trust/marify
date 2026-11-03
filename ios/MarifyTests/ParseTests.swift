@@ -25,6 +25,22 @@ final class EventParseTests: XCTestCase {
         XCTAssertEqual(v.verdict.signingKey, "000b0123")
     }
 
+    func testSecureBootIsRedUnlessTheCoreSaysOn() throws {
+        func secureBoot(_ field: String) throws -> SecureBoot {
+            guard case .verdict(let v) = try Event.parse(#"{"type":"verdict","verdict":{"state":"match""# + field + "}}") else {
+                throw NSError(domain: "not a verdict", code: 0)
+            }
+            return v.verdict.secureBoot
+        }
+        XCTAssertFalse(try secureBoot(#","secure_boot":{"state":"on"}"#).red)
+        for s in [SecureBoot.off, SecureBoot.setupMode, SecureBoot.notEstablished] {
+            let got = try secureBoot(#","secure_boot":{"state":""# + s + #""}"#)
+            XCTAssertEqual(got.state, s)
+            XCTAssertTrue(got.red)
+        }
+        XCTAssertTrue(try secureBoot("").red)
+    }
+
     func testVerdictWithoutBootKeyIsUnused() throws {
         let e = try Event.parse(#"{"type":"verdict","verdict":{"ok":true,"state":"match"}}"#)
         guard case .verdict(let v) = e else { return XCTFail("\(e)") }
@@ -44,6 +60,20 @@ final class EventParseTests: XCTestCase {
         XCTAssertEqual(n.initrdCoverage, Event.initrdCovered)
         XCTAssertEqual(n.initrdPcrs, [9])
         XCTAssertEqual(n.attestationChallenge, Data([0x0a, 0x0b]))
+    }
+
+    func testNeedAnchorKeyNotEstablished() throws {
+        let e = try Event.parse("""
+        {"type":"need_anchor_key","device_id":"ab","friendly_name":"box","initrd_coverage":"not_established","initrd_detail":"no event log"}
+        """)
+        guard case .needAnchorKey(let n) = e else { return XCTFail("\(e)") }
+        XCTAssertEqual(n.initrdCoverage, Event.initrdNotEstablished)
+        XCTAssertEqual(n.initrdDetail, "no event log")
+        let silent = try Event.parse("""
+        {"type":"need_anchor_key","device_id":"ab","friendly_name":"box"}
+        """)
+        guard case .needAnchorKey(let m) = silent else { return XCTFail("\(silent)") }
+        XCTAssertEqual(m.initrdCoverage, Event.initrdNotEstablished)
     }
 
     func testRecordIsKeptAsAnObject() throws {

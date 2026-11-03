@@ -78,12 +78,10 @@
     <string name="bind_tpm_vendor_unknown_body">Marify does not know this TPM\'s vendor yet (%1$s). That does not mean the TPM is untrusted: its certificate could not be checked, which is a risk to weigh. Only continue if you trust the machine\'s current state.</string>
     <string name="bind_tpm_known_vendors">This version of Marify can verify TPMs from: %1$s.</string>
     <string name="bind_tpm_unverified_body">Marify could not confirm that this machine\'s TPM is real hardware (%1$s). This is common for firmware TPMs without a usable certificate. Only continue if you trust the machine\'s current state: a machine that is already compromised could pretend to have a TPM.</string>
-    <string name="bind_initrd_not_covered">The checked boot measurements do not include the initrd</string>
+    <string name="bind_initrd_not_established">Not established: do the checked boot measurements cover the initrd?</string>
     <!-- The double hyphen in the pcrs option is a command-line flag, not a dash. -->
-    <string name="bind_initrd_not_covered_body" tools:ignore="TypographyDashes">On this boot the initrd was measured into PCR %1$s, which this enrolment does not check. A modified initrd, for example one that records your passphrase, would then show as unchanged. Cancel, and enrol again with “--pcrs” including PCR %1$s.</string>
-    <string name="bind_initrd_covered">The checked boot measurements include the initrd (PCR %1$s).</string>
-    <string name="bind_initrd_unknown">The machine could not tell where its initrd was measured. Make sure the checked PCRs cover it.</string>
-    <string name="bind_initrd_none">This machine boots without an initrd.</string>
+    <string name="bind_initrd_not_established_body" tools:ignore="TypographyDashes">%1$s. A modified initrd, for example one that records your passphrase, could then show as unchanged. On a UKI the checked PCRs must hold 11, with GRUB 8 and 9: cancel, and enrol again with “--pcrs” where they do not.</string>
+    <string name="bind_initrd_covered">The checked boot measurements include the initrd (PCR %1$s), as this boot\'s events show.</string>
     <string name="bind_confirm">Bind</string>
     <string name="bind_biometric_only">Require fingerprint or face</string>
     <string name="bind_biometric_only_body">For this machine the screen-lock PIN will not be enough. Changing it later means enrolling the machine again.</string>
@@ -209,7 +207,6 @@
     <string name="reason_selection_mismatch">The machine reported different registers than requested.</string>
     <string name="reason_pcr_values_invalid">The reported register values are invalid.</string>
     <string name="reason_pcr_digest_mismatch">The reported register values are not the ones the TPM signed.</string>
-    <string name="reason_secureboot_off">Secure Boot is off.</string>
     <string name="reason_no_profile_match">The boot chain differs from every state you approved.</string>
     <string name="reason_unknown">Check failed: %1$s</string>
 
@@ -217,7 +214,13 @@
     <string name="warning_reset_count_jump">The machine booted several times since the last check.</string>
     <string name="warning_clock_unsafe">The TPM\'s clock is not trustworthy.</string>
     <string name="warning_firmware_changed">The TPM firmware changed.</string>
-    <string name="warning_secureboot_off">Secure Boot is off.</string>
+    <string name="secure_boot_on">Secure Boot is on, by the TPM\'s quote and the event log.</string>
+    <string name="secure_boot_off">Secure Boot is OFF</string>
+    <string name="secure_boot_off_body">The TPM\'s quote and the event log show it: nothing checks this machine\'s boot loader and kernel, whatever else is on this screen.</string>
+    <string name="secure_boot_setup_mode">Secure Boot is in SETUP MODE</string>
+    <string name="secure_boot_setup_mode_body">The TPM\'s quote and the event log show it: nothing checks this machine\'s boot loader and kernel, and anything running on it can replace its keys.</string>
+    <string name="secure_boot_not_established">Secure Boot could not be established</string>
+    <string name="secure_boot_not_established_body">The TPM\'s quote and the event log do not show that Secure Boot is on: take it as off (%1$s).</string>
     <string name="warning_unknown">Note: %1$s</string>
 
     <!-- Unlock prompts (biometric or screen lock) -->

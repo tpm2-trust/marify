@@ -193,6 +193,45 @@ class SwtpmMachineSessionTest {
         assertEquals("receipt: verdict=ok authentic=true", machine.outcome())
     }
 
+    /**
+     * A real TPM's quote of a real PCR 7, and the events a firmware in each state
+     * measures: what the phone is told is established from them, at enrolment and at the
+     * next boot, and it decides nothing.
+     */
+    @Test fun secureBootStatesFromTheQuote() {
+        for ((state, want) in listOf(
+            "on" to "on", "off" to "off", "setup_mode" to "setup_mode",
+            "no_log" to "not_established", "lying" to "not_established",
+        )) {
+            machine.reset()
+            machine.secureBoot(state)
+            enrol()
+            assertEquals(state, want, bindShown?.secureBoot?.state)
+            machine.secureBoot(state)
+            val s = session(attestMode())
+            val v = s.verdict!!.verdict
+            assertEquals(state, Verdict.MATCH, v.state)
+            assertEquals(state, want, v.secureBoot.state)
+            assertEquals(state, want != "on", v.secureBoot.red)
+            assertEquals("receipt: verdict=ok authentic=true", machine.outcome())
+        }
+    }
+
+    @Test fun initrdFromTheQuote() {
+        for ((boot, want, pcrs) in listOf(
+            Triple("uki", Event.INITRD_COVERED, listOf(11, 4)),
+            Triple("grub", Event.INITRD_COVERED, listOf(9)),
+            Triple("no_log", Event.INITRD_NOT_ESTABLISHED, emptyList()),
+        )) {
+            machine.reset()
+            machine.initrd(boot)
+            enrol()
+            assertEquals(boot, want, bindShown?.initrdCoverage)
+            assertEquals(boot, pcrs, bindShown?.initrdPcrs)
+            assertEquals(boot, want != Event.INITRD_COVERED, bindShown?.initrdDetail.orEmpty().isNotEmpty())
+        }
+    }
+
     @Test fun replayedTpmStateFailsAndIsRejected() {
         enrol()
         machine.snapshot()          // TPM state saved here

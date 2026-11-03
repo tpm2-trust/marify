@@ -1,6 +1,7 @@
 package app.marify
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -85,7 +86,18 @@ class SessionScreenTest {
         rule.onNodeWithTag("tpm_verified").assertIsDisplayed()
         rule.onNodeWithText("TPM verified as genuine: Intel Corporation").assertIsDisplayed()
         rule.onNodeWithText("include the initrd (PCR 9)", substring = true).assertIsDisplayed()
-        rule.onNodeWithTag("initrd_not_covered").assertDoesNotExist()
+        rule.onNodeWithTag("initrd_not_established").assertDoesNotExist()
+    }
+
+    @Test fun bindShowsSecureBoot() {
+        show(enrolState(app.marify.core.Event.NeedAnchorKey("a0", "box", ekVerifiedBy = "Intel Corporation", secureBoot = app.marify.core.SecureBoot("setup_mode"))))
+        rule.onNodeWithTag("secure_boot_red_setup_mode").assertIsDisplayed()
+        rule.onNodeWithTag("bind").assertIsDisplayed()
+    }
+
+    @Test fun bindSaysSecureBootIsOn() {
+        show(enrolState(app.marify.core.Event.NeedAnchorKey("a0", "box", ekVerifiedBy = "Intel Corporation", secureBoot = app.marify.core.SecureBoot("on"))))
+        rule.onNodeWithTag("secure_boot_on").assertIsDisplayed()
     }
 
     @Test fun bindSaysAnUnknownVendorIsARiskNotUntrusted() {
@@ -99,15 +111,16 @@ class SessionScreenTest {
     }
 
     @Test fun bindWarnsAboutUnverifiedTPMAndUncoveredInitrd() {
-        show(enrolState(app.marify.core.Event.NeedAnchorKey("a0", "box", ekNote = "no certificate", initrdCoverage = "not_covered", initrdPcrs = listOf(9))))
+        show(enrolState(app.marify.core.Event.NeedAnchorKey("a0", "box", ekNote = "no certificate", initrdCoverage = "not_established", initrdDetail = "the machine gave no events of those registers: no event log")))
         rule.onNodeWithTag("tpm_unverified").assertIsDisplayed()
         rule.onNodeWithText("no certificate", substring = true).assertIsDisplayed()
-        rule.onNodeWithTag("initrd_not_covered").assertIsDisplayed()
-        rule.onNodeWithText("measured into PCR 9", substring = true).assertIsDisplayed()
+        rule.onNodeWithTag("initrd_not_established").assertIsDisplayed()
+        rule.onNodeWithText("no event log", substring = true).assertIsDisplayed()
         // The vendor list comes from the core compiled into this app.
         rule.onNodeWithText("can verify TPMs from: Intel Corporation", substring = true).assertIsDisplayed()
         rule.onNodeWithTag("bind").assertIsDisplayed()
-        rule.onNodeWithTag("bind_cancel").assertIsDisplayed()
+        // The red cards can push the buttons down: the screen scrolls.
+        rule.onNodeWithTag("bind_cancel").performScrollTo().assertIsDisplayed()
     }
 
     @Test fun unreachableDoesNotClaimTheMachineIsFine() {

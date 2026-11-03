@@ -24,7 +24,9 @@
 # Environment: JAVA_HOME (default /usr/lib/jvm/java-25-openjdk),
 #              ANDROID_HOME (default ~/Android/Sdk), KIRA_SRC (tpm2-kira
 #              checkout, default ../../tpm2-kira), MARIFY_TEST_PORT (the
-#              emulator's console port, default 5580).
+#              emulator's console port, default 5580), MARIFY_TEST_DATA_MIB (the
+#              wiped data partition, MiB; default the AVD's, which the emulator
+#              refuses without about 12 GB free).
 set -euo pipefail
 
 swtpm=true core=true keep=false
@@ -117,7 +119,7 @@ if ! "$emulator" -list-avds | grep -qx "$avd"; then
     echo "made the AVD $avd"
 fi
 "$emulator" -avd "$avd" -port "$port" -wipe-data -no-snapshot -no-window -no-audio -no-boot-anim \
-    -gpu swiftshader_indirect >"$out/emulator.log" 2>&1 &
+    -gpu swiftshader_indirect ${MARIFY_TEST_DATA_MIB:+-partition-size "$MARIFY_TEST_DATA_MIB"} >"$out/emulator.log" 2>&1 &
 emu=$!
 stop_emulator() {
     $keep && return 0

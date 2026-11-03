@@ -1,18 +1,18 @@
 # Testing
 
-## Status (2026-10-29)
+## Status (2026-11-02)
 
 `scripts/test-emulator.sh`, unattended, on a fresh emulator (API 36
-google_apis x86_64, data wiped), core from tpm2-kira `8c3ff3f`: ALL PASS.
+google_apis x86_64, data wiped), core from tpm2-kira `c81ea61`: ALL PASS.
 
 | Check | Result |
 |---|---|
 | `scripts/build-core.sh` (the commit in `../core.properties`, NDK 30, gomobile 2026-09-08) | ✅ both .aar built |
-| `testDebugUnitTest` — JVM tests | ✅ 57 pass |
+| `testDebugUnitTest` — JVM tests | ✅ 59 pass |
 | `lintDebug`, `lintRelease`; `assembleDebug`, `assembleRelease` (AGP 9.4.1 / Gradle 9.8.0, JDK 25) | ✅ |
 | No kiratest in release (`apkanalyzer dex packages`) | ✅ 0 in release |
-| `connectedDebugAndroidTest` — demo machine, Compose UI, keystore, enrol list, permission request | ✅ 40 pass |
-| `scripts/test-swtpm.sh` — app session code + Go core against a tpm2-kira machine on swtpm (§5) | ✅ 7 pass |
+| `connectedDebugAndroidTest` — demo machine, Compose UI, keystore, enrol list, permission request | ✅ 46 pass |
+| `scripts/test-swtpm.sh` — app session code + Go core against a tpm2-kira machine on swtpm (§5) | ✅ 8 pass |
 | Manual, emulator, PIN-only: onboarding, a demo enrolment and a *match* attestation signed with the keystore key (2026-10-06) | ✅ |
 | Real hardware checklist (§4) | ⏳ needs a phone and a Linux machine with Bluetooth |
 
@@ -20,6 +20,7 @@ Re-run everything, from a defined state and with nobody at the keyboard:
 
 ```sh
 scripts/test-emulator.sh                 # --no-swtpm, --no-core, --keep-emulator
+MARIFY_TEST_DATA_MIB=8192 scripts/test-emulator.sh   # the emulator refuses its default data partition without about 12 GB free
 ```
 
 It builds the core from `../core.properties`, runs the JVM tests, lint and
@@ -44,6 +45,7 @@ with the API 36 image and an NDK, KVM, and go and swtpm for §5.
 | `SessionRunnerTest` | connecting retried every 5 s while the machine is not reachable, without giving up (half an hour checked) until cancelled; Bluetooth off waited out the same way; other connection errors not retried; fragments of a failing Step written before disconnect; recoverable error keeps the session; abort writes its fragments; notification order; match → automatic signing → receipt_ack → record_updated → done; unlock-prompt cancel aborts; typed-name decision passed through unchanged; link loss; wrong INFO mode; enrolment stores the record |
 | `InfoValueTest` | INFO parsing and protocol/schema/mode checks |
 | `TextsTest` | every reason, warning, error and receipt-result code has its own text |
+| `EventParseTest.secureBoot*`, `enrolmentCarriesSecureBoot` | Secure Boot's state on a verdict and at the bind screen; not said, or a word the app does not know, is red |
 
 ## 2. Instrumented tests with the demo machine (`app/src/androidTest`)
 
@@ -56,6 +58,7 @@ with the API 36 image and an NDK, KVM, and go and swtpm for §5.
 - `failed` + approve with a wrong, then the right typed name
 - user abort mid-session; unlock-prompt cancel; SAS mismatch stores nothing
 - `matchAdvertisement` accepts only the enrolled machine's service data
+- `secureBootStates`: on, off, Setup Mode, no event log, and a machine showing the events of another boot, from the real core on both sides: at enrolment and at the next boot; the boot still matches
 
 Each asserts `demo.outcome(5000)` (`enrolled`, `receipt: verdict=ok authentic=true`, …).
 
@@ -69,7 +72,9 @@ enrolment (asserted only when a biometric is enrolled), and that signing without
 `VerdictScreenTest` renders the three verdict screens from fixed JSON:
 match (no decisions), changed (explanation, diff, hex only behind Details,
 event log button, three decisions), failed (hard reasons only, Reject primary,
-"Approve anyway" in the overflow with typed name).
+"Approve anyway" in the overflow with typed name). `secureBootStates`: a red card in
+each state but on, at a match, and the person can still continue; not said is red.
+`SessionScreenTest.bindShowsSecureBoot`, `bindSaysSecureBootIsOn`: the bind screen.
 
 ## 4. Real hardware checklist
 
@@ -123,6 +128,7 @@ sudo pacman -S go swtpm          # once
 | `changedWithEventlogApproveAndRememberThenMatch` | PCR 4 extended → *changed* with a diff on PCR 4; the 48 kB event log transferred; approve and remember; after a reboot the same change matches the remembered profile |
 | `replayedTpmStateFailsAndIsRejected` | TPM state saved, later restored (a replayed TPM) → *failed* with `reset_count_decreased`; unsigned reject delivered |
 | `retriesEveryFiveSecondsUntilTheMachineWaits` | the machine starts waiting 7 s after the app; the app shows *not reachable* after the attempts at 0 s and 5 s and gets through at 10 s |
+| `secureBootStatesFromTheQuote` | PCR 7 extended on swtpm as firmware in each state does: on, off, Setup Mode, no event log, the events of another boot; a real TPM's quote, the phone establishes the state at enrolment and at the next boot; the boot still matches |
 | `userAbortsMidSession` | the machine receives "peer aborted (code 10)" |
 | `strangerPhoneGetsNoAnswer` | another phone's Noise key: the machine refuses the IK handshake ("initiator is not an enrolled verifier") and the app sees the connection close |
 

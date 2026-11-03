@@ -28,8 +28,11 @@ sealed interface Event {
         val ekNote: String = "",
         /** The EK root store has no root of the TPM's vendor yet: a risk, not untrusted. */
         val ekVendorUnknown: Boolean = false,
-        val initrdCoverage: String = INITRD_UNKNOWN,
+        val initrdCoverage: String = INITRD_NOT_ESTABLISHED,
         val initrdPcrs: List<Int> = emptyList(),
+        val initrdDetail: String = "",
+        /** Secure Boot's state as the baseline quote and the event log establish it. */
+        val secureBoot: SecureBoot = SecureBoot(),
         /** Goes into the anchor key's attestation; binds it to this enrolment. */
         val attestationChallenge: ByteArray? = null,
     ) : Event
@@ -59,9 +62,7 @@ sealed interface Event {
         const val PURPOSE_RECEIPT = "receipt"
 
         const val INITRD_COVERED = "covered"
-        const val INITRD_NOT_COVERED = "not_covered"
-        const val INITRD_NONE = "no_initrd"
-        const val INITRD_UNKNOWN = "unknown"
+        const val INITRD_NOT_ESTABLISHED = "not_established"
 
         private val json = Json { ignoreUnknownKeys = true }
 
@@ -83,9 +84,11 @@ sealed interface Event {
                     ekVerifiedBy = str("ek_verified_by"),
                     ekNote = str("ek_note"),
                     ekVendorUnknown = bool("ek_vendor_unknown"),
-                    initrdCoverage = str("initrd_coverage").ifEmpty { INITRD_UNKNOWN },
+                    initrdCoverage = str("initrd_coverage").ifEmpty { INITRD_NOT_ESTABLISHED },
+                    initrdDetail = str("initrd_detail"),
                     initrdPcrs = (o["initrd_pcrs"] as? kotlinx.serialization.json.JsonArray)
                         ?.mapNotNull { it.jsonPrimitive.intOrNull } ?: emptyList(),
+                    secureBoot = o["secure_boot"]?.let { json.decodeFromJsonElement(SecureBoot.serializer(), it) } ?: SecureBoot(),
                     attestationChallenge = str("attestation_challenge").takeIf { it.isNotEmpty() }?.hexToByteArray(),
                 )
                 "need_signature" -> NeedSignature(str("purpose"), int("verdict_code"))
@@ -133,6 +136,8 @@ data class Verdict(
     val code: String = "",
     /** TPM Name (hex) of the machine's signing key whose approval the TPM enforced; only with [BOOT_KEY_PROVED]. */
     @SerialName("signing_key") val signingKey: String = "",
+    /** Secure Boot's state as the quote and the event log establish it; red unless on. */
+    @SerialName("secure_boot") val secureBoot: SecureBoot = SecureBoot(),
 ) {
     companion object {
         const val MATCH = "match"
@@ -149,6 +154,26 @@ data class Verdict(
 
         private val json = Json { ignoreUnknownKeys = true }
         fun parse(text: String): Verdict = json.decodeFromString(serializer(), text)
+    }
+}
+
+/**
+ * What the core established of Secure Boot, from the quoted PCR 7 and the event log
+ * replayed against it, never from what the machine says. A state not given is not
+ * established, which is red like off.
+ */
+@Serializable
+data class SecureBoot(
+    val state: String = NOT_ESTABLISHED,
+    val detail: String = "",
+) {
+    val red: Boolean get() = state != ON
+
+    companion object {
+        const val ON = "on"
+        const val OFF = "off"
+        const val SETUP_MODE = "setup_mode"
+        const val NOT_ESTABLISHED = "not_established"
     }
 }
 

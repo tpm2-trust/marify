@@ -89,7 +89,6 @@ enum Texts {
         case "selection_mismatch": String(localized: "The machine reported different registers than requested.")
         case "pcr_values_invalid": String(localized: "The reported register values are invalid.")
         case "pcr_digest_mismatch": String(localized: "The reported register values are not the ones the TPM signed.")
-        case "secureboot_off": String(localized: "Secure Boot is off.")
         case "no_profile_match": String(localized: "The boot chain differs from every state you approved.")
         default: String(localized: "Check failed: \(code)")
         }
@@ -100,7 +99,6 @@ enum Texts {
         case "reset_count_jump": String(localized: "The machine booted several times since the last check.")
         case "clock_unsafe": String(localized: "The TPM's clock is not trustworthy.")
         case "firmware_changed": String(localized: "The TPM firmware changed.")
-        case "secureboot_off": String(localized: "Secure Boot is off.")
         default: String(localized: "Note: \(code)")
         }
     }

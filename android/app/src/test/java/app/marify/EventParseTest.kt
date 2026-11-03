@@ -3,6 +3,7 @@ package app.marify
 import app.marify.core.Decision
 import app.marify.core.Event
 import app.marify.core.RecordSummary
+import app.marify.core.SecureBoot
 import app.marify.core.Verdict
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -24,14 +25,18 @@ class EventParseTest {
     @Test fun needAnchorKeyWithMachineChecks() {
         val e = Event.parse(
             """{"type":"need_anchor_key","device_id":"a0","friendly_name":"box","ek_verified_by":"Intel Corporation",
-               "initrd_coverage":"not_covered","initrd_pcrs":[9]}""",
+               "initrd_coverage":"covered","initrd_pcrs":[9]}""",
         ) as Event.NeedAnchorKey
         assertEquals("Intel Corporation", e.ekVerifiedBy)
-        assertEquals(Event.INITRD_NOT_COVERED, e.initrdCoverage)
+        assertEquals(Event.INITRD_COVERED, e.initrdCoverage)
         assertEquals(listOf(9), e.initrdPcrs)
-        // An older core sends none of these: unknown, never "covered".
+        // Nothing said: not established, never "covered".
         val old = Event.parse("""{"type":"need_anchor_key","device_id":"a0","friendly_name":"box"}""") as Event.NeedAnchorKey
-        assertEquals(Event.INITRD_UNKNOWN, old.initrdCoverage)
+        assertEquals(Event.INITRD_NOT_ESTABLISHED, old.initrdCoverage)
+        val why = Event.parse(
+            """{"type":"need_anchor_key","device_id":"a0","friendly_name":"box","initrd_coverage":"not_established","initrd_detail":"no event log"}""",
+        ) as Event.NeedAnchorKey
+        assertEquals("no event log", why.initrdDetail)
         assertEquals("", old.ekVerifiedBy)
         assertEquals(false, old.ekVendorUnknown)
         // A vendor the EK root store does not have: a risk, flagged as such.
@@ -151,5 +156,32 @@ class EventParseTest {
     @Test fun unknownTypeIsKept() {
         val e = Event.parse("""{"type":"release_factor","slot":1}""") as Event.Unknown
         assertEquals("release_factor", e.type)
+    }
+
+    @Test fun secureBootIsRedUnlessTheCoreSaysOn() {
+        fun verdict(field: String) = (Event.parse(
+            """{"type":"verdict","verdict":{"state":"match"$field}}""",
+        ) as Event.VerdictEvent).verdict.secureBoot
+        assertEquals(SecureBoot.ON, verdict(""","secure_boot":{"state":"on"}""").state)
+        assertFalse(verdict(""","secure_boot":{"state":"on"}""").red)
+        for (state in listOf(SecureBoot.OFF, SecureBoot.SETUP_MODE, SecureBoot.NOT_ESTABLISHED)) {
+            val s = verdict(""","secure_boot":{"state":"$state","detail":"why"}""")
+            assertEquals(state, s.state)
+            assertEquals(true, s.red)
+        }
+        // Not said at all: not established.
+        assertEquals(SecureBoot.NOT_ESTABLISHED, verdict("").state)
+        assertEquals(true, verdict("").red)
+        // A word this app does not know is red too.
+        assertEquals(true, verdict(""","secure_boot":{"state":"maybe"}""").red)
+    }
+
+    @Test fun enrolmentCarriesSecureBoot() {
+        val e = Event.parse(
+            """{"type":"need_anchor_key","device_id":"a0","friendly_name":"box","secure_boot":{"state":"setup_mode"}}""",
+        ) as Event.NeedAnchorKey
+        assertEquals(SecureBoot.SETUP_MODE, e.secureBoot.state)
+        val none = Event.parse("""{"type":"need_anchor_key","device_id":"a0","friendly_name":"box"}""") as Event.NeedAnchorKey
+        assertEquals(true, none.secureBoot.red)
     }
 }

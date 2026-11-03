@@ -53,6 +53,8 @@ struct VerdictContent: View {
                 }
             }
 
+            SecureBootCard(state: v.secureBoot, colors: colors)
+
             BootKeyCard(v: v, demoScreenCode: demoScreenCode, colors: colors)
 
             if v.state == Verdict.changed && !v.pcrDiff.isEmpty {
@@ -336,6 +338,34 @@ private struct TechnicalDetails: View {
                 Text("Reset count \(v.resetCount) · restart count \(v.restartCount) · firmware \(v.firmwareVersion) · clock safe: \(v.clockSafe ? String(localized: "yes") : String(localized: "no"))")
                     .font(.footnote)
             }
+        }
+    }
+}
+
+/// Secure Boot's state, as the core established it: red in every state but on, at a
+/// matching boot too. It decides nothing; what the person is told cannot be missed.
+struct SecureBootCard: View {
+    let state: SecureBoot
+    let colors: VerdictColors
+
+    var body: some View {
+        if !state.red {
+            Text("Secure Boot is on, by the TPM's quote and the event log.").accessibilityIdentifier("secure_boot_on")
+        } else {
+            CardView(container: colors.failedContainer, content: colors.onFailed) {
+                switch state.state {
+                case SecureBoot.off:
+                    Text("Secure Boot is OFF").font(.headline)
+                    Text("The TPM's quote and the event log show it: nothing checks this machine's boot loader and kernel, whatever else is on this screen.")
+                case SecureBoot.setupMode:
+                    Text("Secure Boot is in SETUP MODE").font(.headline)
+                    Text("The TPM's quote and the event log show it: nothing checks this machine's boot loader and kernel, and anything running on it can replace its keys.")
+                default:
+                    Text("Secure Boot could not be established").font(.headline)
+                    Text("The TPM's quote and the event log do not show that Secure Boot is on: take it as off (\(state.detail)).")
+                }
+            }
+            .accessibilityIdentifier("secure_boot_red_" + state.state)
         }
     }
 }
