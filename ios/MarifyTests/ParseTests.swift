@@ -62,6 +62,20 @@ final class EventParseTests: XCTestCase {
         XCTAssertEqual(n.attestationChallenge, Data([0x0a, 0x0b]))
     }
 
+    func testNeedAnchorKeyNotEstablished() throws {
+        let e = try Event.parse("""
+        {"type":"need_anchor_key","device_id":"ab","friendly_name":"box","initrd_coverage":"not_established","initrd_detail":"no event log"}
+        """)
+        guard case .needAnchorKey(let n) = e else { return XCTFail("\(e)") }
+        XCTAssertEqual(n.initrdCoverage, Event.initrdNotEstablished)
+        XCTAssertEqual(n.initrdDetail, "no event log")
+        let silent = try Event.parse("""
+        {"type":"need_anchor_key","device_id":"ab","friendly_name":"box"}
+        """)
+        guard case .needAnchorKey(let m) = silent else { return XCTFail("\(silent)") }
+        XCTAssertEqual(m.initrdCoverage, Event.initrdNotEstablished)
+    }
+
     func testRecordIsKeptAsAnObject() throws {
         let e = try Event.parse(#"{"type":"enrolled","record":{"b":1,"a":[1,2]}}"#)
         guard case .enrolled(let json) = e else { return XCTFail("\(e)") }
