@@ -1,6 +1,7 @@
 package app.marify
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -118,7 +119,8 @@ class SessionScreenTest {
         // The vendor list comes from the core compiled into this app.
         rule.onNodeWithText("can verify TPMs from: Intel Corporation", substring = true).assertIsDisplayed()
         rule.onNodeWithTag("bind").assertIsDisplayed()
-        rule.onNodeWithTag("bind_cancel").assertIsDisplayed()
+        // The red cards can push the buttons down: the screen scrolls.
+        rule.onNodeWithTag("bind_cancel").performScrollTo().assertIsDisplayed()
     }
 
     @Test fun unreachableDoesNotClaimTheMachineIsFine() {
