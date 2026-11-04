@@ -112,8 +112,8 @@ class SessionScreenTest {
 
     @Test fun bindWarnsAboutTheSHA1Bank() {
         show(enrolState(app.marify.core.Event.NeedAnchorKey("a0", "box", sha1Bank = true)))
-        rule.onNodeWithTag("sha1_bank").assertIsDisplayed()
-        rule.onNodeWithTag("bind").assertIsDisplayed()
+        rule.onNodeWithTag("sha1_bank").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithTag("bind").performScrollTo().assertIsDisplayed()
     }
 
     @Test fun bindWarnsAboutUnverifiedTPMAndUncoveredInitrd() {
