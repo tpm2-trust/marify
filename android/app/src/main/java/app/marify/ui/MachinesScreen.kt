@@ -27,10 +27,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.marify.BuildConfig
 import app.marify.R
+import app.marify.core.KiraCore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,7 +60,8 @@ fun MachinesScreen(
     ) { padding ->
         LazyColumn(
             Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp),
+            // At the bottom, room for the last line beside the button.
+            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (activeState?.finished == false) {
@@ -99,8 +103,20 @@ fun MachinesScreen(
                     )
                 }
             }
+            item { VersionLine() }
         }
     }
+}
+
+/** What this app is: for a bug report, and to tell two builds apart. A label, no proof of anything. */
+@Composable
+internal fun VersionLine() {
+    Text(
+        stringResource(R.string.version_line, BuildConfig.VERSION_NAME, BuildConfig.CORE_COMMIT, KiraCore.protocolVersion, KiraCore.schemaVersion),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.testTag("version_line"),
+    )
 }
 
 @Composable

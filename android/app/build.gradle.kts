@@ -17,6 +17,19 @@ fun signingValue(env: String, prop: String): String? =
     System.getenv(env)?.takeIf { it.isNotEmpty() } ?: keystoreProps.getProperty(prop)
 val releaseStoreFile = signingValue("KIRA_KEYSTORE", "storeFile")
 
+// What this build is, for the version line on the machines screen and the system's app info:
+// this checkout's commit, marked when it holds changes, and the tpm2-kira commit scripts/build-core.sh
+// actually linked (app/libs/CORE_COMMIT), which core.properties only asks for.
+fun git(vararg args: String): String = runCatching {
+    providers.exec {
+        commandLine("git", *args)
+        isIgnoreExitValue = true
+    }.standardOutput.asText.get().trim()
+}.getOrDefault("")
+val marifyCommit = git("rev-parse", "--short=7", "HEAD").ifEmpty { "unknown" } +
+    if (git("status", "--porcelain").isNotEmpty()) "-dirty" else ""
+val coreCommit = file("libs/CORE_COMMIT").takeIf { it.isFile }?.readText()?.trim()?.take(7)?.ifEmpty { null } ?: "unknown"
+
 android {
     namespace = "app.marify"
     compileSdk {
@@ -28,7 +41,9 @@ android {
         minSdk = 30
         targetSdk = 37
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "0.1.0+$marifyCommit"
+        buildConfigField("String", "MARIFY_COMMIT", "\"$marifyCommit\"")
+        buildConfigField("String", "CORE_COMMIT", "\"$coreCommit\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // The swtpm machine tests (androidTest app.marify.swtpm) need a host-side
