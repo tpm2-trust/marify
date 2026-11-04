@@ -49,6 +49,13 @@ final class EventParseTests: XCTestCase {
         XCTAssertFalse(v.verdict.secureBoot.red)
     }
 
+    func testKeyboardKeysAreAnEventOfTheirOwn() throws {
+        guard case .keyboardKeys(let keys) = try Event.parse(#"{"type":"keyboard_keys","keys":"abcd2345"}"#) else {
+            return XCTFail("not the keys")
+        }
+        XCTAssertEqual(keys, "abcd2345")
+    }
+
     func testVerdictWithoutBootKeyIsUnused() throws {
         let e = try Event.parse(#"{"type":"verdict","verdict":{"ok":true,"state":"match"}}"#)
         guard case .verdict(let v) = e else { return XCTFail("\(e)") }

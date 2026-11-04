@@ -1,6 +1,7 @@
 package app.marify
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -108,6 +109,14 @@ class SessionScreenTest {
         rule.onNodeWithText("does not mean the TPM is untrusted", substring = true).assertIsDisplayed()
         rule.onNodeWithText("can verify TPMs from: Intel Corporation", substring = true).assertIsDisplayed()
         rule.onNodeWithTag("bind").assertIsDisplayed()
+    }
+
+    /** The keys in groups for the eye; the machine's prompt takes them without the spaces. */
+    @Test fun keyboardKeysAreShown() {
+        rule.setContent { app.marify.ui.MarifyTheme { app.marify.ui.KeyboardKeysCard("abcd2345") } }
+        rule.onNodeWithTag("keyboard_keys_card").assertIsDisplayed()
+        rule.onNodeWithTag("keyboard_keys").assertTextEquals("abcd 2345")
+        rule.onNodeWithText("Press these keys at the machine").assertIsDisplayed()
     }
 
     @Test fun bindWarnsAboutTheSHA1Bank() {

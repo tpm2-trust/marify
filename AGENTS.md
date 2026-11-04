@@ -41,7 +41,9 @@ The same rule, with tpm2-kira's other standing decisions, is in
   What a machine hands over at `phone salt enrol` is a TPM credential the
   phone cannot open; it is kept with the record, replaced only when a
   verdict offering a new one is accepted, and released after an accepted
-  receipt. The salt and the derived key exist on the machine only.
+  receipt. The salt and the derived key exist on the machine only. The exception, by the owner's decision: a salt typed
+  through a one-time keyboard (the record's `keyboard`), which the phone must read to work out the keys
+  it shows, kept encrypted with the record (tpm2-kira's docs/DISK-KEY.md).
 - **Unlock for every signature by biometrics or the device credential**
   (PIN/pattern/password on Android, passcode on iOS), a deliberate deviation
   from PROTOCOL-BLE.md §11.2; "biometrics only" is a per-machine choice at

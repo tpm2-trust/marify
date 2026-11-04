@@ -75,6 +75,8 @@ struct SessionState: Sendable, Equatable {
     var eventlog: Event.Eventlog?
     var receiptAck: (result: Int, message: String)?
     var releaseAck: (status: Int, message: String)?
+    /// The keys to press at the machine, when this phone keeps a salt typed through a keyboard.
+    var keyboardKeys: String?
     /// A recoverable error from the core (the session continues).
     var notice: String?
     var outcome: Outcome?
@@ -103,7 +105,7 @@ struct SessionState: Sendable, Equatable {
             a.bind == b.bind && a.verdict == b.verdict && a.decisionSent == b.decisionSent &&
             a.eventlogRequested == b.eventlogRequested && a.eventlog == b.eventlog &&
             a.receiptAck?.result == b.receiptAck?.result && a.receiptAck?.message == b.receiptAck?.message &&
-            a.releaseAck?.status == b.releaseAck?.status && a.releaseAck?.message == b.releaseAck?.message &&
+            a.keyboardKeys == b.keyboardKeys && a.releaseAck?.status == b.releaseAck?.status && a.releaseAck?.message == b.releaseAck?.message &&
             a.notice == b.notice && a.outcome == b.outcome
     }
 }

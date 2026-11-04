@@ -188,6 +188,11 @@ class EventParseTest {
         ) as Event.NeedAnchorKey).sha1Bank)
     }
 
+    @Test fun keyboardKeysAreAnEventOfTheirOwn() {
+        val e = Event.parse("""{"type":"keyboard_keys","keys":"abcd2345"}""")
+        assertEquals("abcd2345", (e as Event.KeyboardKeys).keys)
+    }
+
     @Test fun enrolmentCarriesSecureBoot() {
         val e = Event.parse(
             """{"type":"need_anchor_key","device_id":"a0","friendly_name":"box","secure_boot":{"state":"setup_mode"}}""",

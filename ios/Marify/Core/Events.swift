@@ -15,6 +15,8 @@ enum Event: Sendable, Equatable {
     case receiptAck(result: Int, message: String)
     /// What the machine made of the phone salt this phone released (PROTOCOL-BLE.md §7.3.9).
     case releaseAck(status: Int, message: String)
+    /// The keys to press at the machine: a salt typed through a one-time keyboard, for this boot alone.
+    case keyboardKeys(String)
     case recordUpdated(recordJSON: String)
     case done
     case error(code: Int, message: String)
@@ -109,6 +111,7 @@ enum Event: Sendable, Equatable {
         case "eventlog": return .eventlog(Eventlog(received: int64("received"), total: int64("total"), complete: bool("complete")))
         case "receipt_ack": return .receiptAck(result: int("result"), message: str("message"))
         case "release_ack": return .releaseAck(status: int("result"), message: str("message"))
+        case "keyboard_keys": return .keyboardKeys(str("keys"))
         case "record_updated": return .recordUpdated(recordJSON: try record())
         case "done": return .done
         case "error": return .error(code: int("code"), message: str("message"))
@@ -128,6 +131,7 @@ enum Event: Sendable, Equatable {
         case .eventlog: "eventlog"
         case .receiptAck: "receipt_ack"
         case .releaseAck: "release_ack"
+        case .keyboardKeys: "keyboard_keys"
         case .recordUpdated: "record_updated"
         case .done: "done"
         case .error: "error"

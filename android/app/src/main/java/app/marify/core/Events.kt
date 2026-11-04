@@ -52,6 +52,8 @@ sealed interface Event {
     data class ReceiptAck(val result: Int, val message: String) : Event
     /** What the machine made of the phone salt this phone released (PROTOCOL-BLE.md §7.3.9). */
     data class ReleaseAck(val status: Int, val message: String) : Event
+    /** The keys to press at the machine: a salt typed through a one-time keyboard, for this boot alone. */
+    data class KeyboardKeys(val keys: String) : Event
     data class RecordUpdated(val recordJson: String) : Event
     data object Done : Event
     data class Error(val code: Int, val message: String) : Event
@@ -109,6 +111,7 @@ sealed interface Event {
                 "eventlog" -> Eventlog(long("received"), long("total"), bool("complete"))
                 "receipt_ack" -> ReceiptAck(int("result"), str("message"))
                 "release_ack" -> ReleaseAck(int("result"), str("message"))
+                "keyboard_keys" -> KeyboardKeys(str("keys"))
                 "record_updated" -> RecordUpdated(record())
                 "done" -> Done
                 "error" -> Error(int("code"), str("message"))
