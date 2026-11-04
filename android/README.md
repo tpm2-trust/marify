@@ -1,6 +1,6 @@
 # Marify for Android
 
-The verifier app for [tpm2-kira](https://github.com/mrwiora/tpm2-kira)
+The verifier app for [tpm2-kira](https://github.com/tpm2-trust/tpm2-kira)
 machines. Before you type your disk passphrase, the Linux machine advertises
 over Bluetooth LE; Marify connects, lets the machine's TPM prove what it
 booted, shows a verdict you can act on, and returns a receipt signed with a

@@ -1,6 +1,6 @@
 # Marify
 
-The phone app that verifies what a [tpm2-kira](https://github.com/mrwiora/tpm2-kira)
+The phone app that verifies what a [tpm2-kira](https://github.com/tpm2-trust/tpm2-kira)
 machine booted, before you type your disk passphrase: the machine's TPM
 proves its boot state over Bluetooth LE, the phone shows a verdict, and
 returns a receipt signed with a key that needs a fresh unlock every time.
