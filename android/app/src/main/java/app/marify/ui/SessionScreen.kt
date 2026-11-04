@@ -264,6 +264,7 @@ private fun BindContent(b: Event.NeedAnchorKey, onConfirm: (Boolean, Boolean) ->
         }
     }
     SecureBootCard(b.secureBoot)
+    if (b.sha1Bank) Sha1BankCard()
     if (b.initrdCoverage == Event.INITRD_COVERED) {
         Text(stringResource(R.string.bind_initrd_covered, b.initrdPcrs.joinToString(" and ")), style = MaterialTheme.typography.bodyMedium)
     } else {

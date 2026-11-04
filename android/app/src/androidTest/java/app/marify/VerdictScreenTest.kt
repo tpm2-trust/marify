@@ -187,6 +187,25 @@ class VerdictScreenTest {
         assertEquals(listOf(Decision.APPROVE_ONCE to "Thinkpad-X1", Decision.REJECT to ""), decisions)
     }
 
+    /** SHA-1 is a warning beside the state: on stays on, and the person can go on. */
+    @Test fun sha1BankWarnsBesideSecureBootOn() {
+        val verdict = Event.parse(
+            """{"type":"verdict","needs_decision":true,"verdict":{"ok":true,"state":"match","boot_key":"proved","code":"K7QM-2XHD",
+               "secure_boot":{"state":"on"},"sha1_bank":true}}""",
+        ) as Event.VerdictEvent
+        rule.setContent {
+            MarifyTheme {
+                VerdictContent(
+                    event = verdict, machineName = "Thinkpad-X1", lastAttested = null, decisionEnabled = true,
+                    eventlogRequested = false, eventlog = null, onDecide = { _, _ -> }, onRequestEventlog = {},
+                )
+            }
+        }
+        rule.onNodeWithTag("secure_boot_on").assertIsDisplayed()
+        rule.onNodeWithTag("sha1_bank").assertIsDisplayed()
+        rule.onNodeWithTag("continue").assertIsDisplayed()
+    }
+
     /** Red in every state but on, at a matching boot too, and the person can still go on. */
     @Test fun secureBootStates() {
         var state by androidx.compose.runtime.mutableStateOf("on")

@@ -113,6 +113,7 @@ fun VerdictContent(
         }
 
         SecureBootCard(v.secureBoot)
+        if (v.sha1Bank) Sha1BankCard()
 
         BootKeyCard(v, demoScreenCode)
 
@@ -286,6 +287,21 @@ internal fun SecureBootCard(s: SecureBoot) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Text(body)
+        }
+    }
+}
+
+/** The quote is on the SHA-1 bank: a warning beside whatever else is on the screen. */
+@Composable
+internal fun Sha1BankCard() {
+    val colors = LocalVerdictColors.current
+    Card(
+        Modifier.fillMaxWidth().testTag("sha1_bank"),
+        colors = CardDefaults.cardColors(containerColor = colors.changedContainer, contentColor = colors.onChanged),
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.sha1_bank), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.sha1_bank_body))
         }
     }
 }

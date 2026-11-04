@@ -219,6 +219,8 @@
     <string name="secure_boot_off_body">The TPM\'s quote and the event log show it: nothing checks this machine\'s boot loader and kernel, whatever else is on this screen.</string>
     <string name="secure_boot_setup_mode">Secure Boot is in SETUP MODE</string>
     <string name="secure_boot_setup_mode_body">The TPM\'s quote and the event log show it: nothing checks this machine\'s boot loader and kernel, and anything running on it can replace its keys.</string>
+    <string name="sha1_bank">This machine\'s registers are checked on the SHA-1 bank</string>
+    <string name="sha1_bank_body">SHA-1 is broken against collisions, so these registers prove less than on SHA-256. Seal the slot on SHA-256 if this TPM has that bank.</string>
     <string name="secure_boot_not_established">Secure Boot could not be established</string>
     <string name="secure_boot_not_established_body">The TPM\'s quote and the event log do not show that Secure Boot is on: take it as off (%1$s).</string>
     <string name="warning_unknown">Note: %1$s</string>

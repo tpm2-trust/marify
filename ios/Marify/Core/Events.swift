@@ -37,6 +37,8 @@ enum Event: Sendable, Equatable {
         var initrdDetail: String = ""
         /// Secure Boot's state as the baseline quote and the event log establish it.
         var secureBoot = SecureBoot()
+        /// The baseline quote is on the SHA-1 bank: a warning, it decides nothing.
+        var sha1Bank = false
         /// Goes into the anchor key's attestation where the platform has one.
         var attestationChallenge: Data? = nil
     }
@@ -90,6 +92,7 @@ enum Event: Sendable, Equatable {
                 initrdPcrs: (o["initrd_pcrs"] as? [Any])?.compactMap { ($0 as? NSNumber)?.intValue } ?? [],
                 initrdDetail: str("initrd_detail"),
                 secureBoot: SecureBoot(object: o["secure_boot"] as? [String: Any]),
+                sha1Bank: bool("sha1_bank"),
                 attestationChallenge: Data(hex: str("attestation_challenge"))
             ))
         case "need_signature": return .needSignature(purpose: str("purpose"), verdictCode: int("verdict_code"))
@@ -177,6 +180,8 @@ struct Verdict: Sendable, Equatable {
     var signingKey = ""
     /// Secure Boot's state as the quote and the event log establish it; red unless on.
     var secureBoot = SecureBoot()
+    /// The selection is on the SHA-1 bank: a warning, it decides nothing.
+    var sha1Bank = false
 
     static let match = "match"
     static let changed = "changed"
@@ -241,6 +246,7 @@ struct Verdict: Sendable, Equatable {
         bootKey = bk.isEmpty ? Verdict.bootKeyUnused : bk
         code = str("code")
         secureBoot = SecureBoot(object: o["secure_boot"] as? [String: Any])
+        sha1Bank = o["sha1_bank"] as? Bool ?? false
         signingKey = str("signing_key")
     }
 
