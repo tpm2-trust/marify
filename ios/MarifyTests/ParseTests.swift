@@ -41,6 +41,14 @@ final class EventParseTests: XCTestCase {
         XCTAssertTrue(try secureBoot("").red)
     }
 
+    func testSha1BankIsAWarningBesideTheState() throws {
+        guard case .verdict(let v) = try Event.parse(#"{"type":"verdict","verdict":{"state":"match","secure_boot":{"state":"on"},"sha1_bank":true}}"#) else {
+            return XCTFail("not a verdict")
+        }
+        XCTAssertTrue(v.verdict.sha1Bank)
+        XCTAssertFalse(v.verdict.secureBoot.red)
+    }
+
     func testVerdictWithoutBootKeyIsUnused() throws {
         let e = try Event.parse(#"{"type":"verdict","verdict":{"ok":true,"state":"match"}}"#)
         guard case .verdict(let v) = e else { return XCTFail("\(e)") }

@@ -54,6 +54,7 @@ struct VerdictContent: View {
             }
 
             SecureBootCard(state: v.secureBoot, colors: colors)
+            if v.sha1Bank { Sha1BankCard(colors: colors) }
 
             BootKeyCard(v: v, demoScreenCode: demoScreenCode, colors: colors)
 
@@ -339,6 +340,19 @@ private struct TechnicalDetails: View {
                     .font(.footnote)
             }
         }
+    }
+}
+
+/// The quote is on the SHA-1 bank: a warning beside whatever else is on the screen.
+struct Sha1BankCard: View {
+    let colors: VerdictColors
+
+    var body: some View {
+        CardView(container: colors.changedContainer, content: colors.onChanged) {
+            Text("This machine's registers are checked on the SHA-1 bank").font(.headline)
+            Text("SHA-1 is broken against collisions, so these registers prove less than on SHA-256. Seal the slot on SHA-256 if this TPM has that bank.")
+        }
+        .accessibilityIdentifier("sha1_bank")
     }
 }
 

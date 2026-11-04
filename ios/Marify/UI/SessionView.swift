@@ -192,6 +192,7 @@ private struct BindContent: View {
             }
         }
         SecureBootCard(state: bind.secureBoot, colors: colors)
+        if bind.sha1Bank { Sha1BankCard(colors: colors) }
         if bind.initrdCoverage == Event.initrdCovered {
             let pcrs = bind.initrdPcrs.map(String.init).joined(separator: " and ")
             Text("The checked boot measurements include the initrd (PCR \(pcrs)), as this boot's events show.")

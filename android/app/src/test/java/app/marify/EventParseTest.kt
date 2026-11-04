@@ -176,6 +176,18 @@ class EventParseTest {
         assertEquals(true, verdict(""","secure_boot":{"state":"maybe"}""").red)
     }
 
+    @Test fun sha1BankIsAWarningBesideTheState() {
+        val v = (Event.parse(
+            """{"type":"verdict","verdict":{"state":"match","secure_boot":{"state":"on"},"sha1_bank":true}}""",
+        ) as Event.VerdictEvent).verdict
+        assertEquals(true, v.sha1Bank)
+        assertFalse(v.secureBoot.red)
+        assertFalse((Event.parse("""{"type":"verdict","verdict":{"state":"match"}}""") as Event.VerdictEvent).verdict.sha1Bank)
+        assertEquals(true, (Event.parse(
+            """{"type":"need_anchor_key","device_id":"a0","friendly_name":"box","sha1_bank":true}""",
+        ) as Event.NeedAnchorKey).sha1Bank)
+    }
+
     @Test fun enrolmentCarriesSecureBoot() {
         val e = Event.parse(
             """{"type":"need_anchor_key","device_id":"a0","friendly_name":"box","secure_boot":{"state":"setup_mode"}}""",

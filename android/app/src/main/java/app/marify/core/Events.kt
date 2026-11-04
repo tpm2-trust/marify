@@ -33,6 +33,8 @@ sealed interface Event {
         val initrdDetail: String = "",
         /** Secure Boot's state as the baseline quote and the event log establish it. */
         val secureBoot: SecureBoot = SecureBoot(),
+        /** The baseline quote is on the SHA-1 bank: a warning, it decides nothing. */
+        val sha1Bank: Boolean = false,
         /** Goes into the anchor key's attestation; binds it to this enrolment. */
         val attestationChallenge: ByteArray? = null,
     ) : Event
@@ -89,6 +91,7 @@ sealed interface Event {
                     initrdPcrs = (o["initrd_pcrs"] as? kotlinx.serialization.json.JsonArray)
                         ?.mapNotNull { it.jsonPrimitive.intOrNull } ?: emptyList(),
                     secureBoot = o["secure_boot"]?.let { json.decodeFromJsonElement(SecureBoot.serializer(), it) } ?: SecureBoot(),
+                    sha1Bank = bool("sha1_bank"),
                     attestationChallenge = str("attestation_challenge").takeIf { it.isNotEmpty() }?.hexToByteArray(),
                 )
                 "need_signature" -> NeedSignature(str("purpose"), int("verdict_code"))
@@ -138,6 +141,8 @@ data class Verdict(
     @SerialName("signing_key") val signingKey: String = "",
     /** Secure Boot's state as the quote and the event log establish it; red unless on. */
     @SerialName("secure_boot") val secureBoot: SecureBoot = SecureBoot(),
+    /** The selection is on the SHA-1 bank: a warning, it decides nothing. */
+    @SerialName("sha1_bank") val sha1Bank: Boolean = false,
 ) {
     companion object {
         const val MATCH = "match"
