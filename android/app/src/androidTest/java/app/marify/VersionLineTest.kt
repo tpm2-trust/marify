@@ -16,7 +16,8 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class VersionLineTest {
-    @get:Rule val rule = createComposeRule()
+    @get:Rule(order = 0) val rule = createComposeRule()
+    @get:Rule(order = 1) val screen = ScreenshotRule(rule)
 
     /** The app's commit, the core it linked, and what that core speaks. */
     @Test fun saysWhatThisBuildIs() {

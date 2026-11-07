@@ -22,7 +22,8 @@ import org.junit.runner.RunWith
 /** The three verdict screens of PROTOCOL-BLE.md §10.4, from fixed core JSON. */
 @RunWith(AndroidJUnit4::class)
 class VerdictScreenTest {
-    @get:Rule val rule = createComposeRule()
+    @get:Rule(order = 0) val rule = createComposeRule()
+    @get:Rule(order = 1) val screen = ScreenshotRule(rule)
 
     private val decisions = mutableListOf<Pair<Decision, String>>()
     private var eventlogRequests = 0

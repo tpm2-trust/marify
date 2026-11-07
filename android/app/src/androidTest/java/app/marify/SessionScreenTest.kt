@@ -22,7 +22,8 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class SessionScreenTest {
-    @get:Rule val rule = createComposeRule()
+    @get:Rule(order = 0) val rule = createComposeRule()
+    @get:Rule(order = 1) val screen = ScreenshotRule(rule)
 
     private fun show(state: SessionState, onStop: () -> Unit = {}) = rule.setContent {
         MarifyTheme {

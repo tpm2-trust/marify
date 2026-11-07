@@ -1,0 +1,34 @@
+package app.marify
+
+import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.marify.ui.KeyboardLayoutView
+import app.marify.ui.MarifyTheme
+import app.marify.ui.OnboardingScreen
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+
+/**
+ * The screens no other test ends on, drawn for ScreenshotRule's pictures. The keyboard is its view
+ * alone with a layout made up here: the screen around it keeps itself out of screenshots
+ * (FLAG_SECURE), which a picture of the view does not touch.
+ */
+@RunWith(AndroidJUnit4::class)
+class ScreenTourTest {
+    @get:Rule(order = 0) val rule = createComposeRule()
+    @get:Rule(order = 1) val screen = ScreenshotRule(rule)
+
+    @Test fun onboarding() {
+        rule.setContent { MarifyTheme { OnboardingScreen(onReady = {}) } }
+        rule.waitForIdle()
+    }
+
+    @Test fun keyboardLayout() {
+        val keys = "abcdefghijklmnopqrstuvwxyz0123456789"
+        rule.setContent { MarifyTheme { KeyboardLayoutView(keys, keys.reversed(), onClose = {}) } }
+        rule.onNodeWithTag("keyboard_layout").assertIsDisplayed()
+    }
+}

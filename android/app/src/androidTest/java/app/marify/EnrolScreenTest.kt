@@ -24,7 +24,8 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class EnrolScreenTest {
-    @get:Rule val rule = createComposeRule()
+    @get:Rule(order = 0) val rule = createComposeRule()
+    @get:Rule(order = 1) val screen = ScreenshotRule(rule)
 
     private var enrolled: String? = null
     private var demoEnrolled = false
