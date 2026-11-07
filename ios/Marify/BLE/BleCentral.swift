@@ -1,7 +1,7 @@
 import CoreBluetooth
 import Foundation
 
-/// One tpm2-kira advertisement: the peripheral and its 13-byte service data.
+/// One kira advertisement: the peripheral and its 13-byte service data.
 struct Advertisement: @unchecked Sendable {
     let peripheral: CBPeripheral
     let serviceData: Data
@@ -16,7 +16,7 @@ struct Advertisement: @unchecked Sendable {
     var address: String { peripheral.identifier.uuidString }
 }
 
-/// The app's one CBCentralManager: scanning filtered by the tpm2-kira
+/// The app's one CBCentralManager: scanning filtered by the kira
 /// service UUID only (PROTOCOL-BLE.md §13.4), and connections. Which scan
 /// results are shown is decided by the caller with `KiraCore.matchAdvertisement`
 /// (§2.3). No pairing, no bonding, nothing is retained across launches.
@@ -62,7 +62,7 @@ final class BleCentral: NSObject, @unchecked Sendable {
 
     // MARK: scanning
 
-    /// Advertisements of tpm2-kira machines while the stream is consumed;
+    /// Advertisements of kira machines while the stream is consumed;
     /// duplicates are delivered so that "last seen" stays current. Fails at
     /// once when Bluetooth is off.
     func scan() -> AsyncThrowingStream<Advertisement, Error> {

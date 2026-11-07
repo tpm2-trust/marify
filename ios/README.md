@@ -1,6 +1,6 @@
 # Marify for iOS
 
-The verifier app for [tpm2-kira](https://github.com/tpm2-trust/tpm2-kira)
+The verifier app for [kira](https://github.com/tpm2-trust/kira)
 machines, the iOS counterpart of [../android](../android/README.md). Before
 you type your disk passphrase, the Linux machine advertises over Bluetooth
 LE; Marify connects, lets the machine's TPM prove what it booted, shows a
@@ -8,13 +8,13 @@ verdict you can act on, and returns a receipt signed with a Secure Enclave
 key that needs a fresh unlock (Face ID, Touch ID or passcode) for every
 signature.
 
-Both apps link the same Go core (`core/mobile/kiracore` of tpm2-kira) at the
+Both apps link the same Go core (`core/mobile/kiracore` of kira) at the
 commit pinned in [`../core.properties`](../core.properties), and show the
 same screens: see "What a check looks like" in the Android README; it holds
 for this app word for word, with Face ID / Touch ID / passcode in place of
 fingerprint / face / PIN.
 
-The normative contract is tpm2-kira's `docs/PROTOCOL-BLE.md`. This app
+The normative contract is kira's `docs/PROTOCOL-BLE.md`. This app
 implements the build brief `docs/mobile/AGENT-PROMPT-IOS.md`.
 
 ## Status
@@ -129,7 +129,7 @@ it and enrol again. Release builds do not link kiratest.
     background (`bluetooth-central` background mode); the lists scan only
     while shown.
 
-Losing the phone means re-enrolling each machine (`sudo tpm2-kira phone
+Losing the phone means re-enrolling each machine (`sudo kira phone
 enrol` with the new phone; `phone unenrol` removes the old entry).
 
 ## The phone salt
@@ -149,4 +149,4 @@ Marify name, the boot-key badge, the kept phone salt (card, release line,
 details row) - was added blind, mirroring the Android app. First build in
 Xcode, fix what the compiler finds, then the simulator tests, then a real
 phone against a machine (`TESTING.md`). Tracked as an open item in
-tpm2-kira's `docs/PLAN-PHONESALT.md` §13.
+kira's `docs/PLAN-PHONESALT.md` §13.

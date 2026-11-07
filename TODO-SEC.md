@@ -1,21 +1,21 @@
 # Security TODO
 
 Findings from the review of the machine ↔ phone binding (2026-10-05), with
-how to fix each one. Reviewed by reading the code at tpm2-kira `6dceb2a` and
+how to fix each one. Reviewed by reading the code at kira `6dceb2a` and
 marify `a4f4205`; no attacks were run. Not reviewed in depth: the BLE HCI
 layer (`core/transport/ble`) and the TLV parsers (`core/attest/wire.go`,
 `core/attest/messages.go`).
 
 Paths starting with `android/` are in this repository; all others are in
-tpm2-kira.
+kira.
 
 | # | Finding | Severity | Where the fix goes | Status |
 |---|---|---|---|---|
 | [S1](#s1-the-phone-does-not-say-that-the-machines-enrolment-changed) | Phone gives a generic error when the machine's blob was replaced, and one text falsely reassures | High | app | done |
-| [S2](#s2-the-machines-attestation-blob-can-be-replaced-and-its-signature-is-never-checked) | Machine blob replaceable; its signature is never verified | High | tpm2-kira | done |
-| [S3](#s3-enrolment-does-not-verify-that-the-tpm-is-genuine) | Enrolment trusts the TPM on first use (EK certificate not verified) | Medium | core, tpm2-kira, app | done (Intel); needs a real-hardware check |
+| [S2](#s2-the-machines-attestation-blob-can-be-replaced-and-its-signature-is-never-checked) | Machine blob replaceable; its signature is never verified | High | kira | done |
+| [S3](#s3-enrolment-does-not-verify-that-the-tpm-is-genuine) | Enrolment trusts the TPM on first use (EK certificate not verified) | Medium | core, kira, app | done (Intel); needs a real-hardware check |
 | [S4](#s4-phone-debug-builds-and-data-at-rest) | Debug build usable for real machines; stored policy editable by code running as the app | Medium | app | 1–3 done; 4 not done (see S4) |
-| [S5](#s5-the-pcr-selection-may-not-cover-the-initrd) | PCR selection may not cover the initrd | Medium | tpm2-kira, app | done |
+| [S5](#s5-the-pcr-selection-may-not-cover-the-initrd) | PCR selection may not cover the initrd | Medium | kira, app | done |
 | [S6](#s6-the-blob-is-readable-by-anyone-with-tpm-access) | Blob (machine Noise key, advertising key) readable with TPM access | Low, accepted | docs | done (documented) |
 | [S7](#s7-relay-to-a-look-alike-machine) | Relay to a look-alike machine | Inherent | docs | done (documented) |
 | [S8](#s8-smaller-hardening) | Noise test vectors, overlay taps, biometric-only option | Low | both | done |
@@ -104,7 +104,7 @@ was removed. In lazy mode the line is advisory, so this is a display
 problem today. It becomes a real problem the moment anything on the machine
 acts on the receipt (enforced mode).
 
-**Fix (tpm2-kira).** Undefining cannot be prevented without setting an
+**Fix (kira).** Undefining cannot be prevented without setting an
 owner password (which breaks other tooling) or platform auth (not available
 to the OS). So: detect, and stop presenting the unauthenticated result as
 fact.
@@ -113,7 +113,7 @@ fact.
    `cmd/attest_blob.go`, modelled on `VerifyBlobSignature` in `cmd/blob.go`
    (same envelope: signature over `version ‖ payloadLen ‖ payload`).
 2. Call it wherever the signing public key is available
-   (`DefaultPublicKeyPath`, `/etc/tpm2-kira/keys/seal.pub`, or the path
+   (`DefaultPublicKeyPath`, `/etc/kira/keys/seal.pub`, or the path
    stored in the sealed blob):
    - `AttestStatus`: print `Blob signature: valid` / `INVALID — the
      enrolment data was not written by this machine's signing key`; exit
@@ -123,7 +123,7 @@ fact.
    - New `phone check` command plus a systemd unit that runs after unlock
      on the booted system and logs/notifies on an invalid signature or a
      changed verifier list. Store the last seen verifier-list digest under
-     `/var/lib/tpm2-kira/` (on the encrypted disk) and compare.
+     `/var/lib/kira/` (on the encrypted disk) and compare.
 3. `reportReceipt` (`cmd/attest.go`): in lazy mode append to every line
    "(not verified on this machine — the phone's screen is authoritative)".
 4. Document in `docs/PROTOCOL-BLE.md` §15 / `PLAN-BLE.md` §7 that enforced
@@ -137,7 +137,7 @@ that `phone status` and `phone check` flag it.
 
 The phone side of this finding is S1.
 
-**Done, then redone differently** (tpm2-kira, see its log). The first version
+**Done, then redone differently** (kira, see its log). The first version
 was `phone check` plus a unit that ran after unlock. That was withdrawn on
 2026-10-06: after unlock the passphrase has already been typed, so a check
 there helps nobody. `phone status` and the refusal in `phone enrol` remain;
@@ -163,7 +163,7 @@ attacks through the owner hierarchy: a foreign record, an older genuine one,
 and that one with the counter deleted, recreated or replaced by an ordinary
 index holding the old count.
 
-Limits, stated in tpm2-kira's SECURITY.md: the public key is as trustworthy
+Limits, stated in kira's SECURITY.md: the public key is as trustworthy
 as the initramfs carrying it (a Secure Boot-signed UKI, or PCRs covering the
 initrd in the seal or the phone's selection); and someone with the owner
 hierarchy can raise the counter, which makes the genuine record stale until
@@ -252,7 +252,7 @@ truncated and padded chain blobs.
 **Limit.** This proves a genuine TPM holds the EK. It does not stop attacks
 on the bus of a discrete TPM or firmware bugs in the TPM itself.
 
-**Done** (tpm2-kira `db193b1`, core pinned in `android/core.properties`).
+**Done** (kira `db193b1`, core pinned in `android/core.properties`).
 Steps 1–5 as described, with these decisions:
 
 - Only the Intel root is a trust anchor; the two static Intel intermediates
@@ -284,7 +284,7 @@ that the roots are embedded.
 
 **Still open:** no real Intel EK certificate was available here, so the full
 chain (EK ← per-machine CAs ← embedded CAs) is tested only with a synthetic
-hierarchy. On a laptop with Intel PTT, run `sudo tpm2-kira phone ekcert`:
+hierarchy. On a laptop with Intel PTT, run `sudo kira phone ekcert`:
 it prints what the phone will conclude.
 
 ---
@@ -383,12 +383,12 @@ covered, a modified initrd (the classic passphrase logger) verifies as
    descriptions on the app's bind screen under "Details".
 3. Add a `docs/` table: boot setup → PCRs that must be quoted.
 
-**Done: 1 and 3** (tpm2-kira `e90fab9`). `phone enrol` recognises GRUB
+**Done: 1 and 3** (kira `e90fab9`). `phone enrol` recognises GRUB
 (PCR 9 file), the EFI stub's LoadFile2 tag (PCR 9) and a UKI (PCR 11
 `.initrd`, PCR 4 image), prints whether the selection covers the initrd and
-asks (default no) when it does not; the table is in tpm2-kira's README.
+asks (default no) when it does not; the table is in kira's README.
 Checked on real event logs from go-attestation's test data. **Step 2** is
-done with S3 (tpm2-kira `db193b1`): BootContext fields 7/8 carry where the
+done with S3 (kira `db193b1`): BootContext fields 7/8 carry where the
 initrd was measured; the bind step warns in amber when the enrolled PCRs do
 not cover it. The machine reports only a recognised measurement ("none
 found" stays "unknown", so an unfamiliar boot path cannot hide the warning).
@@ -411,7 +411,7 @@ an imitated endpoint ends in a red "did not accept this phone" or a failed
 verdict, never a green one.
 
 **Done:** SECURITY.md ("what it does not protect against") and
-PROTOCOL-BLE.md §2.2 in tpm2-kira.
+PROTOCOL-BLE.md §2.2 in kira.
 
 ---
 
@@ -430,7 +430,7 @@ evident marking of the device, and the planned salt release (the released
 factor is useless without the real machine's TPM, so the passphrase alone
 no longer opens the disk).
 
-**Done:** documented in tpm2-kira's SECURITY.md.
+**Done:** documented in kira's SECURITY.md.
 
 ---
 
@@ -474,7 +474,7 @@ the phone's anchor key on trust: it could not tell a StrongBox key on a
 locked phone from a key in software on a rooted one. And `phone enrol` did
 not show the machine's own TPM verdict before enrolling.
 
-**Done** (tpm2-kira `aac0ef6`, `a360fbd`; the app's pinned core is in
+**Done** (kira `aac0ef6`, `a360fbd`; the app's pinned core is in
 `android/core.properties`):
 
 - The core gives the app an attestation challenge bound to the session; the
@@ -506,7 +506,7 @@ enrols it.
 
 ## Remaining
 
-- S3: run `sudo tpm2-kira phone ekcert` on a laptop with Intel PTT to check
+- S3: run `sudo kira phone ekcert` on a laptop with Intel PTT to check
   the full Intel chain on real hardware; add roots for other vendors.
 - S4.1: create the release signing key (see `android/README.md`).
 - Real-hardware checks in `android/TESTING.md` §4, including what only a

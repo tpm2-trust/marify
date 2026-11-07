@@ -2,7 +2,7 @@
 # Every Android test of the app, from a defined state, with nobody at the
 # keyboard:
 #
-#   1. the Go core from the tpm2-kira commit in ../core.properties
+#   1. the Go core from the kira commit in ../core.properties
 #      (scripts/build-core.sh)
 #   2. the JVM unit tests, lint, and the release APK without kiratest
 #   3. a fresh emulator: the AVD marify-test (API 36, google_apis, x86_64),
@@ -11,7 +11,7 @@
 #   4. the screen lock the keystore tests need (PIN 1234), set on the fresh
 #      data, so the device is unlocked; animations off
 #   5. the instrumented tests (connectedDebugAndroidTest)
-#   6. the session code and the core against a tpm2-kira machine on swtpm
+#   6. the session code and the core against a kira machine on swtpm
 #      (scripts/test-swtpm.sh)
 #   7. a summary from the JUnit results; the emulator is stopped
 #
@@ -23,8 +23,8 @@
 #           --no-core        use the core in app/libs as it is (CORE_COMMIT)
 #           --keep-emulator  leave the emulator running afterwards
 # Environment: JAVA_HOME (default /usr/lib/jvm/java-25-openjdk),
-#              ANDROID_HOME (default ~/Android/Sdk), KIRA_SRC (tpm2-kira
-#              checkout, default ../../tpm2-kira), MARIFY_TEST_PORT (the
+#              ANDROID_HOME (default ~/Android/Sdk), KIRA_SRC (kira
+#              checkout, default ../../kira), MARIFY_TEST_PORT (the
 #              emulator's console port, default 5580), MARIFY_TEST_DATA_MIB (the
 #              wiped data partition, MiB; default the AVD's, which the emulator
 #              refuses without about 12 GB free).
@@ -102,7 +102,7 @@ if $core; then
     run build-core "$here/scripts/build-core.sh"
     ((${#failed[@]} == 0)) || die "no core, no app"
 fi
-echo "core: tpm2-kira $(cat "$here/app/libs/CORE_COMMIT" 2>/dev/null || echo '?')"
+echo "core: kira $(cat "$here/app/libs/CORE_COMMIT" 2>/dev/null || echo '?')"
 
 cd "$here"
 step "2. JVM unit tests, lint, the release APK"
@@ -184,7 +184,7 @@ run instrumented ./gradlew --quiet connectedDebugAndroidTest
 keep_results instrumented
 
 if $swtpm; then
-    step "6. against a tpm2-kira machine on swtpm"
+    step "6. against a kira machine on swtpm"
     rm -rf app/build/outputs/androidTest-results
     run swtpm "$here/scripts/test-swtpm.sh"
     keep_results swtpm

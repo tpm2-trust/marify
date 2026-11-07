@@ -37,7 +37,7 @@ import java.security.SecureRandom
 import kotlin.concurrent.thread
 
 /**
- * The app's session code and the real Go core against a tpm2-kira machine on
+ * The app's session code and the real Go core against a kira machine on
  * a software TPM (swtpm): real EK and AK, real TPM2_Quote, real
  * ActivateCredential, the attestation blob written to NV with PolicySigned.
  *

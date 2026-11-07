@@ -164,7 +164,7 @@ actor SessionRunner {
         switch l.info.check(expectedMode: expected, coreProtocol: coreProtocol, coreSchema: coreSchema) {
         case .ok: break
         case .updateNeeded(let appTooOld):
-            let who = appTooOld ? "this app" : "tpm2-kira on the machine"
+            let who = appTooOld ? "this app" : "kira on the machine"
             await end(.failed(kind: .updateNeeded, code: 0, message: "please update \(who)"))
             return true
         case .wrongMode(let actual):

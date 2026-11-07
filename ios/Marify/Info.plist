@@ -23,7 +23,7 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Marify talks to your Linux machine over Bluetooth Low Energy to check what it booted. It only looks for tpm2-kira machines.</string>
+	<string>Marify talks to your Linux machine over Bluetooth Low Energy to check what it booted. It only looks for kira machines.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Every receipt is signed with a key that needs a fresh unlock.</string>
 	<key>UIBackgroundModes</key>

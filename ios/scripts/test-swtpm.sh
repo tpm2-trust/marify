@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Runs the app's session code and Go core against a tpm2-kira machine on a
+# Runs the app's session code and Go core against a kira machine on a
 # software TPM (swtpm), isolated from the regular test suite:
 #
-#   1. starts TestAppMachine (tpm2-kira cmd/attest_app_test.go, build tag
+#   1. starts TestAppMachine (kira cmd/attest_app_test.go, build tag
 #      apptest) on this Mac: swtpm + the real tpmBackend, served over TCP
 #   2. runs only MarifyTests/SwtpmMachineSessionTest in the simulator, which
 #      shares the Mac's network, with MARIFY_SWTPM set to the control port
@@ -10,13 +10,13 @@
 #
 # Needs: go, swtpm (brew install swtpm), Xcode with an iOS simulator,
 # Marify.xcodeproj (xcodegen generate) and the frameworks (build-core.sh).
-# Environment: KIRA_SRC (tpm2-kira checkout, default ../../tpm2-kira),
+# Environment: KIRA_SRC (kira checkout, default ../../kira),
 #              KIRA_SWTPM_PORT (control port, default 7317; data = port + 1),
 #              MARIFY_SIMULATOR (destination name, default "iPhone 16").
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")/.." && pwd)"
-src="$(cd "${KIRA_SRC:-$here/../../tpm2-kira}" && pwd)"
+src="$(cd "${KIRA_SRC:-$here/../../kira}" && pwd)"
 port="${KIRA_SWTPM_PORT:-7317}"
 sim="${MARIFY_SIMULATOR:-iPhone 16}"
 log="$here/build/swtpm-machine.log"

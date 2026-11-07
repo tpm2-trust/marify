@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the Go core for the iOS app from the tpm2-kira commit pinned in
+# Builds the Go core for the iOS app from the kira commit pinned in
 # ../core.properties (shared with the Android app):
 #
 #   Frameworks/Kiracore.xcframework       mobile/kiracore                 -> Release
@@ -11,7 +11,7 @@
 # it. Each `gomobile bind` run embeds its own full Go runtime, and linking
 # two independently bound libraries into one process crashes (SIGSEGV
 # inside the cgo stack-switch trampoline, a few seconds after the first
-# call that reaches the second runtime) -- see tpm2-kira's
+# call that reaches the second runtime) -- see kira's
 # mobile/kiratest package doc. The module both frameworks expose to Swift
 # is named "Kiracore" either way (gomobile bakes that in from -o at build
 # time, not from the file's name on disk), so `import Kiracore` resolves
@@ -22,8 +22,8 @@
 # Go >= 1.24 and a network connection for the first run.
 #
 # Environment:
-#   KIRA_SRC  local tpm2-kira checkout to take the commit from
-#             (default: ../../tpm2-kira next to this repository, else a
+#   KIRA_SRC  local kira checkout to take the commit from
+#             (default: ../../kira next to this repository, else a
 #             fresh clone of kira.repo)
 set -euo pipefail
 
@@ -45,7 +45,7 @@ done
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
-src="${KIRA_SRC:-$here/../../tpm2-kira}"
+src="${KIRA_SRC:-$here/../../kira}"
 if [[ -d "$src/.git" ]]; then
     git -C "$src" cat-file -e "$commit^{commit}" 2>/dev/null || git -C "$src" fetch --quiet "$repo" "$commit"
     git clone --quiet --shared --no-checkout "$src" "$work/src"
@@ -53,16 +53,16 @@ else
     git clone --quiet --no-checkout "$repo" "$work/src"
 fi
 git -C "$work/src" checkout --quiet "$commit"
-echo "tpm2-kira $commit"
+echo "kira $commit"
 
-# The core is a module of its own in tpm2-kira's repository (core/): it
+# The core is a module of its own in kira's repository (core/): it
 # requires go-tpm, x/crypto and tpm2-verifier (the EK root store), nothing
-# of tpm2-kira or aSSH. Each submodule the core's go.mod replaces with
-# ../<path> - and only those - at the commit tpm2-kira records, from the
+# of kira or aSSH. Each submodule the core's go.mod replaces with
+# ../<path> - and only those - at the commit kira records, from the
 # checkout's submodule when it has that commit, else from its URL.
 for sub in $(sed -n 's#^replace [^ ]* => \.\./\([^ ]*\)$#\1#p' "$work/src/core/go.mod"); do
     sha="$(git -C "$work/src" ls-tree "$commit" "$sub" | awk '$1 == "160000" {print $3}')"
-    [[ -n "$sha" ]] || { echo "the core replaces with ../$sub, which tpm2-kira $commit has no submodule for" >&2; exit 1; }
+    [[ -n "$sha" ]] || { echo "the core replaces with ../$sub, which kira $commit has no submodule for" >&2; exit 1; }
     if [[ -d "$src/.git" ]] && git -C "$src/$sub" cat-file -e "$sha^{commit}" 2>/dev/null; then
         git clone --quiet --shared --no-checkout "$src/$sub" "$work/src/$sub"
         git -C "$work/src/$sub" checkout --quiet "$sha"
@@ -94,4 +94,4 @@ mv "$work/Kiracore.xcframework" "$here/Frameworks/KiracoreDebug.xcframework"
 
 echo "slices (project.yml expects ios-arm64 and ios-arm64_x86_64-simulator):"
 ls "$here/Frameworks/KiracoreDebug.xcframework" | grep -v Info.plist
-echo "built from tpm2-kira $commit with golang.org/x/mobile $mobile_ver"
+echo "built from kira $commit with golang.org/x/mobile $mobile_ver"

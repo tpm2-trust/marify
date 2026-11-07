@@ -18,7 +18,7 @@ fun signingValue(env: String, prop: String): String? =
 val releaseStoreFile = signingValue("KIRA_KEYSTORE", "storeFile")
 
 // What this build is, for the version line on the machines screen and the system's app info:
-// this checkout's commit, marked when it holds changes, and the tpm2-kira commit scripts/build-core.sh
+// this checkout's commit, marked when it holds changes, and the kira commit scripts/build-core.sh
 // actually linked (app/libs/CORE_COMMIT), which core.properties only asks for.
 fun git(vararg args: String): String = runCatching {
     providers.exec {
@@ -48,7 +48,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // The swtpm machine tests (androidTest app.marify.swtpm) need a host-side
         // machine; they run only through scripts/test-swtpm.sh (-Pkira.swtpm). The VM
-        // test runs only through tpm2-kira's tools/phone-vm-test.py, which starts it by
+        // test runs only through kira's tools/phone-vm-test.py, which starts it by
         // name: marked @RunByPhoneVmTest, left out of every Gradle run.
         if (!project.hasProperty("kira.swtpm")) {
             testInstrumentationRunnerArguments["notPackage"] = "app.marify.swtpm"

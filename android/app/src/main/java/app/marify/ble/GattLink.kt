@@ -26,7 +26,7 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * One GATT connection to a tpm2-kira machine (PROTOCOL-BLE.md §3.3).
+ * One GATT connection to a kira machine (PROTOCOL-BLE.md §3.3).
  *
  * No bonding, no encrypted characteristics: the link is an untrusted pipe and
  * the Noise session inside the core provides all security (§3.6). Pairing
@@ -162,12 +162,12 @@ class GattLink private constructor(private val device: BluetoothDevice) : Link {
             throw LinkException("service discovery failed")
         }
         val service = g.getService(KiraCore.SERVICE_UUID)
-            ?: throw LinkException("the device does not offer the tpm2-kira service")
+            ?: throw LinkException("the device does not offer the kira service")
         val rxChar = service.getCharacteristic(KiraCore.RX_UUID)
         val txChar = service.getCharacteristic(KiraCore.TX_UUID)
         val infoChar = service.getCharacteristic(KiraCore.INFO_UUID)
         if (rxChar == null || txChar == null || infoChar == null) {
-            throw LinkException("the tpm2-kira service is incomplete")
+            throw LinkException("the kira service is incomplete")
         }
         rx = rxChar
         if (rxChar.properties and BluetoothGattCharacteristic.PROPERTY_WRITE == 0) {

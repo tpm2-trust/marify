@@ -15,7 +15,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
-/** One tpm2-kira advertisement: the device and its 13-byte service data. */
+/** One kira advertisement: the device and its 13-byte service data. */
 class Advertisement(
     val device: BluetoothDevice,
     val serviceData: ByteArray,
@@ -29,7 +29,7 @@ class Advertisement(
 }
 
 /**
- * Active scan, filtered by the tpm2-kira service UUID only (PROTOCOL-BLE.md
+ * Active scan, filtered by the kira service UUID only (PROTOCOL-BLE.md
  * §13.4). Which results are shown is decided by the caller with
  * [KiraCore.matchAdvertisement] (§2.3).
  */

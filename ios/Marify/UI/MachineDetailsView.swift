@@ -40,7 +40,7 @@ struct MachineDetailsView: View {
                         Text("Kept on this phone since \(kept). Only the machine's TPM can open it.")
                             .accessibilityIdentifier("factor")
                     } else {
-                        Text("None kept. Run \"tpm2-kira phone salt enrol\" on the machine to add one.")
+                        Text("None kept. Run \"kira phone salt enrol\" on the machine to add one.")
                             .accessibilityIdentifier("factor")
                     }
                 }
@@ -74,7 +74,7 @@ struct MachineDetailsView: View {
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("This phone forgets the machine and destroys its key. On the machine, also run: sudo tpm2-kira phone unenrol")
+                Text("This phone forgets the machine and destroys its key. On the machine, also run: sudo kira phone unenrol")
             }
         } else {
             Color.clear.onAppear(perform: onBack)
