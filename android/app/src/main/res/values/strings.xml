@@ -229,6 +229,7 @@
     <string name="sha1_bank_body">SHA-1 is broken against collisions, so these registers prove less than on SHA-256. Seal the slot on SHA-256 if this TPM has that bank.</string>
     <string name="secure_boot_not_established">Secure Boot could not be established</string>
     <string name="secure_boot_not_established_body">The TPM\'s quote and the event log do not show that Secure Boot is on: take it as off (%1$s).</string>
+    <string name="secure_boot_not_established_body_plain">The TPM\'s quote and the event log do not show that Secure Boot is on: take it as off.</string>
     <string name="warning_unknown">Note: %1$s</string>
 
     <!-- Unlock prompts (biometric or screen lock) -->

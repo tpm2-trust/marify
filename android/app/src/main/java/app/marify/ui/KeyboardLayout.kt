@@ -5,7 +5,7 @@ import android.view.WindowManager
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,12 +24,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import app.marify.R
 
 /**
@@ -97,13 +97,27 @@ private fun Key(key: Char, types: Char, modifier: Modifier) {
         modifier.aspectRatio(1.3f).testTag("key_$key"),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
     ) {
-        Box(Modifier.fillMaxSize().padding(4.dp)) {
-            Text(key.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.align(Alignment.TopStart))
+        BoxWithConstraints(Modifier.fillMaxSize().padding(4.dp)) {
+            // The character the key types is sized from the key itself, never cut off: a narrow
+            // screen or a large system font would otherwise clip it, and a misread character is a
+            // wrong pepper typed at the machine. In pixels of the key, so the font scale does not
+            // push it out again.
+            val density = LocalDensity.current
+            val big = with(density) { (maxHeight * 0.55f).toSp() }
+            val small = with(density) { (maxHeight * 0.28f).toSp() }
+            Text(
+                key.uppercase(),
+                fontSize = small,
+                lineHeight = small,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.TopStart),
+            )
             Text(
                 types.toString(),
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Bold,
-                fontSize = 26.sp,
+                fontSize = big,
+                lineHeight = big,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.align(Alignment.Center).testTag("types_$key"),
             )

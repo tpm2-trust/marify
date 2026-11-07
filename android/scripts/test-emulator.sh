@@ -187,9 +187,10 @@ if $swtpm; then
 fi
 
 step "7. summary"
-python3 - "$out" <<'EOF'
+if python3 - "$out" <<'EOF'
 import glob, os, sys, xml.etree.ElementTree as ET
 out = sys.argv[1]
+total_bad = 0
 for suite in ("unit", "instrumented", "swtpm"):
     files = glob.glob(os.path.join(out, suite, "**", "*.xml"), recursive=True)
     if not files:
@@ -198,13 +199,25 @@ for suite in ("unit", "instrumented", "swtpm"):
     for f in files:
         for tc in ET.parse(f).getroot().iter("testcase"):
             n += 1
-            if tc.find("failure") is not None or tc.find("error") is not None:
+            problem = tc.find("failure") if tc.find("failure") is not None else tc.find("error")
+            if problem is not None and "AssumptionViolatedException" in (problem.text or "") + (problem.get("type") or ""):
+                skipped += 1  # the test says it does not apply here: no failure
+            elif problem is not None:
                 bad += 1
                 print(f"  FAIL {suite}: {tc.get('classname', '').split('.')[-1]}.{tc.get('name')}")
             elif tc.find("skipped") is not None:
                 skipped += 1
     print(f"{suite:13} {n:3} tests, {bad} failed, {skipped} skipped")
+    total_bad += bad
+# A failed test fails the run, whatever its step's exit status said.
+sys.exit(1 if total_bad else 0)
 EOF
+then
+    summary_ok=true
+else
+    summary_ok=false
+fi
+$summary_ok || failed+=("a test in the results")
 if ((${#failed[@]})); then
     echo "FAILED: ${failed[*]} - app/build/test-emulator/"
     exit 1

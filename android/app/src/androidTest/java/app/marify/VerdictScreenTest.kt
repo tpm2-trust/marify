@@ -248,5 +248,8 @@ class VerdictScreenTest {
     @Test fun secureBootNotSaidIsRed() {
         show("""{"type":"verdict","needs_decision":true,"verdict":{"ok":true,"state":"match","boot_key":"proved","code":"K7QM-2XHD"}}""")
         rule.onNodeWithTag("secure_boot_red_not_established").assertIsDisplayed()
+        // No reason given: no empty brackets.
+        rule.onNodeWithText("take it as off.", substring = true).assertIsDisplayed()
+        rule.onNodeWithText("()", substring = true).assertDoesNotExist()
     }
 }

@@ -376,7 +376,10 @@ struct SecureBootCard: View {
                     Text("The TPM's quote and the event log show it: nothing checks this machine's boot loader and kernel, and anything running on it can replace its keys.")
                 default:
                     Text("Secure Boot could not be established").font(.headline)
-                    Text("The TPM's quote and the event log do not show that Secure Boot is on: take it as off (\(state.detail)).")
+                    // Without a reason the sentence ends without one, not with empty brackets.
+                    Text(state.detail.isEmpty
+                        ? "The TPM's quote and the event log do not show that Secure Boot is on: take it as off."
+                        : "The TPM's quote and the event log do not show that Secure Boot is on: take it as off (\(state.detail)).")
                 }
             }
             .accessibilityIdentifier("secure_boot_red_" + state.state)

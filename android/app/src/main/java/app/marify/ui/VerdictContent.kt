@@ -278,7 +278,10 @@ internal fun SecureBootCard(s: SecureBoot) {
     val (title, body) = when (s.state) {
         SecureBoot.OFF -> stringResource(R.string.secure_boot_off) to stringResource(R.string.secure_boot_off_body)
         SecureBoot.SETUP_MODE -> stringResource(R.string.secure_boot_setup_mode) to stringResource(R.string.secure_boot_setup_mode_body)
-        else -> stringResource(R.string.secure_boot_not_established) to stringResource(R.string.secure_boot_not_established_body, s.detail)
+        // Without a reason the sentence ends without one, not with empty brackets.
+        else -> stringResource(R.string.secure_boot_not_established) to
+            if (s.detail.isBlank()) stringResource(R.string.secure_boot_not_established_body_plain)
+            else stringResource(R.string.secure_boot_not_established_body, s.detail)
     }
     Card(
         Modifier.fillMaxWidth().testTag("secure_boot_red_" + s.state),
