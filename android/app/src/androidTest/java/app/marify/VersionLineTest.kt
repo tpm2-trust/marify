@@ -6,7 +6,6 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.marify.core.KiraCore
-import app.marify.ui.MarifyTheme
 import app.marify.ui.VersionLine
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -21,7 +20,7 @@ class VersionLineTest {
 
     /** The app's commit, the core it linked, and what that core speaks. */
     @Test fun saysWhatThisBuildIs() {
-        rule.setContent { MarifyTheme { VersionLine() } }
+        rule.setContent { ScreenFrame { VersionLine() } }
         rule.onNodeWithTag("version_line").assertIsDisplayed().assertTextEquals(
             "Marify ${BuildConfig.VERSION_NAME} · core ${BuildConfig.CORE_COMMIT} · " +
                 "protocol ${KiraCore.protocolVersion} · schema ${KiraCore.schemaVersion}",

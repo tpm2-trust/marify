@@ -12,7 +12,6 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.marify.core.Decision
 import app.marify.core.Event
-import app.marify.ui.MarifyTheme
 import app.marify.ui.VerdictContent
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -31,7 +30,7 @@ class VerdictScreenTest {
     private fun show(json: String, lastAttested: String? = null) {
         val e = Event.parse(json) as Event.VerdictEvent
         rule.setContent {
-            MarifyTheme {
+            ScreenFrame {
                 VerdictContent(
                     event = e,
                     machineName = "Thinkpad-X1",
@@ -105,7 +104,7 @@ class VerdictScreenTest {
                "boot_key":"proved","code":"K7QM-2XHD"}}""",
         ) as Event.VerdictEvent
         rule.setContent {
-            MarifyTheme {
+            ScreenFrame {
                 VerdictContent(
                     event = e, machineName = "Demo", lastAttested = null, decisionEnabled = true,
                     eventlogRequested = false, eventlog = null, onDecide = { _, _ -> }, onRequestEventlog = {},
@@ -195,7 +194,7 @@ class VerdictScreenTest {
                "secure_boot":{"state":"on"},"sha1_bank":true}}""",
         ) as Event.VerdictEvent
         rule.setContent {
-            MarifyTheme {
+            ScreenFrame {
                 VerdictContent(
                     event = verdict, machineName = "Thinkpad-X1", lastAttested = null, decisionEnabled = true,
                     eventlogRequested = false, eventlog = null, onDecide = { _, _ -> }, onRequestEventlog = {},
@@ -216,7 +215,7 @@ class VerdictScreenTest {
                "secure_boot":{"state":"$state","detail":"$detail"}}}""",
         ) as Event.VerdictEvent }
         rule.setContent {
-            MarifyTheme {
+            ScreenFrame {
                 VerdictContent(
                     event = verdict(), machineName = "Thinkpad-X1", lastAttested = null, decisionEnabled = true,
                     eventlogRequested = false, eventlog = null, onDecide = { _, _ -> }, onRequestEventlog = {},

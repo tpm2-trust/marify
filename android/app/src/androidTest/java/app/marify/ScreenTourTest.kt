@@ -6,7 +6,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.marify.ui.KeyboardLayoutView
-import app.marify.ui.MarifyTheme
 import app.marify.ui.OnboardingScreen
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -24,13 +23,13 @@ class ScreenTourTest {
     @get:Rule(order = 1) val screen = ScreenshotRule(rule)
 
     @Test fun onboarding() {
-        rule.setContent { MarifyTheme { OnboardingScreen(onReady = {}) } }
+        rule.setContent { ScreenFrame { OnboardingScreen(onReady = {}) } }
         rule.waitForIdle()
     }
 
     @Test fun keyboardLayout() {
         val keys = "abcdefghijklmnopqrstuvwxyz0123456789"
-        rule.setContent { MarifyTheme { KeyboardLayoutView(keys, keys.reversed(), onClose = {}) } }
+        rule.setContent { ScreenFrame { KeyboardLayoutView(keys, keys.reversed(), onClose = {}) } }
         rule.onNodeWithTag("keyboard_layout").assertIsDisplayed()
         // Portrait, the narrowest a key gets: every character the key types fits inside its key.
         for (k in keys) {
