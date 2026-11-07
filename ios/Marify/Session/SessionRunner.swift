@@ -428,8 +428,10 @@ actor SessionRunner {
             await update { $0.eventlog = l }
         case .receiptAck(let result, let message):
             await update { $0.receiptAck = (result, message) }
-        case .keyboardKeys(let keys):
-            await update { $0.keyboardKeys = keys }
+        case .keyboardLayout(let keys, let layout):
+            if !keys.isEmpty && keys.count == layout.count {
+                await update { $0.keyboardLayout = KeyboardLayoutShown(keys: keys, layout: layout) }
+            }
         case .releaseAck(let status, let message):
             await update { $0.releaseAck = (status, message) }
         case .recordUpdated(let json):

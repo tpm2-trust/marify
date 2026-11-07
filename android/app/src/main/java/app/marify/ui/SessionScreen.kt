@@ -85,8 +85,16 @@ fun SessionScreen(manager: SessionManager, onClose: () -> Unit) {
         )
     }
 
+    // The layout opens on its own once it is here, and again from its card.
+    var layoutOpen by rememberSaveable(state.keyboardLayout) { mutableStateOf(state.keyboardLayout != null) }
+    state.keyboardLayout?.takeIf { layoutOpen }?.let {
+        KeyboardLayoutScreen(it.keys, it.layout, onClose = { layoutOpen = false })
+        return
+    }
+
     SessionContent(
         state = state,
+        onShowLayout = { layoutOpen = true },
         canRetry = manager.canRetry,
         demoScreenCode = if (state.verdict != null) manager.demoScreenCode() else null,
         onConfirmSas = r::confirmSas,
@@ -111,6 +119,7 @@ fun SessionContent(
     onRetry: () -> Unit,
     onDone: () -> Unit,
     onStop: () -> Unit = {},
+    onShowLayout: () -> Unit = {},
 ) {
     val name = state.machineName ?: stringResource(R.string.a_machine)
     Column(
@@ -175,9 +184,9 @@ fun SessionContent(
             }
         }
 
-        state.keyboardKeys?.let { KeyboardKeysCard(it) }
+        state.keyboardLayout?.let { KeyboardLayoutCard(onShowLayout) }
 
-        state.releaseAck?.takeIf { state.keyboardKeys == null }?.let { ack ->
+        state.releaseAck?.takeIf { state.keyboardLayout == null }?.let { ack ->
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 Column {
@@ -372,25 +381,5 @@ private fun Progress(text: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         CircularProgressIndicator(Modifier.size(28.dp))
         Text(text, style = MaterialTheme.typography.titleMedium)
-    }
-}
-
-/**
- * The keys to press at the machine for a salt typed through a one-time keyboard: what the machine's
- * prompt takes for the salt this boot. Worth nothing in a recording, or in any other boot.
- */
-@Composable
-internal fun KeyboardKeysCard(keys: String) {
-    Card(Modifier.fillMaxWidth().testTag("keyboard_keys_card")) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.keyboard_keys_title), style = MaterialTheme.typography.titleMedium)
-            Text(
-                keys.chunked(4).joinToString(" "),
-                style = MaterialTheme.typography.headlineMedium,
-                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                modifier = Modifier.testTag("keyboard_keys"),
-            )
-            Text(stringResource(R.string.keyboard_keys_body), style = MaterialTheme.typography.bodySmall)
-        }
     }
 }

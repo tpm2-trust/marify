@@ -49,11 +49,12 @@ final class EventParseTests: XCTestCase {
         XCTAssertFalse(v.verdict.secureBoot.red)
     }
 
-    func testKeyboardKeysAreAnEventOfTheirOwn() throws {
-        guard case .keyboardKeys(let keys) = try Event.parse(#"{"type":"keyboard_keys","keys":"abcd2345"}"#) else {
-            return XCTFail("not the keys")
+    func testKeyboardLayoutIsAnEventOfItsOwn() throws {
+        guard case .keyboardLayout(let keys, let layout) = try Event.parse(#"{"type":"keyboard_layout","keyboard_keys":"abc","layout":"cab"}"#) else {
+            return XCTFail("not the layout")
         }
-        XCTAssertEqual(keys, "abcd2345")
+        XCTAssertEqual(keys, "abc")
+        XCTAssertEqual(layout, "cab")
     }
 
     func testVerdictWithoutBootKeyIsUnused() throws {

@@ -386,7 +386,9 @@ class SessionRunner(
             is Event.Eventlog -> _state.update { it.copy(eventlog = e) }
             is Event.ReceiptAck -> _state.update { it.copy(receiptAck = e) }
             is Event.ReleaseAck -> _state.update { it.copy(releaseAck = e) }
-            is Event.KeyboardKeys -> _state.update { it.copy(keyboardKeys = e.keys) }
+            is Event.KeyboardLayout -> if (e.keys.length == e.layout.length && e.keys.isNotEmpty()) {
+                _state.update { it.copy(keyboardLayout = e) }
+            }
             is Event.RecordUpdated -> try {
                 records.replace(e.recordJson)
             } catch (ex: Exception) {

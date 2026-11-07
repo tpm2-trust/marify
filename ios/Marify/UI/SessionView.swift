@@ -111,8 +111,8 @@ struct SessionContent: View {
                     }
                 }
 
-                if let keys = state.keyboardKeys {
-                    KeyboardKeysCard(keys: keys)
+                if let layout = state.keyboardLayout {
+                    KeyboardLayoutCard(layout: layout)
                 } else if let ack = state.releaseAck {
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor)
@@ -289,25 +289,3 @@ struct Progress: View {
     }
 }
 
-/// The keys to press at the machine for a salt typed through a one-time keyboard: what the machine's
-/// prompt takes for the salt this boot. Worth nothing in a recording, or in any other boot.
-struct KeyboardKeysCard: View {
-    let keys: String
-
-    private var grouped: String {
-        stride(from: 0, to: keys.count, by: 4).map { start in
-            let from = keys.index(keys.startIndex, offsetBy: start)
-            let to = keys.index(from, offsetBy: min(4, keys.count - start))
-            return String(keys[from..<to])
-        }.joined(separator: " ")
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Press these keys at the machine").font(.headline)
-            Text(grouped).font(.system(.title, design: .monospaced)).accessibilityIdentifier("keyboard_keys")
-            Text("At the machine's prompt for the keys, without the spaces. They hold for this boot alone and are not your salt: a recording of them is no use, and the next boot asks for others.").font(.footnote)
-        }
-        .accessibilityIdentifier("keyboard_keys_card")
-    }
-}

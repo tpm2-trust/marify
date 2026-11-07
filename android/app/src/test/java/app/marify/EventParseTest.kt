@@ -188,9 +188,9 @@ class EventParseTest {
         ) as Event.NeedAnchorKey).sha1Bank)
     }
 
-    @Test fun keyboardKeysAreAnEventOfTheirOwn() {
-        val e = Event.parse("""{"type":"keyboard_keys","keys":"abcd2345"}""")
-        assertEquals("abcd2345", (e as Event.KeyboardKeys).keys)
+    @Test fun keyboardLayoutIsAnEventOfItsOwn() {
+        val e = Event.parse("""{"type":"keyboard_layout","keyboard_keys":"abc","layout":"cab"}""")
+        assertEquals(Event.KeyboardLayout("abc", "cab"), e)
     }
 
     @Test fun enrolmentCarriesSecureBoot() {

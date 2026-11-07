@@ -15,6 +15,7 @@ import app.marify.session.SessionMode
 import app.marify.session.SessionState
 import app.marify.ui.MarifyTheme
 import app.marify.ui.SessionContent
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -111,12 +112,27 @@ class SessionScreenTest {
         rule.onNodeWithTag("bind").assertIsDisplayed()
     }
 
-    /** The keys in groups for the eye; the machine's prompt takes them without the spaces. */
-    @Test fun keyboardKeysAreShown() {
-        rule.setContent { app.marify.ui.MarifyTheme { app.marify.ui.KeyboardKeysCard("abcd2345") } }
-        rule.onNodeWithTag("keyboard_keys_card").assertIsDisplayed()
-        rule.onNodeWithTag("keyboard_keys").assertTextEquals("abcd 2345")
-        rule.onNodeWithText("Press these keys at the machine").assertIsDisplayed()
+    /** Every key of the US rows shows what it types in this layout; Close closes. */
+    @Test fun keyboardLayoutIsShown() {
+        val keys = "abcdefghijklmnopqrstuvwxyz0123456789"
+        val layout = keys.reversed()
+        var closed = false
+        rule.setContent { app.marify.ui.MarifyTheme { app.marify.ui.KeyboardLayoutView(keys, layout, onClose = { closed = true }) } }
+        rule.onNodeWithTag("keyboard_layout").assertIsDisplayed()
+        for ((i, k) in keys.withIndex()) {
+            rule.onNodeWithTag("types_$k").assertTextEquals(layout[i].toString())
+        }
+        rule.onNodeWithTag("keyboard_layout_close").performClick()
+        rule.runOnIdle { assertTrue(closed) }
+    }
+
+    /** On the session's screen the layout's card opens it again. */
+    @Test fun keyboardLayoutCardShowsIt() {
+        var shown = false
+        rule.setContent { app.marify.ui.MarifyTheme { app.marify.ui.KeyboardLayoutCard(onShow = { shown = true }) } }
+        rule.onNodeWithTag("keyboard_layout_card").assertIsDisplayed()
+        rule.onNodeWithTag("keyboard_layout_show").performClick()
+        rule.runOnIdle { assertTrue(shown) }
     }
 
     @Test fun bindWarnsAboutTheSHA1Bank() {
