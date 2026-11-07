@@ -10,7 +10,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.marify.ui.EnrolContent
-import app.marify.ui.MarifyTheme
 import app.marify.ui.WaitingMachine
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -31,7 +30,7 @@ class EnrolScreenTest {
     private var demoEnrolled = false
 
     private fun show(waiting: List<WaitingMachine>, debugBuild: Boolean, demoAvailable: Boolean) = rule.setContent {
-        MarifyTheme {
+        ScreenFrame {
             var showDemo by remember { mutableStateOf(false) }
             EnrolContent(
                 waiting = waiting, debugBuild = debugBuild, demoAvailable = demoAvailable,

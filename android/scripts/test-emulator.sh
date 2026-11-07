@@ -16,7 +16,8 @@
 #   7. a summary from the JUnit results; the emulator is stopped
 #
 # The exit status is 0 only when every step passed. Results and logs:
-# app/build/test-emulator/.
+# app/build/test-emulator/; the screens the UI tests ended on in
+# app/build/test-emulator/instrumented/screens/.
 #
 # Options:  --no-swtpm       leave out step 6 (no go/swtpm on this host)
 #           --no-core        use the core in app/libs as it is (CORE_COMMIT)
@@ -86,10 +87,14 @@ run() {
         failed+=("$name")
     fi
 }
-# keep_results NAME: the instrumented results of the last run, kept under NAME.
+# keep_results NAME: the instrumented results of the last run, kept under NAME,
+# with the screens the UI tests ended on (ScreenshotRule) in NAME/screens: the
+# next Gradle run clears the build's outputs.
 keep_results() {
-    mkdir -p "$out/$1"
+    mkdir -p "$out/$1/screens"
     cp -r "$here/app/build/outputs/androidTest-results/connected/." "$out/$1/" 2>/dev/null || true
+    find "$here/app/build/outputs/connected_android_test_additional_output" -name '*.png' \
+        -exec cp {} "$out/$1/screens/" \; 2>/dev/null || true
 }
 
 if $core; then

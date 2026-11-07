@@ -13,7 +13,6 @@ import app.marify.session.Outcome
 import app.marify.session.Phase
 import app.marify.session.SessionMode
 import app.marify.session.SessionState
-import app.marify.ui.MarifyTheme
 import app.marify.ui.SessionContent
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -26,7 +25,7 @@ class SessionScreenTest {
     @get:Rule(order = 1) val screen = ScreenshotRule(rule)
 
     private fun show(state: SessionState, onStop: () -> Unit = {}) = rule.setContent {
-        MarifyTheme {
+        ScreenFrame {
             SessionContent(
                 state = state, canRetry = true,
                 onConfirmSas = {}, onDecide = { _, _ -> }, onRequestEventlog = {}, onRetry = {}, onDone = {},
@@ -118,7 +117,7 @@ class SessionScreenTest {
         val keys = "abcdefghijklmnopqrstuvwxyz0123456789"
         val layout = keys.reversed()
         var closed = false
-        rule.setContent { app.marify.ui.MarifyTheme { app.marify.ui.KeyboardLayoutView(keys, layout, onClose = { closed = true }) } }
+        rule.setContent { ScreenFrame { app.marify.ui.KeyboardLayoutView(keys, layout, onClose = { closed = true }) } }
         rule.onNodeWithTag("keyboard_layout").assertIsDisplayed()
         for ((i, k) in keys.withIndex()) {
             rule.onNodeWithTag("types_$k").assertTextEquals(layout[i].toString())
@@ -130,7 +129,7 @@ class SessionScreenTest {
     /** On the session's screen the layout's card opens it again. */
     @Test fun keyboardLayoutCardShowsIt() {
         var shown = false
-        rule.setContent { app.marify.ui.MarifyTheme { app.marify.ui.KeyboardLayoutCard(onShow = { shown = true }) } }
+        rule.setContent { ScreenFrame { app.marify.ui.KeyboardLayoutCard(onShow = { shown = true }) } }
         rule.onNodeWithTag("keyboard_layout_card").assertIsDisplayed()
         rule.onNodeWithTag("keyboard_layout_show").performClick()
         rule.runOnIdle { assertTrue(shown) }
