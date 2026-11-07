@@ -44,6 +44,7 @@ import java.io.File
  * layout_keys=, layout=, outcome=.
  */
 @RunWith(AndroidJUnit4::class)
+@RunByPhoneVmTest
 class RealMachineTest {
 
     private lateinit var stage: String

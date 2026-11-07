@@ -22,7 +22,8 @@ import org.junit.runner.RunWith
 /** The three verdict screens of PROTOCOL-BLE.md §10.4, from fixed core JSON. */
 @RunWith(AndroidJUnit4::class)
 class VerdictScreenTest {
-    @get:Rule val rule = createComposeRule()
+    @get:Rule(order = 0) val rule = createComposeRule()
+    @get:Rule(order = 1) val screen = ScreenshotRule(rule)
 
     private val decisions = mutableListOf<Pair<Decision, String>>()
     private var eventlogRequests = 0
@@ -247,5 +248,8 @@ class VerdictScreenTest {
     @Test fun secureBootNotSaidIsRed() {
         show("""{"type":"verdict","needs_decision":true,"verdict":{"ok":true,"state":"match","boot_key":"proved","code":"K7QM-2XHD"}}""")
         rule.onNodeWithTag("secure_boot_red_not_established").assertIsDisplayed()
+        // No reason given: no empty brackets.
+        rule.onNodeWithText("take it as off.", substring = true).assertIsDisplayed()
+        rule.onNodeWithText("()", substring = true).assertDoesNotExist()
     }
 }
