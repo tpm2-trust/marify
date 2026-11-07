@@ -152,3 +152,18 @@ Isolation:
 
 The machine runs from the tpm2-kira working tree, the app's core from the
 commit in `../core.properties`; keep them on the same protocol version.
+
+## 6. Against a real tpm2-kira machine over simulated Bluetooth (a VM)
+
+`tools/phone-vm-test.py` in tpm2-kira runs this app's real BLE code - `BleScanner`, `GattLink`, the
+session and the core - against a test VM with the real tpm2-kira package, both on the emulator's
+simulated Bluetooth (netsimd's HCI socket, the VM's COM3 through `btattach`). It builds the debug app
+and its instrumented tests, starts an emulator of its own (AVD `marify-vmtest`, wiped data), installs
+both with their Bluetooth permissions, and drives `app.marify.vm.RealMachineTest` stage by stage with
+`adb shell am instrument -e vm STAGE` while tpm2-kira's `vmtest.py` drives the machine. tpm2-kira's
+docs/TESTING.md, "The phone against a VM", says what it checks.
+
+Isolation: test sources only (`androidTest/…/vm/`: `RealMachineTest`, `FileAnchorKeys`, software keys
+kept in the app's files so the stages share one anchor key). The regular `connectedDebugAndroidTest`
+and the swtpm run exclude the package (`notPackage`); without the argument `vm` the test is skipped.
+It is not part of `scripts/test-emulator.sh`: both would use the one netsimd of the user.
