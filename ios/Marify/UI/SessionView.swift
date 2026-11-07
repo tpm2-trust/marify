@@ -111,7 +111,9 @@ struct SessionContent: View {
                     }
                 }
 
-                if let ack = state.releaseAck {
+                if let layout = state.keyboardLayout {
+                    KeyboardLayoutCard(layout: layout)
+                } else if let ack = state.releaseAck {
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor)
                         VStack(alignment: .leading, spacing: 4) {
@@ -286,3 +288,4 @@ struct Progress: View {
         }
     }
 }
+

@@ -49,6 +49,14 @@ final class EventParseTests: XCTestCase {
         XCTAssertFalse(v.verdict.secureBoot.red)
     }
 
+    func testKeyboardLayoutIsAnEventOfItsOwn() throws {
+        guard case .keyboardLayout(let keys, let layout) = try Event.parse(#"{"type":"keyboard_layout","keyboard_keys":"abc","layout":"cab"}"#) else {
+            return XCTFail("not the layout")
+        }
+        XCTAssertEqual(keys, "abc")
+        XCTAssertEqual(layout, "cab")
+    }
+
     func testVerdictWithoutBootKeyIsUnused() throws {
         let e = try Event.parse(#"{"type":"verdict","verdict":{"ok":true,"state":"match"}}"#)
         guard case .verdict(let v) = e else { return XCTFail("\(e)") }

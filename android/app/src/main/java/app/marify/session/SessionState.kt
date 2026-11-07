@@ -76,6 +76,8 @@ data class SessionState(
     val eventlog: Event.Eventlog? = null,
     val receiptAck: Event.ReceiptAck? = null,
     val releaseAck: Event.ReleaseAck? = null,
+    /** The one-time layout to type the pepper through, when the machine's keyslot takes one. */
+    val keyboardLayout: Event.KeyboardLayout? = null,
     /** A recoverable error from the core (the session continues). */
     val notice: String? = null,
     val outcome: Outcome? = null,

@@ -75,6 +75,8 @@ struct SessionState: Sendable, Equatable {
     var eventlog: Event.Eventlog?
     var receiptAck: (result: Int, message: String)?
     var releaseAck: (status: Int, message: String)?
+    /// The one-time layout to type the pepper through, when the machine's keyslot takes one.
+    var keyboardLayout: KeyboardLayoutShown?
     /// A recoverable error from the core (the session continues).
     var notice: String?
     var outcome: Outcome?
@@ -103,7 +105,7 @@ struct SessionState: Sendable, Equatable {
             a.bind == b.bind && a.verdict == b.verdict && a.decisionSent == b.decisionSent &&
             a.eventlogRequested == b.eventlogRequested && a.eventlog == b.eventlog &&
             a.receiptAck?.result == b.receiptAck?.result && a.receiptAck?.message == b.receiptAck?.message &&
-            a.releaseAck?.status == b.releaseAck?.status && a.releaseAck?.message == b.releaseAck?.message &&
+            a.keyboardLayout == b.keyboardLayout && a.releaseAck?.status == b.releaseAck?.status && a.releaseAck?.message == b.releaseAck?.message &&
             a.notice == b.notice && a.outcome == b.outcome
     }
 }
@@ -120,4 +122,10 @@ final class SessionStateModel {
     nonisolated init(_ initial: SessionState) { _value = initial }
 
     func set(_ s: SessionState) { value = s }
+}
+
+/// A boot's one-time keyboard layout: on the key `keys[i]` the character `layout[i]`.
+struct KeyboardLayoutShown: Sendable, Equatable {
+    let keys: String
+    let layout: String
 }

@@ -47,10 +47,10 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // The swtpm machine tests (androidTest app.marify.swtpm) need a host-side
-        // machine; they run only through scripts/test-swtpm.sh (-Pkira.swtpm).
-        if (!project.hasProperty("kira.swtpm")) {
-            testInstrumentationRunnerArguments["notPackage"] = "app.marify.swtpm"
-        }
+        // machine; they run only through scripts/test-swtpm.sh (-Pkira.swtpm). The VM
+        // test (app.marify.vm) runs only through tpm2-kira's tools/phone-vm-test.py.
+        testInstrumentationRunnerArguments["notPackage"] =
+            if (project.hasProperty("kira.swtpm")) "app.marify.vm" else "app.marify.swtpm,app.marify.vm"
     }
 
     signingConfigs {

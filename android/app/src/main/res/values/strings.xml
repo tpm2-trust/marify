@@ -219,6 +219,11 @@
     <string name="secure_boot_off_body">The TPM\'s quote and the event log show it: nothing checks this machine\'s boot loader and kernel, whatever else is on this screen.</string>
     <string name="secure_boot_setup_mode">Secure Boot is in SETUP MODE</string>
     <string name="secure_boot_setup_mode_body">The TPM\'s quote and the event log show it: nothing checks this machine\'s boot loader and kernel, and anything running on it can replace its keys.</string>
+    <string name="keyboard_layout_title">Your pepper\'s keyboard for this boot</string>
+    <string name="keyboard_layout_body">Type your pepper at the machine through this layout: for each character, press the key it is shown on (the small letter is the key). It holds for this boot alone.</string>
+    <string name="keyboard_layout_card_body">The machine asks for your pepper after the password. A recording of the keys is no use without this layout, and the next boot shows another.</string>
+    <string name="keyboard_layout_show">Show the layout</string>
+    <string name="keyboard_layout_close">Close</string>
     <string name="version_line">Marify %1$s · core %2$s · protocol %3$d · schema %4$d</string>
     <string name="sha1_bank">This machine\'s registers are checked on the SHA-1 bank</string>
     <string name="sha1_bank_body">SHA-1 is broken against collisions, so these registers prove less than on SHA-256. Seal the slot on SHA-256 if this TPM has that bank.</string>

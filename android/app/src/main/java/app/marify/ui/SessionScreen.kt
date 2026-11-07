@@ -85,8 +85,16 @@ fun SessionScreen(manager: SessionManager, onClose: () -> Unit) {
         )
     }
 
+    // The layout opens on its own once it is here, and again from its card.
+    var layoutOpen by rememberSaveable(state.keyboardLayout) { mutableStateOf(state.keyboardLayout != null) }
+    state.keyboardLayout?.takeIf { layoutOpen }?.let {
+        KeyboardLayoutScreen(it.keys, it.layout, onClose = { layoutOpen = false })
+        return
+    }
+
     SessionContent(
         state = state,
+        onShowLayout = { layoutOpen = true },
         canRetry = manager.canRetry,
         demoScreenCode = if (state.verdict != null) manager.demoScreenCode() else null,
         onConfirmSas = r::confirmSas,
@@ -111,6 +119,7 @@ fun SessionContent(
     onRetry: () -> Unit,
     onDone: () -> Unit,
     onStop: () -> Unit = {},
+    onShowLayout: () -> Unit = {},
 ) {
     val name = state.machineName ?: stringResource(R.string.a_machine)
     Column(
@@ -175,7 +184,9 @@ fun SessionContent(
             }
         }
 
-        state.releaseAck?.let { ack ->
+        state.keyboardLayout?.let { KeyboardLayoutCard(onShowLayout) }
+
+        state.releaseAck?.takeIf { state.keyboardLayout == null }?.let { ack ->
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 Column {

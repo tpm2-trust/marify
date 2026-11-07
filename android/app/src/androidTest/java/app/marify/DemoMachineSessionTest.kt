@@ -137,6 +137,30 @@ class DemoMachineSessionTest {
     }
 
     /**
+     * A phone salt with a pepper typed through the keyboard: the session that hands it over shows no
+     * layout; every boot after it shows the one the machine's TPM opened, another each time.
+     */
+    @Test fun keyboardLayoutIsTheMachines() {
+        enrol()
+        demo.enableKeyboard()
+        demo.nextBoot()
+        val handOver = session(attestMode(), 517)
+        assertEquals(Outcome.Succeeded, handOver.outcome)
+        assertEquals(null, handOver.keyboardLayout)
+        val seen = mutableListOf<String>()
+        repeat(2) {
+            demo.nextBoot()
+            val s = session(attestMode(), 517)
+            assertEquals(Outcome.Succeeded, s.outcome)
+            val shown = s.keyboardLayout
+            assertEquals("abcdefghijklmnopqrstuvwxyz0123456789", shown?.keys)
+            assertEquals(demo.keyboardLayout(), shown?.layout)
+            seen += shown!!.layout
+        }
+        assertTrue(seen[0] != seen[1])
+    }
+
+    /**
      * Every state of Secure Boot, from the real core on both sides: at enrolment and
      * at the next boot, what the phone is told comes from the quote and the events, a
      * machine showing another boot's events included.
