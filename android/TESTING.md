@@ -3,7 +3,7 @@
 ## Status (2026-11-02)
 
 `scripts/test-emulator.sh`, unattended, on a fresh emulator (API 36
-google_apis x86_64, data wiped), core from tpm2-kira `c81ea61`: ALL PASS.
+google_apis x86_64, data wiped), core from kira `c81ea61`: ALL PASS.
 
 | Check | Result |
 |---|---|
@@ -12,7 +12,7 @@ google_apis x86_64, data wiped), core from tpm2-kira `c81ea61`: ALL PASS.
 | `lintDebug`, `lintRelease`; `assembleDebug`, `assembleRelease` (AGP 9.4.1 / Gradle 9.8.0, JDK 25) | ✅ |
 | No kiratest in release (`apkanalyzer dex packages`) | ✅ 0 in release |
 | `connectedDebugAndroidTest` — demo machine, Compose UI, keystore, enrol list, permission request | ✅ 46 pass |
-| `scripts/test-swtpm.sh` — app session code + Go core against a tpm2-kira machine on swtpm (§5) | ✅ 8 pass |
+| `scripts/test-swtpm.sh` — app session code + Go core against a kira machine on swtpm (§5) | ✅ 8 pass |
 | Manual, emulator, PIN-only: onboarding, a demo enrolment and a *match* attestation signed with the keystore key (2026-10-06) | ✅ |
 | Real hardware checklist (§4) | ⏳ needs a phone and a Linux machine with Bluetooth |
 
@@ -82,15 +82,15 @@ Fill in per device:
 
 | Scenario | Pixel (StrongBox) | non-Pixel | Notes |
 |---|---|---|---|
-| `sudo tpm2-kira phone enrol` → SAS matches → bound | | | |
+| `sudo kira phone enrol` → SAS matches → bound | | | |
 | Enrol screen lists the real machine without any switch (debug build: with its warning card) | | | |
 | Machine details show StrongBox / TEE, hardware-enforced auth | | | |
-| `sudo tpm2-kira phone gate` → "asking" banner → match → receipt accepted | | | |
+| `sudo kira phone gate` → "asking" banner → match → receipt accepted | | | |
 | At boot: machine shows its code and the phone is asked at the same time → the phone shows the eight-character code and the machine's screen shows the same → "The codes match — continue" → PIN → the machine continues to the passphrase prompt | | | |
 | After the receipt the "asking for attestation" banner disappears within ten seconds (the machine stopped advertising) | | | |
 | Match: green card with the green "Signed" check; changed after a approved update: orange card with the green check; `phone gate` by hand after boot: grey "After boot" badge with the lock, no code, "the machine is up, and its TPM keeps the boot key locked until the next boot" | | | |
 | Kernel update, approved by the hook → the phone shows "changed" **with** the code (the signing key approved the new state) → approve and remember | | | |
-| `tpm2-kira phone salt enrol` → the "Keep this machine's phone salt" card → accept → details say since when it is kept; the next boot's verdict says "This phone keeps the salt…" and the button reads "The codes match — attest and return the salt" → after the receipt the session shows "Phone salt handed back" with what the machine made of it | | | |
+| `kira phone salt enrol` → the "Keep this machine's phone salt" card → accept → details say since when it is kept; the next boot's verdict says "This phone keeps the salt…" and the button reads "The codes match — attest and return the salt" → after the receipt the session shows "Phone salt handed back" with what the machine made of it | | | |
 | At boot, phone ignored: Enter (or 90 s) continues to the passphrase prompt; from then on the phone shows "not reachable" (the machine has stopped asking for this boot) | | | |
 | At boot, phone connects in the last seconds of the 90: the machine waits for the answer (up to a minute more), then continues | | | |
 | At boot, reject on the phone: the machine shows the rejection and does not continue early | | | |
@@ -99,7 +99,7 @@ Fill in per device:
 | `phone enrol` on a slot without a sealed TOTP key → refused with the `slot add` command to run | | | |
 | Kernel update → reseal hook runs → the phone is still enrolled and attests (changed, approve once) | | | |
 | `slot delete --nvram N` → slot gone whole; the phone shows the machine as not reachable | | | |
-| Machine's gate unit runs confined (`journalctl -b -u tpm2-kira-attest.service` shows no refused operation) | | | |
+| Machine's gate unit runs confined (`journalctl -b -u kira-attest.service` shows no refused operation) | | | |
 | Kernel/bootloader update → changed → approve and remember → next boot matches | | | |
 | Bluetooth off mid-session → "Connection lost", Try again | | | |
 | App killed mid-session → machine times out, next session works | | | |
@@ -112,14 +112,14 @@ Fill in per device:
 
 `scripts/test-swtpm.sh` runs `app.marify.swtpm.SwtpmMachineSessionTest`: the
 app's `SessionRunner` and the real Go core on the emulator or a phone,
-against tpm2-kira's **production machine code** (`tpmBackend`) on swtpm —
+against kira's **production machine code** (`tpmBackend`) on swtpm —
 real EK and AK, real `TPM2_Quote`, real `ActivateCredential`, the
 attestation blob written to NV with PolicySigned. Only BLE is replaced, by
 TCP through `adb reverse`.
 
 ```sh
 sudo pacman -S go swtpm          # once
-./scripts/test-swtpm.sh          # KIRA_SRC=… if tpm2-kira is not at ../../tpm2-kira
+./scripts/test-swtpm.sh          # KIRA_SRC=… if kira is not at ../../kira
 ```
 
 | Test | What happens on the machine |
@@ -134,7 +134,7 @@ sudo pacman -S go swtpm          # once
 
 Isolation:
 
-- **Machine side:** `TestAppMachine` in tpm2-kira `internal/admin/attest_app_test.go`,
+- **Machine side:** `TestAppMachine` in kira `internal/admin/attest_app_test.go`,
   build tag `apptest`; it runs only with `KIRA_APPTEST_ADDR` set. The swtpm
   helpers it shares with the `integration` suite live in
   `internal/admin/swtpm_helpers_test.go` (swtpm can now be power-cycled on the same
@@ -150,17 +150,17 @@ Isolation:
   data port (8-byte INFO, then u16-length-prefixed fragments). The machine's
   log is `app/build/swtpm-machine.log`.
 
-The machine runs from the tpm2-kira working tree, the app's core from the
+The machine runs from the kira working tree, the app's core from the
 commit in `../core.properties`; keep them on the same protocol version.
 
-## 6. Against a real tpm2-kira machine over simulated Bluetooth (a VM)
+## 6. Against a real kira machine over simulated Bluetooth (a VM)
 
-`tools/phone-vm-test.py` in tpm2-kira runs this app's real BLE code - `BleScanner`, `GattLink`, the
-session and the core - against a test VM with the real tpm2-kira package, both on the emulator's
+`tools/phone-vm-test.py` in kira runs this app's real BLE code - `BleScanner`, `GattLink`, the
+session and the core - against a test VM with the real kira package, both on the emulator's
 simulated Bluetooth (netsimd's HCI socket, the VM's COM3 through `btattach`). It builds the debug app
 and its instrumented tests, starts an emulator of its own (AVD `marify-vmtest`, wiped data), installs
 both with their Bluetooth permissions, and drives `app.marify.vm.RealMachineTest` stage by stage with
-`adb shell am instrument -e vm STAGE` while tpm2-kira's `vmtest.py` drives the machine. tpm2-kira's
+`adb shell am instrument -e vm STAGE` while kira's `vmtest.py` drives the machine. kira's
 docs/TESTING.md, "The phone against a VM", says what it checks.
 
 Isolation: test sources only (`androidTest/…/vm/`: `RealMachineTest`, `FileAnchorKeys`, software keys

@@ -130,7 +130,7 @@ class SessionRunner(
                 when (val c = link.info.check(expected, coreProtocol, coreSchema)) {
                     InfoValue.Compatibility.Ok -> Unit
                     is InfoValue.Compatibility.UpdateNeeded -> {
-                        val who = if (c.appTooOld) "this app" else "tpm2-kira on the machine"
+                        val who = if (c.appTooOld) "this app" else "kira on the machine"
                         end(Outcome.Failed(FailureKind.UPDATE_NEEDED, 0, "please update $who"))
                         return@coroutineScope
                     }

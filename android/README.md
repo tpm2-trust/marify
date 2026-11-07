@@ -1,6 +1,6 @@
 # Marify for Android
 
-The verifier app for [tpm2-kira](https://github.com/tpm2-trust/tpm2-kira)
+The verifier app for [kira](https://github.com/tpm2-trust/kira)
 machines. Before you type your disk passphrase, the Linux machine advertises
 over Bluetooth LE; Marify connects, lets the machine's TPM prove what it
 booted, shows a verdict you can act on, and returns a receipt signed with a
@@ -35,18 +35,18 @@ The verdict screen then shows, before anything is signed:
   change. Nothing is signed by itself: the PIN or biometric prompt comes
   after your choice.
 
-The construction behind this is tpm2-kira's `docs/SECURITY-BACKGROUND.md`
+The construction behind this is kira's `docs/SECURITY-BACKGROUND.md`
 §3.4 (the boot key) and §13 (who signs what, and why the phone believes it);
 the wire format is `docs/PROTOCOL-BLE.md` §7.6.
 
-The normative contract is tpm2-kira's `docs/PROTOCOL-BLE.md`. This app
+The normative contract is kira's `docs/PROTOCOL-BLE.md`. This app
 implements the build brief `docs/mobile/AGENT-PROMPT-ANDROID.md`.
 
 ## Build
 
 Requirements: JDK 17+ (Gradle uses or provisions a JDK 25 daemon), Android
 SDK with platform 37 and an NDK (`sdkmanager "ndk;30.0.16248370"`), Go ≥ 1.24,
-and a tpm2-kira checkout next to this repository (`../../tpm2-kira`) or network
+and a kira checkout next to this repository (`../../kira`) or network
 access to clone it.
 
 ```sh
@@ -55,7 +55,7 @@ access to clone it.
 ./gradlew assembleRelease        # release APK (no kiratest code)
 ./gradlew testDebugUnitTest      # JVM unit tests
 ./gradlew connectedDebugAndroidTest   # instrumented tests (device or emulator)
-./scripts/test-swtpm.sh               # against a tpm2-kira machine on swtpm (needs go, swtpm)
+./scripts/test-swtpm.sh               # against a kira machine on swtpm (needs go, swtpm)
 ```
 
 ### Release signing
@@ -92,7 +92,7 @@ at a time (lint separately from builds).
 
 ### The Go core
 
-`../core.properties` (shared with the iOS app) pins the tpm2-kira commit and the `golang.org/x/mobile`
+`../core.properties` (shared with the iOS app) pins the kira commit and the `golang.org/x/mobile`
 version. `scripts/build-core.sh` exports that commit with `git archive`, adds
 `golang.org/x/mobile` to the *temporary* copy's module graph (the bind needs
 it; the pinned sources are not changed), and runs `gomobile bind`:
@@ -110,7 +110,7 @@ packages. The release variant links only `kiracore.aar`; verify with
 `apkanalyzer dex packages app/build/outputs/apk/release/*.apk | grep kiratest`
 (must print nothing).
 
-To move to a new tpm2-kira commit, change `kira.commit` and rerun the script.
+To move to a new kira commit, change `kira.commit` and rerun the script.
 
 ## Architecture
 
@@ -195,17 +195,17 @@ it and enrol again.
 10. The app disconnects on `done`, `error` and whenever the core reports
     `finished()`.
 
-Losing the phone means re-enrolling each machine (`sudo tpm2-kira phone
+Losing the phone means re-enrolling each machine (`sudo kira phone
 enrol` with the new phone; `phone unenrol` removes the old entry).
 
 ## The phone salt
 
 A machine can ask this phone to keep the salt of its disk key - the phone salt
-(tpm2-kira's `docs/PLAN-PHONESALT.md`): a wrapped secret that only
+(kira's `docs/PLAN-PHONESALT.md`): a wrapped secret that only
 that machine's TPM can open, and only in a boot its owner approved. The
 phone never sees the secret itself.
 
-- **Keeping it**: `tpm2-kira phone salt enrol` on the machine runs an
+- **Keeping it**: `kira phone salt enrol` on the machine runs an
   ordinary check in which the verdict screen shows the card "Keep this
   machine's phone salt". Accepting the verdict keeps it (replacing any
   kept before); rejecting keeps nothing. It is part of the machine's

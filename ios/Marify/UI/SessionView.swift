@@ -272,7 +272,7 @@ private struct UnreachableView: View {
         }
         Text(u.bluetoothOff
              ? String(localized: "Turn on Bluetooth on this phone. Marify continues looking for \(name) as soon as it is on.")
-             : String(localized: "Marify keeps looking for it until you cancel. The machine asks for a phone only while it shows its one-time code at boot (about 90 seconds); once it is at the passphrase prompt, it has stopped asking for this boot. If it is showing the code, it is out of range, its Bluetooth did not start, or (if you test by hand) it is not running “sudo tpm2-kira phone gate”. If its screen shows a red tpm2-kira line saying the enrolment record was not accepted, do not type your passphrase. Marify cannot say anything about this machine until it reaches it — a missing result is not a good result."))
+             : String(localized: "Marify keeps looking for it until you cancel. The machine asks for a phone only while it shows its one-time code at boot (about 90 seconds); once it is at the passphrase prompt, it has stopped asking for this boot. If it is showing the code, it is out of range, its Bluetooth did not start, or (if you test by hand) it is not running “sudo kira phone gate”. If its screen shows a red kira line saying the enrolment record was not accepted, do not type your passphrase. Marify cannot say anything about this machine until it reaches it — a missing result is not a good result."))
         Text("Attempt \(u.attempt) · \(u.reason)").font(.footnote)
     }
 }

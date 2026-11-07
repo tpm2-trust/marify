@@ -21,7 +21,7 @@ struct OnboardingView: View {
                 Text("Before you type your disk passphrase, your Linux machine asks this phone to check it. The machine's TPM signs a statement of what it booted; Marify compares it with what it recorded when you bound the machine, shows you the result, and sends back a receipt signed with a key that only your Face ID, Touch ID or passcode can unlock.")
 
                 step(done: allowed, title: String(localized: "Allow Bluetooth"),
-                     body: String(localized: "Marify talks to your machine over Bluetooth Low Energy. It only looks for tpm2-kira machines and never uses your location."),
+                     body: String(localized: "Marify talks to your machine over Bluetooth Low Energy. It only looks for kira machines and never uses your location."),
                      action: String(localized: "Open settings")) { openSettings() }
 
                 step(done: poweredOn, title: String(localized: "Turn on Bluetooth"),

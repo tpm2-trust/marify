@@ -4,8 +4,8 @@ import java.io.Closeable
 import java.net.Socket
 
 /**
- * Remote control of the swtpm-backed tpm2-kira machine served by
- * `TestAppMachine` (tpm2-kira internal/admin/attest_app_test.go), the counterpart of
+ * Remote control of the swtpm-backed kira machine served by
+ * `TestAppMachine` (kira internal/admin/attest_app_test.go), the counterpart of
  * kiratest's DemoMachine for a real TPM 2.0 implementation.
  */
 class SwtpmMachine(private val host: String, private val port: Int) : Closeable {

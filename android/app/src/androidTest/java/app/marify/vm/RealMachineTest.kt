@@ -28,14 +28,14 @@ import org.junit.runner.RunWith
 import java.io.File
 
 /**
- * The app's real Bluetooth LE code, session and core against a real tpm2-kira machine: a test VM
- * on the emulator's simulated Bluetooth (netsim), driven by tpm2-kira's tools/phone-vm-test.py.
+ * The app's real Bluetooth LE code, session and core against a real kira machine: a test VM
+ * on the emulator's simulated Bluetooth (netsim), driven by kira's tools/phone-vm-test.py.
  * Isolated from the regular suite: it runs only when the instrumentation argument `vm` names a
  * stage, one instrumentation run each:
  *
  *   reset    forget the record and the anchor key of an earlier run
- *   scan     wait for any advertisement of tpm2-kira's service: the radio path, before anything
- *   enrol    enrol the machine that advertises for enrolment (`tpm2-kira phone enrol`)
+ *   scan     wait for any advertisement of kira's service: the radio path, before anything
+ *   enrol    enrol the machine that advertises for enrolment (`kira phone enrol`)
  *   attest   attest the enrolled machine: the booted system (a phone salt's hand-over) or a boot
  *
  * The person is played: the bind and the SAS confirmed (the script compares the SAS with the
@@ -70,7 +70,7 @@ class RealMachineTest {
 
     @Before fun stage() {
         val s = args.getString("vm")
-        assumeTrue("no stage: run by tools/phone-vm-test.py (tpm2-kira)", s != null)
+        assumeTrue("no stage: run by tools/phone-vm-test.py (kira)", s != null)
         stage = s!!
     }
 

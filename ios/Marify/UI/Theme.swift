@@ -146,7 +146,7 @@ enum Texts {
         switch kind {
         case .machineRefused: String(localized: "The machine is advertising as yours but refused the secure connection, twice. Its enrolment data was changed or removed, or this is a different machine imitating it.")
         case .connect: String(localized: "Marify reached the machine, but setting up the connection failed.")
-        case .updateNeeded: String(localized: "This machine speaks a different protocol version. Please update the app or tpm2-kira.")
+        case .updateNeeded: String(localized: "This machine speaks a different protocol version. Please update the app or kira.")
         case .wrongMode: String(localized: "The machine is not in the expected mode. For enrolment run 'phone enrol'; for verification, 'phone gate'.")
         case .linkLost: String(localized: "Connection lost.")
         case .cancelled: String(localized: "Cancelled.")

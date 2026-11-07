@@ -1,6 +1,6 @@
 # XcodeGen project definition: `xcodegen generate` writes Marify.xcodeproj.
 # The Go core comes from scripts/build-core.sh (Frameworks/*.xcframework,
-# from the tpm2-kira commit in ../core.properties); build it first.
+# from the kira commit in ../core.properties); build it first.
 name: Marify
 options:
   bundleIdPrefix: io.wiora
@@ -50,7 +50,7 @@ targets:
           # embeds its own full Go runtime, and two independent runtimes in
           # one process corrupt each other's per-thread cgo bookkeeping
           # (SIGSEGV inside __cgo_topofstack, a few seconds after launch).
-          # See tpm2-kira's mobile/kiratest package doc. The module is still
+          # See kira's mobile/kiratest package doc. The module is still
           # named Kiracore either way, so `import Kiracore` (KiraCore.swift)
           # resolves the same way in both configs; KiracoreDebug additionally
           # exports the Kiratest* demo-machine API used by DemoMachineSupport.
@@ -66,7 +66,7 @@ targets:
       path: Marify/Info.plist
       properties:
         CFBundleDisplayName: Marify
-        NSBluetoothAlwaysUsageDescription: "Marify talks to your Linux machine over Bluetooth Low Energy to check what it booted. It only looks for tpm2-kira machines."
+        NSBluetoothAlwaysUsageDescription: "Marify talks to your Linux machine over Bluetooth Low Energy to check what it booted. It only looks for kira machines."
         NSFaceIDUsageDescription: "Every receipt is signed with a key that needs a fresh unlock."
         UIBackgroundModes: [bluetooth-central]
         UILaunchScreen: {}

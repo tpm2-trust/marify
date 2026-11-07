@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the Go core for the app from the tpm2-kira commit pinned in
+# Builds the Go core for the app from the kira commit pinned in
 # ../core.properties (shared with the iOS app):
 #
 #   app/libs/kiracore.aar        core/mobile/kiracore            -> release builds
@@ -11,8 +11,8 @@
 # kiratest code at all.
 #
 # Environment:
-#   KIRA_SRC      local tpm2-kira checkout to take the commit from
-#                 (default: ../../tpm2-kira next to this repository, else a
+#   KIRA_SRC      local kira checkout to take the commit from
+#                 (default: ../../kira next to this repository, else a
 #                 fresh clone of kira.repo)
 #   ANDROID_HOME  Android SDK with an NDK installed (default ~/Android/Sdk)
 set -euo pipefail
@@ -39,26 +39,26 @@ done
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
-src="${KIRA_SRC:-$here/../../tpm2-kira}"
+src="${KIRA_SRC:-$here/../../kira}"
 if git -C "$src" cat-file -e "$commit^{commit}" 2>/dev/null; then
-    echo "tpm2-kira $commit from $src"
+    echo "kira $commit from $src"
     git -C "$src" archive "$commit" | tar -x -C "$work"
     from="$src"
 else
-    echo "tpm2-kira $commit from $repo"
+    echo "kira $commit from $repo"
     git clone --quiet "$repo" "$work/clone"
     git -C "$work/clone" archive "$commit" | tar -x -C "$work"
     from="$work/clone"
 fi
-# The core is a module of its own in tpm2-kira's repository (core/): it
+# The core is a module of its own in kira's repository (core/): it
 # requires go-tpm, x/crypto and tpm2-verifier (the EK root store), nothing
-# of tpm2-kira or aSSH. tpm2-verifier is a submodule of tpm2-kira, which an
+# of kira or aSSH. tpm2-verifier is a submodule of kira, which an
 # archive leaves out: each submodule the core's go.mod replaces with
-# ../<path> - and only those - at the commit tpm2-kira records, from the
+# ../<path> - and only those - at the commit kira records, from the
 # checkout's submodule when it has that commit, else from its URL.
 for sub in $(sed -n 's#^replace [^ ]* => \.\./\([^ ]*\)$#\1#p' "$work/core/go.mod"); do
     sha="$(git -C "$from" ls-tree "$commit" "$sub" | awk '$1 == "160000" {print $3}')"
-    [[ -n "$sha" ]] || { echo "the core replaces with ../$sub, which tpm2-kira $commit has no submodule for" >&2; exit 1; }
+    [[ -n "$sha" ]] || { echo "the core replaces with ../$sub, which kira $commit has no submodule for" >&2; exit 1; }
     mkdir -p "$work/$sub"
     if git -C "$from/$sub" cat-file -e "$sha^{commit}" 2>/dev/null; then
         git -C "$from/$sub" archive "$sha" | tar -x -C "$work/$sub"

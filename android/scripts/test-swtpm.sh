@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
-# Runs the app's session code and Go core against a tpm2-kira machine on a
+# Runs the app's session code and Go core against a kira machine on a
 # software TPM (swtpm), isolated from the regular test suite:
 #
-#   1. starts TestAppMachine (tpm2-kira internal/admin/attest_app_test.go, build tag
+#   1. starts TestAppMachine (kira internal/admin/attest_app_test.go, build tag
 #      apptest) on the host: swtpm + the real tpmBackend, served over TCP
 #   2. forwards its two ports into the emulator/phone with `adb reverse`
 #   3. runs only app.marify.swtpm.SwtpmMachineSessionTest
 #   4. stops the machine and removes the forwards
 #
 # Needs: go, swtpm, a device or emulator in `adb devices`.
-# Environment: KIRA_SRC (tpm2-kira checkout, default ../../tpm2-kira),
+# Environment: KIRA_SRC (kira checkout, default ../../kira),
 #              KIRA_SWTPM_PORT (control port, default 7317; data = port + 1),
 #              ANDROID_HOME (default ~/Android/Sdk).
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")/.." && pwd)"
-src="$(cd "${KIRA_SRC:-$here/../../tpm2-kira}" && pwd)"
+src="$(cd "${KIRA_SRC:-$here/../../kira}" && pwd)"
 port="${KIRA_SWTPM_PORT:-7317}"
 adb="${ANDROID_HOME:-$HOME/Android/Sdk}/platform-tools/adb"
 log="$here/app/build/swtpm-machine.log"

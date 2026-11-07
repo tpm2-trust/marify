@@ -66,8 +66,8 @@ final class TcpSocket: @unchecked Sendable {
     func shutdown() { close(fd) }
 }
 
-/// Remote control of the swtpm-backed tpm2-kira machine served by
-/// `TestAppMachine` (tpm2-kira cmd/attest_app_test.go), the counterpart of
+/// Remote control of the swtpm-backed kira machine served by
+/// `TestAppMachine` (kira cmd/attest_app_test.go), the counterpart of
 /// kiratest's DemoMachine for a real TPM 2.0 implementation.
 final class SwtpmMachine: @unchecked Sendable {
     private let host: String

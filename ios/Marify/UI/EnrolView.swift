@@ -54,7 +54,7 @@ struct EnrolView: View {
         List {
             Section {
                 Text("On the computer, run:")
-                Text("sudo tpm2-kira phone enrol").font(.system(.body, design: .monospaced)).textSelection(.enabled)
+                Text("sudo kira phone enrol").font(.system(.body, design: .monospaced)).textSelection(.enabled)
                 Text("Machines waiting for a phone appear below. Keep the computer's screen in view: you will compare a six-digit number.")
             }
             if debugBuild {
@@ -78,7 +78,7 @@ struct EnrolView: View {
                         HStack(spacing: 12) {
                             Image(systemName: "desktopcomputer")
                             VStack(alignment: .leading) {
-                                Text("tpm2-kira machine waiting for enrolment").font(.headline)
+                                Text("kira machine waiting for enrolment").font(.headline)
                                 Text("Signal \(m.rssi) dBm").font(.subheadline).foregroundStyle(.secondary)
                             }
                         }

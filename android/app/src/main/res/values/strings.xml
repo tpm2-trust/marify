@@ -12,7 +12,7 @@
     <string name="onboarding_title">Know what your computer booted</string>
     <string name="onboarding_body">Before you type your disk passphrase, your Linux machine asks this phone to check it. The machine\'s TPM signs a statement of what it booted; Marify compares it with what it recorded when you bound the machine, shows you the result, and sends back a receipt signed with a key that only your fingerprint, face or screen-lock PIN can unlock.</string>
     <string name="onboarding_permissions">Allow Bluetooth</string>
-    <string name="onboarding_permissions_rationale">Marify talks to your machine over Bluetooth Low Energy. It only looks for tpm2-kira machines and never uses your location.</string>
+    <string name="onboarding_permissions_rationale">Marify talks to your machine over Bluetooth Low Energy. It only looks for kira machines and never uses your location.</string>
     <string name="onboarding_permissions_rationale_legacy">Marify talks to your machine over Bluetooth Low Energy. On this Android version, Bluetooth scanning requires the location permission; Marify does not use your location.</string>
     <string name="onboarding_bluetooth_on">Turn on Bluetooth</string>
     <string name="onboarding_screen_lock">Set up a screen lock</string>
@@ -36,10 +36,10 @@
     <!-- Enrol -->
     <string name="enrol_title">Enrol a machine</string>
     <string name="enrol_instructions">On the computer, run:</string>
-    <string name="enrol_command">sudo tpm2-kira phone enrol</string>
+    <string name="enrol_command">sudo kira phone enrol</string>
     <string name="enrol_instructions_2">Machines waiting for a phone appear below. Keep the computer\'s screen in view: you will compare a six-digit number.</string>
     <string name="enrol_searching">Searching…</string>
-    <string name="enrol_waiting_machine">tpm2-kira machine waiting for enrolment</string>
+    <string name="enrol_waiting_machine">kira machine waiting for enrolment</string>
     <string name="enrol_signal">Signal %1$d dBm</string>
     <string name="debug_chip">DEBUG</string>
     <string name="debug_build_warning">This is a debug build: it is debuggable and may keep keys outside secure hardware. Use the signed release build for machines you rely on.</string>
@@ -50,7 +50,7 @@
     <!-- Session -->
     <string name="phase_connecting">Connecting…</string>
     <string name="unreachable_title">%1$s is not reachable</string>
-    <string name="unreachable_body">Marify keeps looking for it until you cancel. The machine asks for a phone only while it shows its one-time code at boot (about 90 seconds); once it is at the passphrase prompt, it has stopped asking for this boot. If it is showing the code, it is out of range, its Bluetooth did not start, or (if you test by hand) it is not running “sudo tpm2-kira phone gate”. If its screen shows a red tpm2-kira line saying the enrolment record was not accepted, do not type your passphrase. Marify cannot say anything about this machine until it reaches it — a missing result is not a good result.</string>
+    <string name="unreachable_body">Marify keeps looking for it until you cancel. The machine asks for a phone only while it shows its one-time code at boot (about 90 seconds); once it is at the passphrase prompt, it has stopped asking for this boot. If it is showing the code, it is out of range, its Bluetooth did not start, or (if you test by hand) it is not running “sudo kira phone gate”. If its screen shows a red kira line saying the enrolment record was not accepted, do not type your passphrase. Marify cannot say anything about this machine until it reaches it — a missing result is not a good result.</string>
     <string name="bluetooth_off_title">Bluetooth is off</string>
     <string name="bluetooth_off_body">Turn on Bluetooth on this phone. Marify continues looking for %1$s as soon as it is on.</string>
     <string name="unreachable_attempt">Attempt %1$d · %2$s</string>
@@ -142,14 +142,14 @@
     <string name="release_no_receipt">The machine had no accepted receipt for it.</string>
     <string name="factor_label">Phone salt</string>
     <string name="factor_kept">Kept on this phone since %1$s. Only the machine\'s TPM can open it.</string>
-    <string name="factor_none">None kept. Run \"tpm2-kira phone salt enrol\" on the machine to add one.</string>
+    <string name="factor_none">None kept. Run \"kira phone salt enrol\" on the machine to add one.</string>
 
     <!-- Failures -->
     <string name="refused_title">%1$s did not accept this phone</string>
     <string name="refused_body">The machine is advertising as yours but refused the secure connection, twice. Its enrolment data was changed or removed, or this is a different machine imitating it.</string>
     <string name="refused_action">Do not type your passphrase. If you did not change the enrolment yourself (for example by running “phone enrol” with another phone), treat the machine as tampered with.</string>
     <string name="fail_connect">Marify reached the machine, but setting up the connection failed.</string>
-    <string name="fail_update_needed">This machine speaks a different protocol version. Please update the app or tpm2-kira.</string>
+    <string name="fail_update_needed">This machine speaks a different protocol version. Please update the app or kira.</string>
     <string name="fail_wrong_mode">The machine is not in the expected mode. For enrolment run \'phone enrol\'; for verification, \'phone gate\'.</string>
     <string name="fail_link_lost">Connection lost.</string>
     <string name="fail_cancelled">Cancelled.</string>
@@ -261,7 +261,7 @@
     <string name="delete_machine">Delete machine</string>
     <string name="delete_machine_title">Delete %1$s?</string>
     <string name="delete_machine_body">This phone forgets the machine and destroys its key. On the machine, also run:</string>
-    <string name="unenrol_command">sudo tpm2-kira phone unenrol</string>
+    <string name="unenrol_command">sudo kira phone unenrol</string>
     <string name="delete">Delete</string>
     <string name="demo_controls">Demo machine controls</string>
     <string name="demo_next_boot">Reboot (match)</string>

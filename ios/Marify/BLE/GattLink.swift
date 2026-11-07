@@ -1,7 +1,7 @@
 import CoreBluetooth
 import Foundation
 
-/// One GATT connection to a tpm2-kira machine (PROTOCOL-BLE.md §3.3).
+/// One GATT connection to a kira machine (PROTOCOL-BLE.md §3.3).
 ///
 /// No bonding, no encrypted characteristics: the link is an untrusted pipe
 /// and the Noise session inside the core provides all security (§3.6).
@@ -62,7 +62,7 @@ final class GattLink: NSObject, Link, @unchecked Sendable {
         peripheral.discoverServices([KiraCore.serviceUUID])
         try await step(discovered, "service discovery failed")
         guard let service = peripheral.services?.first(where: { $0.uuid == KiraCore.serviceUUID }) else {
-            throw LinkError.failed("the device does not offer the tpm2-kira service")
+            throw LinkError.failed("the device does not offer the kira service")
         }
         peripheral.discoverCharacteristics([KiraCore.rxUUID, KiraCore.txUUID, KiraCore.infoUUID], for: service)
         try await step(characteristics, "characteristic discovery failed")
@@ -70,7 +70,7 @@ final class GattLink: NSObject, Link, @unchecked Sendable {
         rx = chars.first { $0.uuid == KiraCore.rxUUID }
         tx = chars.first { $0.uuid == KiraCore.txUUID }
         infoChar = chars.first { $0.uuid == KiraCore.infoUUID }
-        guard let rx, let tx, let infoChar else { throw LinkError.failed("the tpm2-kira service is incomplete") }
+        guard let rx, let tx, let infoChar else { throw LinkError.failed("the kira service is incomplete") }
         _ = rx
 
         peripheral.readValue(for: infoChar)
