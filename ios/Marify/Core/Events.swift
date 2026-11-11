@@ -18,7 +18,9 @@ enum Event: Sendable, Equatable {
     /// The one-time keyboard layout to type a pepper through at the machine, for this boot alone:
     /// on the key `keys[i]` the character `layout[i]`.
     case keyboardLayout(keys: String, layout: String)
-    case recordUpdated(recordJSON: String)
+    /// Store the record. With `confirm` the core waits for `CoreSession.recordStored`: the phone
+    /// salt is released to the machine only once the record that holds it is stored here.
+    case recordUpdated(recordJSON: String, confirm: Bool = false)
     case done
     case error(code: Int, message: String)
     /// An event type this app does not know (a newer core). Logged, not acted on.
@@ -113,7 +115,7 @@ enum Event: Sendable, Equatable {
         case "receipt_ack": return .receiptAck(result: int("result"), message: str("message"))
         case "release_ack": return .releaseAck(status: int("result"), message: str("message"))
         case "keyboard_layout": return .keyboardLayout(keys: str("keyboard_keys"), layout: str("layout"))
-        case "record_updated": return .recordUpdated(recordJSON: try record())
+        case "record_updated": return .recordUpdated(recordJSON: try record(), confirm: bool("confirm"))
         case "done": return .done
         case "error": return .error(code: int("code"), message: str("message"))
         default: return .unknown(type: type)
@@ -167,6 +169,9 @@ struct SecureBoot: Sendable, Equatable {
 struct Verdict: Sendable, Equatable {
     var ok = false
     var state = ""
+    /// The enrolled machine's attestation key signed this quote, for this session. Without it
+    /// there is nothing to approve: the core refuses every approval, and the app offers none.
+    var authentic = false
     var profile = ""
     var reasons: [Reason] = []
     var warnings: [Warning] = []
@@ -226,6 +231,7 @@ struct Verdict: Sendable, Equatable {
         func bool(_ k: String) -> Bool { (o[k] as? Bool) ?? false }
         ok = bool("ok")
         state = str("state")
+        authentic = bool("authentic")
         profile = str("profile")
         reasons = (o["reasons"] as? [[String: Any]] ?? []).map {
             Reason(code: $0["code"] as? String ?? "", detail: $0["detail"] as? String ?? "", hard: $0["hard"] as? Bool ?? false)

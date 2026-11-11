@@ -31,6 +31,8 @@ interface CoreSession {
     fun pendingTbs(): ByteArray
     fun provideSignature(der: ByteArray): StepResult
     fun decide(decision: Decision, confirmName: String): StepResult
+    /** Answers a `record_updated` event that asked for it: the record is stored, or could not be. */
+    fun recordStored(stored: Boolean): StepResult
     fun requestEventlog(): StepResult
     fun eventlog(): ByteArray?
     fun abort(reason: String): StepResult
@@ -51,6 +53,7 @@ class GoCoreSession(private val s: kiracore.Session) : CoreSession {
     override fun provideSignature(der: ByteArray) = s.provideSignature(der).toResult()
     override fun decide(decision: Decision, confirmName: String) =
         s.decide(decision.code, confirmName).toResult()
+    override fun recordStored(stored: Boolean) = s.recordStored(stored).toResult()
     override fun requestEventlog() = s.requestEventlog().toResult()
     override fun eventlog(): ByteArray? = s.eventlog()
     override fun abort(reason: String) = s.abort(reason).toResult()

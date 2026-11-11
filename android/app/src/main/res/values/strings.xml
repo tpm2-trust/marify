@@ -111,6 +111,7 @@
     <string name="reject">Reject</string>
     <string name="approve_anyway">Approve anyway…</string>
     <string name="more_options">More options</string>
+    <string name="verdict_not_authentic">The machine did not prove that it is the one you enrolled: its key did not sign this boot for this session. There is nothing to approve.</string>
     <string name="approve_failed_title">Approve a failed attestation?</string>
     <string name="approve_failed_body">A hard check failed. Approving tells the machine that this boot is trusted. Type the machine\'s name, %1$s, to confirm.</string>
     <string name="machine_name_hint">Machine name</string>

@@ -26,6 +26,8 @@ protocol CoreSession: AnyObject {
     func pendingTbs() -> Data
     func provideSignature(der: Data) -> StepResult
     func decide(_ decision: Decision, confirmName: String) -> StepResult
+    /// Answers a `record_updated` event that asked for it: the record is stored, or could not be.
+    func recordStored(_ stored: Bool) -> StepResult
     func requestEventlog() -> StepResult
     func eventlog() -> Data?
     func abort(_ reason: String) -> StepResult
@@ -52,6 +54,7 @@ final class GoCoreSession: CoreSession {
     func decide(_ decision: Decision, confirmName: String) -> StepResult {
         s.decide(decision.rawValue, confirmName: confirmName).toResult()
     }
+    func recordStored(_ stored: Bool) -> StepResult { s.recordStored(stored).toResult() }
     func requestEventlog() -> StepResult { s.requestEventlog().toResult() }
     func eventlog() -> Data? { s.eventlog() }
     func abort(_ reason: String) -> StepResult { s.abort(reason).toResult() }

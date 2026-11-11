@@ -92,7 +92,7 @@ struct VerdictContent: View {
                 switch v.state {
                 case Verdict.match: MatchDecisions(v: v, returnsSalt: returnsSalt, onDecide: onDecide)
                 case Verdict.changed: ChangedDecisions(returnsSalt: returnsSalt, onDecide: onDecide)
-                default: FailedDecisions(machineName: machineName, onDecide: onDecide)
+                default: FailedDecisions(machineName: machineName, authentic: v.authentic, onDecide: onDecide)
                 }
             }
 
@@ -289,11 +289,30 @@ private struct ChangedDecisions: View {
 
 private struct FailedDecisions: View {
     var machineName: String
+    var authentic: Bool
     var onDecide: (Decision, String) -> Void
     @State private var dialog = false
     @State private var typed = ""
 
     var body: some View {
+        if authentic {
+            approvable
+        } else {
+            // The enrolled machine's key did not sign this: there is no boot state of that
+            // machine to approve, whatever is typed. The core refuses it too.
+            VStack(alignment: .leading, spacing: 8) {
+                Text("The machine did not prove that it is the one you enrolled: its key did not sign this boot for this session. There is nothing to approve.")
+                    .font(.body)
+                    .accessibilityIdentifier("not_authentic")
+                Button(role: .destructive) { onDecide(.reject, "") } label: { Text("Reject").frame(maxWidth: .infinity) }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.red)
+                    .accessibilityIdentifier("reject")
+            }
+        }
+    }
+
+    @ViewBuilder private var approvable: some View {
         HStack {
             Button(role: .destructive) { onDecide(.reject, "") } label: { Text("Reject").frame(maxWidth: .infinity) }
                 .buttonStyle(.borderedProminent)

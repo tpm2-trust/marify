@@ -434,12 +434,20 @@ actor SessionRunner {
             }
         case .releaseAck(let status, let message):
             await update { $0.releaseAck = (status, message) }
-        case .recordUpdated(let json):
+        case .recordUpdated(let json, let confirm):
+            var stored = true
             do {
                 try await records.replace(recordJSON: json)
             } catch {
+                stored = false
                 debugLog(Self.tag, "updating the machine record failed: \(error)")
                 await update { $0.notice = "could not update the stored machine: \(error)" }
+            }
+            // The record holds the phone salt the machine is about to be handed: the core
+            // releases it only when told the record is stored, and fails the session when not.
+            if confirm {
+                if !stored { failureKind = .storage }
+                queue.append(core.recordStored(stored))
             }
         case .done:
             if failureKind == .storage {

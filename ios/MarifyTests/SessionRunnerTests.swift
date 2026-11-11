@@ -34,6 +34,7 @@ final class SessionRunnerTests: XCTestCase {
         func pendingTbs() -> Data { Data([1, 2, 3]) }
         func provideSignature(der: Data) -> StepResult { calls.append("signature"); return onSignature(der) }
         func decide(_ decision: Decision, confirmName: String) -> StepResult { calls.append("decide(\(decision))"); return onDecide(decision, confirmName) }
+        func recordStored(_ stored: Bool) -> StepResult { calls.append("recordStored(\(stored))"); return .empty }
         func requestEventlog() -> StepResult { calls.append("requestEventlog"); return .empty }
         func eventlog() -> Data? { nil }
         func abort(_ reason: String) -> StepResult {
