@@ -57,7 +57,12 @@ sealed interface Event {
      * the key `keys[i]` the character `layout[i]`.
      */
     data class KeyboardLayout(val keys: String, val layout: String) : Event
-    data class RecordUpdated(val recordJson: String) : Event
+    /**
+     * Store the record. With [confirm] the core waits for [CoreSession.recordStored]:
+     * the phone salt is released to the machine only once the record that holds it
+     * is on this phone's storage.
+     */
+    data class RecordUpdated(val recordJson: String, val confirm: Boolean = false) : Event
     data object Done : Event
     data class Error(val code: Int, val message: String) : Event
 
@@ -115,7 +120,7 @@ sealed interface Event {
                 "receipt_ack" -> ReceiptAck(int("result"), str("message"))
                 "release_ack" -> ReleaseAck(int("result"), str("message"))
                 "keyboard_layout" -> KeyboardLayout(str("keyboard_keys"), str("layout"))
-                "record_updated" -> RecordUpdated(record())
+                "record_updated" -> RecordUpdated(record(), bool("confirm"))
                 "done" -> Done
                 "error" -> Error(int("code"), str("message"))
                 else -> Unknown(type, text)
@@ -129,6 +134,12 @@ sealed interface Event {
 data class Verdict(
     val ok: Boolean = false,
     val state: String,
+    /**
+     * The enrolled machine's attestation key signed this quote, for this session.
+     * Without it there is no boot state of that machine to approve: the core
+     * refuses every approval, and the app offers none.
+     */
+    val authentic: Boolean = false,
     val profile: String = "",
     val reasons: List<Reason> = emptyList(),
     val warnings: List<Warning> = emptyList(),

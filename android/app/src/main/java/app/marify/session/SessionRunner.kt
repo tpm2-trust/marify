@@ -389,11 +389,23 @@ class SessionRunner(
             is Event.KeyboardLayout -> if (e.keys.length == e.layout.length && e.keys.isNotEmpty()) {
                 _state.update { it.copy(keyboardLayout = e) }
             }
-            is Event.RecordUpdated -> try {
-                records.replace(e.recordJson)
-            } catch (ex: Exception) {
-                Log.e(TAG, "updating the machine record failed", ex)
-                _state.update { it.copy(notice = "could not update the stored machine: ${ex.message}") }
+            is Event.RecordUpdated -> {
+                val stored = try {
+                    records.replace(e.recordJson)
+                    true
+                } catch (ex: Exception) {
+                    Log.e(TAG, "updating the machine record failed", ex)
+                    _state.update { it.copy(notice = "could not update the stored machine: ${ex.message}") }
+                    false
+                }
+                // The record holds the phone salt the machine is about to be handed:
+                // the core releases it only when told that the record is stored, and
+                // fails the session when it is not - the machine then builds no keyslot
+                // on a salt this phone does not keep.
+                if (e.confirm) {
+                    if (!stored) failureKind = FailureKind.STORAGE
+                    queue.add(core.recordStored(stored))
+                }
             }
             Event.Done -> end(
                 if (failureKind == FailureKind.STORAGE) {

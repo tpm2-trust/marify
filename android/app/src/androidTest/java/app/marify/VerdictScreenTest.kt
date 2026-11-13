@@ -166,7 +166,7 @@ class VerdictScreenTest {
     @Test fun failed() {
         show(
             """{"type":"verdict","needs_decision":true,"verdict":{
-               "ok":false,"state":"failed",
+               "ok":false,"state":"failed","authentic":true,
                "reasons":[{"code":"reset_count_decreased","detail":"12 -> 0","hard":true},
                           {"code":"no_profile_match","detail":"x","hard":false}],
                "reset_count":0,"restart_count":0,"clock_safe":true,"firmware_version":1}}""",
@@ -185,6 +185,23 @@ class VerdictScreenTest {
         rule.onNodeWithTag("confirm_approve").performClick()
         rule.onNodeWithTag("reject").performClick()
         assertEquals(listOf(Decision.APPROVE_ONCE to "Thinkpad-X1", Decision.REJECT to ""), decisions)
+    }
+
+    /** A quote the enrolled machine's key did not sign: nothing to approve, in no menu. */
+    @Test fun failedAndNotAuthenticOffersNoApproval() {
+        show(
+            """{"type":"verdict","needs_decision":true,"verdict":{
+               "ok":false,"state":"failed","authentic":false,
+               "reasons":[{"code":"bad_signature","detail":"x","hard":true}],
+               "reset_count":0,"restart_count":0,"clock_safe":true,"firmware_version":1}}""",
+        )
+        rule.onNodeWithTag("verdict_failed").assertIsDisplayed()
+        rule.onNodeWithTag("not_authentic").assertIsDisplayed()
+        rule.onNodeWithTag("more").assertDoesNotExist()
+        rule.onNodeWithTag("approve_anyway").assertDoesNotExist()
+        rule.onNodeWithTag("approve_once").assertDoesNotExist()
+        rule.onNodeWithTag("reject").performClick()
+        assertEquals(listOf(Decision.REJECT to ""), decisions)
     }
 
     /** SHA-1 is a warning beside the state: on stays on, and the person can go on. */

@@ -71,6 +71,8 @@ class SessionRunnerTest {
         override fun pendingTbs() = byteArrayOf(1, 2, 3)
         override fun provideSignature(der: ByteArray) = onSignature(der).also { calls += "signature" }
         override fun decide(decision: Decision, confirmName: String) = onDecide(decision, confirmName).also { calls += "decide($decision)" }
+        var onRecordStored: (Boolean) -> StepResult = { StepResult.EMPTY }
+        override fun recordStored(stored: Boolean) = onRecordStored(stored).also { calls += "recordStored($stored)" }
         override fun requestEventlog() = StepResult.EMPTY.also { calls += "requestEventlog" }
         override fun eventlog(): ByteArray? = null
         override fun abort(reason: String) = onAbort(reason).also { calls += "abort($reason)" }
@@ -115,8 +117,12 @@ class SessionRunnerTest {
     private class FakeRecords : RecordSink {
         val saved = mutableListOf<String>()
         val replaced = mutableListOf<String>()
+        var replaceFails = false
         override suspend fun saveEnrolled(recordJson: String, keyStorage: KeyStorage) { saved += recordJson }
-        override suspend fun replace(recordJson: String) { replaced += recordJson }
+        override suspend fun replace(recordJson: String) {
+            if (replaceFails) throw java.io.IOException("the device is locked")
+            replaced += recordJson
+        }
     }
 
     private fun TestScope.runner(
@@ -190,6 +196,47 @@ class SessionRunnerTest {
         val fed = core.calls.filter { it.startsWith("notify") }
         assertEquals((1..50).map { "notify([$it])" }, fed)
         r.cancel()
+    }
+
+    /** The phone salt's release waits for the record: stored first, then the core is told, then it releases. */
+    @Test fun recordIsStoredBeforeTheSaltIsReleased() = runTest {
+        val core = FakeCore()
+        val link = FakeLink()
+        val records = FakeRecords()
+        core.onNotification = { step(events = listOf(Event.ReceiptAck(1, ""), Event.RecordUpdated("{}", confirm = true))) }
+        core.onRecordStored = { stored ->
+            assertTrue(stored)
+            assertEquals(listOf("{}"), records.replaced) // on storage before the release leaves
+            core.finished = true; core.succeeded = true
+            step(frag(0x09), events = listOf(Event.Done))
+        }
+        val r = runner(core, link, FakeKeys(), records)
+        launch { r.run() }
+        link.notify(1)
+        advanceUntilIdle()
+        assertTrue("recordStored(true)" in core.calls)
+        assertEquals(listOf(listOf<Byte>(0x09)), link.written)
+        assertEquals(Outcome.Succeeded, r.state.value.outcome)
+    }
+
+    /** A record that cannot be stored releases nothing: the core is told, and the session fails as storage. */
+    @Test fun unstoredRecordFailsTheSession() = runTest {
+        val core = FakeCore()
+        val link = FakeLink()
+        val records = FakeRecords().apply { replaceFails = true }
+        core.onNotification = { step(events = listOf(Event.ReceiptAck(1, ""), Event.RecordUpdated("{}", confirm = true))) }
+        core.onRecordStored = { stored ->
+            assertTrue(!stored)
+            core.finished = true
+            step(frag(0x7f), events = listOf(Event.Error(7, "the phone could not store the machine's record")), err = "storage")
+        }
+        val r = runner(core, link, FakeKeys(), records)
+        launch { r.run() }
+        link.notify(1)
+        advanceUntilIdle()
+        assertTrue("recordStored(false)" in core.calls)
+        val outcome = r.state.value.outcome
+        assertTrue(outcome is Outcome.Failed && outcome.kind == FailureKind.STORAGE)
     }
 
     @Test fun matchSignsAutomaticallyAndFinishes() = runTest {

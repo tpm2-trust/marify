@@ -159,7 +159,7 @@ fun VerdictContent(
             when (v.state) {
                 Verdict.MATCH -> MatchDecisions(v, returnsSalt, onDecide)
                 Verdict.CHANGED -> ChangedDecisions(returnsSalt, onDecide)
-                else -> FailedDecisions(machineName, onDecide)
+                else -> FailedDecisions(machineName, v.authentic, onDecide)
             }
         }
 
@@ -443,10 +443,30 @@ private fun ChangedDecisions(returnsSalt: Boolean, onDecide: (Decision, String) 
 }
 
 @Composable
-private fun FailedDecisions(machineName: String, onDecide: (Decision, String) -> Unit) {
+private fun FailedDecisions(machineName: String, authentic: Boolean, onDecide: (Decision, String) -> Unit) {
     var menu by rememberSaveable { mutableStateOf(false) }
     var dialog by rememberSaveable { mutableStateOf(false) }
     var typed by rememberSaveable { mutableStateOf("") }
+    if (!authentic) {
+        // The enrolled machine's key did not sign this: there is no boot state of
+        // that machine to approve, whatever is typed. The core refuses it too.
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                stringResource(R.string.verdict_not_authentic),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.testTag("not_authentic"),
+            )
+            Button(
+                onClick = { onDecide(Decision.REJECT, "") },
+                modifier = Modifier.fillMaxWidth().testTag("reject"),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError,
+                ),
+            ) { Text(stringResource(R.string.reject)) }
+        }
+        return
+    }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Button(
             onClick = { onDecide(Decision.REJECT, "") },

@@ -17,6 +17,10 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.nio.channels.FileChannel
+import java.nio.file.StandardOpenOption
 
 /** One enrolled machine: the core's record, verbatim, plus what the app knows about its key. */
 data class Machine(
@@ -111,11 +115,19 @@ class MachineRepository(context: Context) {
             val f = file(summary.deviceId)
             val tmp = File(dir, f.name + ".tmp")
             val plain = json.encodeToString(Envelope.serializer(), env).toByteArray()
-            tmp.writeBytes(aead.encrypt(plain, aad(summary.deviceId)))
+            // Written through before it takes the record's place, and the directory
+            // after: "stored" is told to the core, which then hands the phone salt in
+            // this record to the machine.
+            FileOutputStream(tmp).use { out ->
+                out.write(aead.encrypt(plain, aad(summary.deviceId)))
+                out.flush()
+                out.fd.sync()
+            }
             if (!tmp.renameTo(f)) {
                 tmp.delete()
                 error("cannot store machine record")
             }
+            syncDirectory(dir)
             val m = Machine(env.record, summary, env.keyStorage, env.factorBlob)
             _machines.value = (_machines.value.filterNot { it.deviceId == m.deviceId } + m)
                 .sortedBy { it.name.lowercase() }
@@ -141,5 +153,15 @@ class MachineRepository(context: Context) {
     private companion object {
         const val TAG = "MarifyMachines"
         const val SUFFIX = ".machine"
+    }
+
+    /** Writes the directory's entry through: a rename is durable only then. */
+    private fun syncDirectory(d: File) {
+        try {
+            FileChannel.open(d.toPath(), StandardOpenOption.READ).use { it.force(true) }
+        } catch (ex: IOException) {
+            // Not every filesystem lets a directory be opened for this; the file itself is synced.
+            Log.w("MachineRepository", "the records' directory was not synced: ${ex.message}")
+        }
     }
 }
